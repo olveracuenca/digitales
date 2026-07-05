@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String       @id @default(cuid())
+  name          String?
+  email         String?      @unique
+  emailVerified DateTime?
+  password      String?
+  role          String       @default("USER")
+  image         String?
+  invitations   Invitation[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model Template {
+  id          String       @id @default(cuid())
+  eventType   String       // e.g., "Boda", "XV Años", "Bautizo"
+  name        String
+  description String?
+  thumbnail   String?
+  defaultData String       // JSON stringified configuration
+  isPremium   Boolean      @default(false)
+  invitations Invitation[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Invitation {
+  id         String   @id @default(cuid())
+  slug       String   @unique // Public URL identifier
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  templateId String
+  template   Template @relation(fields: [templateId], references: [id])
+  
+  // Data for the invitation (photos, texts, config for sections)
+  data       String   // JSON stringified data
+  
+  isPublished Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}

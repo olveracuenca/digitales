@@ -1,0 +1,19 @@
+.playerBtn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 100;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.playerBtn:hover {
+  transform: scale(1.1);
+}

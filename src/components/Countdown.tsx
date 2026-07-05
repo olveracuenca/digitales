@@ -1,0 +1,57 @@
+"use client";
+import { useState, useEffect } from "react";
+import styles from "./Countdown.module.css";
+
+export default function Countdown({ 
+  targetDate, 
+  bgColor, 
+  textColor, 
+  font 
+}: { 
+  targetDate: string, 
+  bgColor: string, 
+  textColor: string, 
+  font: string 
+}) {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0 });
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    const calculateTimeLeft = () => {
+      const difference = +new Date(targetDate) - +new Date();
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+        });
+      } else {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0 });
+      }
+    };
+
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 60000); // update every minute
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+  if (!isClient) return null; // Avoid hydration mismatch
+
+  return (
+    <div className={styles.countdownContainer}>
+      <div className={styles.timeBox} style={{ background: bgColor, color: textColor, fontFamily: font }}>
+        <span>{timeLeft.days.toString().padStart(2, '0')}</span>
+        <small style={{ color: textColor }}>Días</small>
+      </div>
+      <div className={styles.timeBox} style={{ background: bgColor, color: textColor, fontFamily: font }}>
+        <span>{timeLeft.hours.toString().padStart(2, '0')}</span>
+        <small style={{ color: textColor }}>Hrs</small>
+      </div>
+      <div className={styles.timeBox} style={{ background: bgColor, color: textColor, fontFamily: font }}>
+        <span>{timeLeft.minutes.toString().padStart(2, '0')}</span>
+        <small style={{ color: textColor }}>Min</small>
+      </div>
+    </div>
+  );
+}
