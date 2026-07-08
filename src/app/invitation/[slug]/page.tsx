@@ -5,6 +5,7 @@ import AutoCarousel from "@/components/AutoCarousel";
 import FallingIcons from "@/components/FallingIcons";
 import AudioPlayer from "@/components/AudioPlayer";
 import Countdown from "@/components/Countdown";
+import AnimatedSection from "@/components/AnimatedSection";
 import { MapPin } from "lucide-react";
 
 const prisma = new PrismaClient();
@@ -136,7 +137,7 @@ export default async function PublicInvitation({
 
           {data.visibility.itinerary && data.itinerary && data.itinerary.length > 0 && (
             <div style={{ width: '100%', maxWidth: '350px', marginBottom: '3rem' }}>
-              <div style={{ fontSize: '1.8rem', marginBottom: '0.5rem' }}>{data.emojis.itinerary}</div>
+              <div style={{ fontSize: '1.8rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.itinerary }} />
               <h3 style={{fontFamily: data.design.font, fontSize: '1.4rem', marginBottom: '1.5rem'}}>Itinerario</h3>
               
               <div style={{ position: 'relative', padding: '0.5rem 0' }}>
@@ -146,9 +147,7 @@ export default async function PublicInvitation({
                 {data.itinerary.map((item: any, i: number) => (
                   <div key={item.id || i} style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', justifyContent: i % 2 === 0 ? 'flex-start' : 'flex-end' }}>
                     {/* Icono central */}
-                    <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: '32px', height: '32px', borderRadius: '50%', background: data.design.bgColor, border: `2px solid ${data.design.textColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', zIndex: 2 }}>
-                      {item.icon}
-                    </div>
+                    <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: '32px', height: '32px', borderRadius: '50%', background: data.design.bgColor, border: `2px solid ${data.design.textColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', zIndex: 2 }} dangerouslySetInnerHTML={{ __html: item.icon }} />
                     
                     {/* Contenido (Texto) */}
                     <div style={{ width: '42%', textAlign: i % 2 === 0 ? 'right' : 'left', padding: i % 2 === 0 ? '0 1rem 0 0' : '0 0 0 1rem' }}>
@@ -158,6 +157,33 @@ export default async function PublicInvitation({
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {data.visibility.generalGift && (
+            <div style={{ width: '100%', maxWidth: '350px', marginBottom: '3rem' }}>
+              <div style={{ fontSize: '1.8rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.generalGift }} />
+              <h3 style={{fontFamily: data.design.font, fontSize: '1.4rem', marginBottom: '1rem'}}>Regalo</h3>
+              <p style={{ fontSize: '1rem' }}>{data.generalGift}</p>
+            </div>
+          )}
+
+          {data.visibility.dressCode && (
+            <div style={{ width: '100%', maxWidth: '350px', marginBottom: '3rem' }}>
+              <div style={{ fontSize: '1.8rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.dressCode }} />
+              <h3 style={{fontFamily: data.design.font, fontSize: '1.4rem', marginBottom: '1.5rem'}}>Código de Vestimenta</h3>
+              <div style={{ fontSize: '1rem', lineHeight: '1.5' }}>
+                {data.dressCode?.him && <div><strong>Para Él:</strong> {data.dressCode.him}</div>}
+                {data.dressCode?.her && <div><strong>Para Ella:</strong> {data.dressCode.her}</div>}
+                {data.dressCode?.general && <div style={{marginTop: '0.5rem'}}>{data.dressCode.general}</div>}
+              </div>
+            </div>
+          )}
+
+          {data.visibility.generalText && (
+            <div style={{ width: '100%', maxWidth: '350px', marginBottom: '3rem' }}>
+              <div style={{ fontSize: '1.8rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.generalText }} />
+              <p style={{ fontSize: '1rem' }}>{data.generalText}</p>
             </div>
           )}
 
@@ -205,123 +231,168 @@ export default async function PublicInvitation({
       <div className={styles.previewBody} style={{ padding: '3rem 1.5rem', position: 'relative', zIndex: 20 }}>
         
         {data.visibility.quote && (
-          <div className={styles.previewSection}>
-            <p style={{
-              fontFamily: data.quote.font, 
-              color: data.quote.color, 
-              fontSize: data.quote.size, 
-              lineHeight: 1.5,
-              fontStyle: data.quote.font.includes('cursive') ? 'normal' : 'italic',
-              padding: '1rem'
-            }}>
-              "{data.quote.text}"
-            </p>
-          </div>
+          <AnimatedSection enableAnimation={invitation.templateId === 't-boda-04'} direction="left">
+            <div className={styles.previewSection}>
+              <p style={{
+                fontFamily: data.quote.font, 
+                color: data.quote.color, 
+                fontSize: data.quote.size, 
+                lineHeight: 1.5,
+                fontStyle: data.quote.font.includes('cursive') ? 'normal' : 'italic',
+                padding: '1rem'
+              }}>
+                &quot;{data.quote.text}&quot;
+              </p>
+            </div>
+          </AnimatedSection>
         )}
 
         {data.visibility.countdown && (
-          <div className={styles.previewSection}>
-            <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>{data.emojis.countdown}</div>
-            <h3 style={{fontFamily: data.design.font}}>Faltan</h3>
-            <Countdown 
-              targetDate={data.date} 
-              bgColor={data.countdownDesign?.bgColor || data.design.textColor} 
-              textColor={data.countdownDesign?.textColor || data.design.bgColor} 
-              font={data.countdownDesign?.font || data.design.font} 
-            />
-          </div>
+          <AnimatedSection enableAnimation={invitation.templateId === 't-boda-04'} direction="right">
+            <div className={styles.previewSection}>
+              <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.countdown }} />
+              <h3 style={{fontFamily: data.design.font}}>Faltan</h3>
+              <Countdown 
+                targetDate={data.date} 
+                bgColor={data.countdownDesign?.bgColor || data.design.textColor} 
+                textColor={data.countdownDesign?.textColor || data.design.bgColor} 
+                font={data.countdownDesign?.font || data.design.font} 
+              />
+            </div>
+          </AnimatedSection>
         )}
 
         {data.visibility.carousel && (
-          <div className={styles.previewSection}>
-            <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>{data.emojis.carousel}</div>
-            <h3 style={{fontFamily: data.design.font}}>Nuestros Momentos</h3>
-            <AutoCarousel photos={data.carouselPhotos} />
-          </div>
+          <AnimatedSection enableAnimation={invitation.templateId === 't-boda-04'} direction="left">
+            <div className={styles.previewSection}>
+              <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.carousel }} />
+              <h3 style={{fontFamily: data.design.font}}>Nuestros Momentos</h3>
+              <AutoCarousel photos={data.carouselPhotos} />
+            </div>
+          </AnimatedSection>
         )}
 
         {data.visibility.itinerary && data.itinerary && data.itinerary.length > 0 && (
-          <div className={styles.previewSection}>
-            <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>{data.emojis.itinerary}</div>
-            <h3 style={{fontFamily: data.design.font}}>Itinerario</h3>
-            
-            <div style={{ position: 'relative', marginTop: '2rem', padding: '1rem 0' }}>
-              {/* Línea central */}
-              <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: '2px', background: `${data.design.textColor}40`, transform: 'translateX(-50%)' }}></div>
+          <AnimatedSection enableAnimation={invitation.templateId === 't-boda-04'} direction="right">
+            <div className={styles.previewSection}>
+              <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.itinerary }} />
+              <h3 style={{fontFamily: data.design.font}}>Itinerario</h3>
               
-              {data.itinerary.map((item: any, i: number) => (
-                <div key={item.id || i} style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem', position: 'relative', justifyContent: i % 2 === 0 ? 'flex-start' : 'flex-end' }}>
-                  {/* Icono central */}
-                  <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: '40px', height: '40px', borderRadius: '50%', background: data.design.bgColor, border: `2px solid ${data.design.textColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', zIndex: 2 }}>
-                    {item.icon}
+              <div style={{ position: 'relative', marginTop: '2rem', padding: '1rem 0' }}>
+                {/* Línea central */}
+                <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: '2px', background: `${data.design.textColor}40`, transform: 'translateX(-50%)' }}></div>
+                
+                {data.itinerary.map((item: any, i: number) => (
+                  <div key={item.id || i} style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem', position: 'relative', justifyContent: i % 2 === 0 ? 'flex-start' : 'flex-end' }}>
+                    {/* Icono central */}
+                    <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: '40px', height: '40px', borderRadius: '50%', background: data.design.bgColor, border: `2px solid ${data.design.textColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', zIndex: 2 }} dangerouslySetInnerHTML={{ __html: item.icon }} />
+                    
+                    {/* Contenido (Texto) */}
+                    <div style={{ width: '42%', textAlign: i % 2 === 0 ? 'right' : 'left', padding: i % 2 === 0 ? '0 1.5rem 0 0' : '0 0 0 1.5rem' }}>
+                      <div style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '0.2rem' }}>{item.time}</div>
+                      <div style={{ fontSize: '1.1rem' }}>{item.title}</div>
+                    </div>
                   </div>
-                  
-                  {/* Contenido (Texto) */}
-                  <div style={{ width: '42%', textAlign: i % 2 === 0 ? 'right' : 'left', padding: i % 2 === 0 ? '0 1.5rem 0 0' : '0 0 0 1.5rem' }}>
-                    <div style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '0.2rem' }}>{item.time}</div>
-                    <div style={{ fontSize: '1.1rem' }}>{item.title}</div>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          </AnimatedSection>
         )}
 
         {data.visibility.location && (
-          <div className={styles.previewSection}>
-            <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>{data.emojis.location}</div>
-            <h3 style={{fontFamily: data.design.font}}>Ubicación</h3>
-            <p style={{fontSize: '1.2rem', padding: '0 1rem'}}>{data.location}</p>
-            {data.locationUrl && (
-              <a href={data.locationUrl} target="_blank" rel="noreferrer" style={{
-                display: 'inline-flex', 
-                alignItems: 'center',
-                gap: '0.5rem',
-                marginTop: '1rem', 
-                padding: '0.75rem 1.5rem', 
-                background: data.design.textColor, 
-                color: data.design.bgColor, 
-                borderRadius: '9999px', 
-                textDecoration: 'none', 
-                fontWeight: 600,
-                fontSize: '1rem',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-              }}>
-                <MapPin size={20} />
-                Abrir en Google Maps
-              </a>
-            )}
-          </div>
+          <AnimatedSection enableAnimation={invitation.templateId === 't-boda-04'} direction="left">
+            <div className={styles.previewSection}>
+              <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.location }} />
+              <h3 style={{fontFamily: data.design.font}}>Ubicación</h3>
+              <p style={{fontSize: '1.2rem', padding: '0 1rem'}}>{data.location}</p>
+              {data.locationUrl && (
+                <a href={data.locationUrl} target="_blank" rel="noreferrer" style={{
+                  display: 'inline-flex', 
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  marginTop: '1rem', 
+                  padding: '0.75rem 1.5rem', 
+                  background: data.design.textColor, 
+                  color: data.design.bgColor, 
+                  borderRadius: '9999px', 
+                  textDecoration: 'none', 
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                }}>
+                  <MapPin size={20} />
+                  Abrir en Google Maps
+                </a>
+              )}
+            </div>
+          </AnimatedSection>
         )}
 
         {data.visibility.gifts && data.gifts.length > 0 && (
-          <div className={styles.previewSection}>
-            <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>{data.emojis.gifts}</div>
-            <h3 style={{fontFamily: data.design.font}}>Mesa de Regalos</h3>
-            <div style={{display:'flex', flexDirection:'column', gap:'0.75rem', alignItems: 'center'}}>
-              {data.gifts.map((g: any, i: number) => (
-                g.store && (
-                  <a key={i} href={g.url} target="_blank" rel="noreferrer" style={{display: 'block', width: '100%', maxWidth: '300px', padding:'1rem', background:'rgba(0,0,0,0.05)', borderRadius:'12px', border:`1px solid ${data.design.textColor}30`, color:data.design.textColor, textDecoration: 'none', fontWeight: 600}}>
-                    {g.store}
-                  </a>
-                )
-              ))}
+          <AnimatedSection enableAnimation={invitation.templateId === 't-boda-04'} direction="right">
+            <div className={styles.previewSection}>
+              <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.gifts }} />
+              <h3 style={{fontFamily: data.design.font}}>Mesa de Regalos</h3>
+              <div style={{display:'flex', flexDirection:'column', gap:'0.75rem', alignItems: 'center'}}>
+                {data.gifts.map((g: any, i: number) => (
+                  g.store && (
+                    <a key={i} href={g.url} target="_blank" rel="noreferrer" style={{display: 'block', width: '100%', maxWidth: '300px', padding:'1rem', background:'rgba(0,0,0,0.05)', borderRadius:'12px', border:`1px solid ${data.design.textColor}30`, color:data.design.textColor, textDecoration: 'none', fontWeight: 600}}>
+                      {g.store}
+                    </a>
+                  )
+                ))}
+              </div>
             </div>
-          </div>
+          </AnimatedSection>
+        )}
+
+        {data.visibility.generalGift && (
+          <AnimatedSection enableAnimation={invitation.templateId === 't-boda-04'} direction="right">
+            <div className={styles.previewSection}>
+              <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.generalGift }} />
+              <h3 style={{fontFamily: data.design.font}}>Mesa de Regalos</h3>
+              <p style={{ marginTop: '1rem', fontSize: '1.1rem' }}>{data.generalGift}</p>
+            </div>
+          </AnimatedSection>
+        )}
+
+        {data.visibility.dressCode && (
+          <AnimatedSection enableAnimation={invitation.templateId === 't-boda-04'} direction="left">
+            <div className={styles.previewSection}>
+              <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.dressCode }} />
+              <h3 style={{fontFamily: data.design.font}}>Código de Vestimenta</h3>
+              <div style={{ fontSize: '1.1rem', lineHeight: '1.5', marginTop: '1rem' }}>
+                {data.dressCode?.him && <div><strong>Para Él:</strong> {data.dressCode.him}</div>}
+                {data.dressCode?.her && <div><strong>Para Ella:</strong> {data.dressCode.her}</div>}
+                {data.dressCode?.general && <div style={{marginTop: '0.5rem'}}>{data.dressCode.general}</div>}
+              </div>
+            </div>
+          </AnimatedSection>
+        )}
+
+        {data.visibility.generalText && (
+          <AnimatedSection enableAnimation={invitation.templateId === 't-boda-04'} direction="left">
+            <div className={styles.previewSection}>
+              <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.generalText }} />
+              <p style={{ marginTop: '1rem', fontSize: '1.1rem' }}>{data.generalText}</p>
+            </div>
+          </AnimatedSection>
         )}
 
         {data.visibility.whatsapp && (
-          <div className={styles.previewSection} style={{ paddingBottom: '3rem' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1.5rem' }}>{data.emojis.whatsapp}</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
-              <a href={`https://wa.me/${data.whatsapp}?text=${confirmMsg}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#25D366', color: 'white', padding: '1rem 2rem', borderRadius: '9999px', fontWeight: 600, textDecoration: 'none', width: '100%', maxWidth: '300px', justifyContent: 'center' }}>
-                ✓ Confirmar Asistencia
-              </a>
-              <a href={`https://wa.me/${data.whatsapp}?text=${declineMsg}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'transparent', border: `2px solid ${data.design.textColor}50`, color: data.design.textColor, padding: '1rem 2rem', borderRadius: '9999px', fontWeight: 600, textDecoration: 'none', width: '100%', maxWidth: '300px', justifyContent: 'center' }}>
-                ✕ No podré asistir
-              </a>
+          <AnimatedSection enableAnimation={invitation.templateId === 't-boda-04'} direction="up">
+            <div className={styles.previewSection} style={{ paddingBottom: '3rem' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.whatsapp }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
+                <a href={`https://wa.me/${data.whatsapp}?text=${confirmMsg}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#25D366', color: 'white', padding: '1rem 2rem', borderRadius: '9999px', fontWeight: 600, textDecoration: 'none', width: '100%', maxWidth: '300px', justifyContent: 'center' }}>
+                  ✓ Confirmar Asistencia
+                </a>
+                <a href={`https://wa.me/${data.whatsapp}?text=${declineMsg}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'transparent', border: `2px solid ${data.design.textColor}50`, color: data.design.textColor, padding: '1rem 2rem', borderRadius: '9999px', fontWeight: 600, textDecoration: 'none', width: '100%', maxWidth: '300px', justifyContent: 'center' }}>
+                  ✕ No podré asistir
+                </a>
+              </div>
             </div>
-          </div>
+          </AnimatedSection>
         )}
       </div>
     </div>

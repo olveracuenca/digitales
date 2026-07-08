@@ -13,11 +13,14 @@ export default function Countdown({
   textColor: string, 
   font: string 
 }) {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0 });
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
+  }, []);
+
+  useEffect(() => {
     const calculateTimeLeft = () => {
       const difference = +new Date(targetDate) - +new Date();
       if (difference > 0) {
@@ -25,14 +28,15 @@ export default function Countdown({
           days: Math.floor(difference / (1000 * 60 * 60 * 24)),
           hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
           minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
         });
       } else {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0 });
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
       }
     };
 
     calculateTimeLeft();
-    const timer = setInterval(calculateTimeLeft, 60000); // update every minute
+    const timer = setInterval(calculateTimeLeft, 1000); // update every second
     return () => clearInterval(timer);
   }, [targetDate]);
 
@@ -51,6 +55,10 @@ export default function Countdown({
       <div className={styles.timeBox} style={{ background: bgColor, color: textColor, fontFamily: font }}>
         <span>{timeLeft.minutes.toString().padStart(2, '0')}</span>
         <small style={{ color: textColor }}>Min</small>
+      </div>
+      <div className={styles.timeBox} style={{ background: bgColor, color: textColor, fontFamily: font }}>
+        <span>{timeLeft.seconds.toString().padStart(2, '0')}</span>
+        <small style={{ color: textColor }}>Seg</small>
       </div>
     </div>
   );

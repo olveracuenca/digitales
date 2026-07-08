@@ -3,7 +3,8 @@
 import { useState, use, useEffect } from "react";
 import AdminLayout from "@/app/admin/layout";
 import styles from "./editor.module.css";
-import { Save, Image as ImageIcon, MapPin, Clock, Gift, MessageCircle, Eye, EyeOff, Palette, Share2, Copy } from "lucide-react";
+import { Save, Image as ImageIcon, MapPin, Clock, Gift, MessageCircle, Eye, EyeOff, Palette, Share2, Copy, Music, Type, ArrowLeft, Check, Upload, Trash2, Smartphone, Download, Map as MapIcon, Plus } from "lucide-react";
+import AnimatedSection from "@/components/AnimatedSection";
 import AutoCarousel from "@/components/AutoCarousel";
 import FallingIcons from "@/components/FallingIcons";
 import AudioPlayer from "@/components/AudioPlayer";
@@ -32,14 +33,21 @@ const getDefaultData = (id: string) => {
     ],
     music: "",
     itinerary: [
-      { id: 1, time: "20:00 hs", title: "Ceremonia", icon: "💍" },
-      { id: 2, time: "21:30 hs", title: "Recepción", icon: "🥂" },
-      { id: 3, time: "22:30 hs", title: "Cena", icon: "🍽️" },
-      { id: 4, time: "00:00 hs", title: "Baile", icon: "🪩" }
+      { id: 1, time: "20:00 hs", title: "Ceremonia", icon: '<i class="fa-solid fa-ring"></i>' },
+      { id: 2, time: "21:30 hs", title: "Recepción", icon: '<i class="fa-solid fa-champagne-glasses"></i>' },
+      { id: 3, time: "22:30 hs", title: "Cena", icon: '<i class="fa-solid fa-utensils"></i>' },
+      { id: 4, time: "00:00 hs", title: "Baile", icon: '<i class="fa-solid fa-music"></i>' }
     ],
     gifts: [
       { id: 1, store: "Liverpool", url: "https://liverpool.com.mx" }
     ],
+    dressCode: {
+      him: "Traje Formal",
+      her: "Vestido Largo",
+      general: "Formal"
+    },
+    generalGift: "¡Tu presencia es nuestro mejor regalo! Si deseas tener un detalle adicional, puedes usar este sobre.",
+    generalText: "Nota adicional para nuestros invitados.",
     quote: {
       text: "Gracias por ser parte de este momento tan especial.",
       color: "#1f2937",
@@ -47,13 +55,16 @@ const getDefaultData = (id: string) => {
       size: "1.2rem"
     },
     emojis: {
-      countdown: "⏳",
-      carousel: "📸",
-      location: "📍",
-      gifts: "🎁",
-      whatsapp: "💬",
-      falling: "✨ 💖 🌸 💍 🥂",
-      itinerary: "🕒"
+      countdown: '<i class="fa-solid fa-hourglass-half"></i>',
+      carousel: '<i class="fa-solid fa-camera"></i>',
+      itinerary: '<i class="fa-solid fa-list"></i>',
+      location: '<i class="fa-solid fa-location-dot"></i>',
+      gifts: '<i class="fa-solid fa-gift"></i>',
+      dressCode: '<i class="fa-solid fa-shirt"></i>',
+      generalGift: '<i class="fa-solid fa-envelope"></i>',
+      generalText: '<i class="fa-solid fa-message"></i>',
+      whatsapp: '<i class="fa-brands fa-whatsapp"></i>',
+      falling: "✨ 💖 🌸 💍 🥂"
     },
     design: {
       bgColor: "#fdfbf7",
@@ -78,7 +89,10 @@ const getDefaultData = (id: string) => {
       fallingIcons: false,
       music: false,
       decorations: false,
-      itinerary: false
+      itinerary: false,
+      dressCode: false,
+      generalGift: false,
+      generalText: false
     }
   };
 
@@ -559,7 +573,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
               <div className={styles.moduleItem}>
                 <div className={styles.moduleHeader}>
                   <div className={styles.moduleTitle}>
-                    <input type="text" name="countdown" value={data.emojis.countdown} onChange={handleEmojiChange} style={{width:'30px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <input type="text" name="countdown" value={data.emojis.countdown} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
                     <span>Cuenta Regresiva</span>
                   </div>
                   <button onClick={() => toggleVisibility('countdown')} className={styles.toggleBtn}>
@@ -594,7 +608,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
               <div className={styles.moduleItem}>
                 <div className={styles.moduleHeader}>
                   <div className={styles.moduleTitle}>
-                    <input type="text" name="carousel" value={data.emojis.carousel} onChange={handleEmojiChange} style={{width:'30px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <input type="text" name="carousel" value={data.emojis.carousel} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
                     <span>Carrusel Automático (5s)</span>
                   </div>
                   <button onClick={() => toggleVisibility('carousel')} className={styles.toggleBtn}>
@@ -632,7 +646,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
               <div className={styles.moduleItem}>
                 <div className={styles.moduleHeader}>
                   <div className={styles.moduleTitle}>
-                    <input type="text" name="location" value={data.emojis.location} onChange={handleEmojiChange} style={{width:'30px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <input type="text" name="location" value={data.emojis.location} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
                     <span>Ubicación</span>
                   </div>
                   <button onClick={() => toggleVisibility('location')} className={styles.toggleBtn}>
@@ -652,7 +666,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
               <div className={styles.moduleItem}>
                 <div className={styles.moduleHeader}>
                   <div className={styles.moduleTitle}>
-                    <input type="text" name="gifts" value={data.emojis.gifts} onChange={handleEmojiChange} style={{width:'30px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <input type="text" name="gifts" value={data.emojis.gifts} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
                     <span>Mesa de Regalos (Max 3)</span>
                   </div>
                   <button onClick={() => toggleVisibility('gifts')} className={styles.toggleBtn}>
@@ -678,7 +692,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
               <div className={styles.moduleItem}>
                 <div className={styles.moduleHeader}>
                   <div className={styles.moduleTitle}>
-                    <input type="text" name="whatsapp" value={data.emojis.whatsapp} onChange={handleEmojiChange} style={{width:'30px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <input type="text" name="whatsapp" value={data.emojis.whatsapp} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
                     <span>Confirmación WhatsApp</span>
                   </div>
                   <button onClick={() => toggleVisibility('whatsapp')} className={styles.toggleBtn}>
@@ -695,7 +709,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
               <div className={styles.moduleItem}>
                 <div className={styles.moduleHeader}>
                   <div className={styles.moduleTitle}>
-                    <input type="text" name="itinerary" value={data.emojis.itinerary} onChange={handleEmojiChange} style={{width:'30px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <input type="text" name="itinerary" value={data.emojis.itinerary} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
                     <span>Itinerario (Timeline)</span>
                   </div>
                   <button onClick={() => toggleVisibility('itinerary')} className={styles.toggleBtn}>
@@ -708,13 +722,86 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                       <div key={item.id} style={{marginBottom:'1rem', padding:'1rem', background:'rgba(255,255,255,0.05)', borderRadius:'8px'}}>
                         <div style={{display:'flex', gap:'0.5rem', marginBottom:'0.5rem'}}>
                           <input type="text" value={item.time} onChange={e => updateItineraryItem(i, 'time', e.target.value)} placeholder="Ej. 20:00 hs" className={styles.input} style={{flex: 1}} />
-                          <input type="text" value={item.icon} onChange={e => updateItineraryItem(i, 'icon', e.target.value)} placeholder="Icono" className={styles.input} style={{width: '60px', textAlign: 'center'}} />
+                          <input type="text" value={item.icon} onChange={e => updateItineraryItem(i, 'icon', e.target.value)} placeholder="Icono HTML" className={styles.input} style={{flex: 1, minWidth: '120px', textAlign: 'center'}} />
                         </div>
                         <input type="text" value={item.title} onChange={e => updateItineraryItem(i, 'title', e.target.value)} placeholder="Ej. Ceremonia" className={styles.input} style={{marginBottom:'0.5rem'}} />
                         <button onClick={() => removeItineraryItem(i)} style={{color:'var(--accent-color)', fontSize:'0.875rem'}}>Eliminar</button>
                       </div>
                     ))}
                     <button onClick={addItineraryItem} className={styles.secondaryBtn}>+ Agregar Evento</button>
+                  </div>
+                )}
+              </div>
+
+              {/* Dress Code */}
+              <div className={styles.moduleCard}>
+                <div className={styles.moduleHeader}>
+                  <div style={{display:'flex', alignItems:'center', gap:'0.5rem'}}>
+                    <input type="text" name="dressCode" value={data.emojis.dressCode} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <span>Código de Vestimenta</span>
+                  </div>
+                  <button onClick={() => toggleVisibility('dressCode')} className={styles.toggleBtn}>
+                    {data.visibility.dressCode ? <Eye size={18} /> : <EyeOff size={18} />}
+                  </button>
+                </div>
+                {data.visibility.dressCode && (
+                  <div className={styles.moduleBody}>
+                    <label className={styles.label}>Para Él</label>
+                    <input type="text" value={data.dressCode?.him || ''} onChange={e => setData({...data, dressCode: {...data.dressCode, him: e.target.value}})} className={styles.input} />
+                    
+                    <label className={styles.label}>Para Ella</label>
+                    <input type="text" value={data.dressCode?.her || ''} onChange={e => setData({...data, dressCode: {...data.dressCode, her: e.target.value}})} className={styles.input} />
+                    
+                    <label className={styles.label}>General (Opcional)</label>
+                    <input type="text" value={data.dressCode?.general || ''} onChange={e => setData({...data, dressCode: {...data.dressCode, general: e.target.value}})} className={styles.input} />
+                  </div>
+                )}
+              </div>
+
+              {/* General Gift */}
+              <div className={styles.moduleCard}>
+                <div className={styles.moduleHeader}>
+                  <div style={{display:'flex', alignItems:'center', gap:'0.5rem'}}>
+                    <input type="text" name="generalGift" value={data.emojis.generalGift} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <span>Regalo General</span>
+                  </div>
+                  <button onClick={() => toggleVisibility('generalGift')} className={styles.toggleBtn}>
+                    {data.visibility.generalGift ? <Eye size={18} /> : <EyeOff size={18} />}
+                  </button>
+                </div>
+                {data.visibility.generalGift && (
+                  <div className={styles.moduleBody}>
+                    <textarea 
+                      value={data.generalGift} 
+                      onChange={e => setData({...data, generalGift: e.target.value})} 
+                      className={styles.input} 
+                      rows={3} 
+                      placeholder="Ej. No olvides llevar tu regalo." 
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* General Text */}
+              <div className={styles.moduleCard}>
+                <div className={styles.moduleHeader}>
+                  <div style={{display:'flex', alignItems:'center', gap:'0.5rem'}}>
+                    <input type="text" name="generalText" value={data.emojis.generalText} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <span>Texto General</span>
+                  </div>
+                  <button onClick={() => toggleVisibility('generalText')} className={styles.toggleBtn}>
+                    {data.visibility.generalText ? <Eye size={18} /> : <EyeOff size={18} />}
+                  </button>
+                </div>
+                {data.visibility.generalText && (
+                  <div className={styles.moduleBody}>
+                    <textarea 
+                      value={data.generalText} 
+                      onChange={e => setData({...data, generalText: e.target.value})} 
+                      className={styles.input} 
+                      rows={3} 
+                      placeholder="Ej. Llevar tu cerveza favorita." 
+                    />
                   </div>
                 )}
               </div>
@@ -779,7 +866,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
 
                     {data.visibility.quote && (
                       <p style={{ fontFamily: data.quote.font, fontSize: '0.85rem', marginBottom: '1rem', fontStyle: 'italic', maxWidth: '300px' }}>
-                        "{data.quote.text}"
+                        &quot;{data.quote.text}&quot;
                       </p>
                     )}
 
@@ -796,7 +883,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
 
                     {data.visibility.itinerary && data.itinerary && data.itinerary.length > 0 && (
                       <div style={{ width: '100%', maxWidth: '300px', marginBottom: '2rem' }}>
-                        <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{data.emojis.itinerary}</div>
+                        <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.itinerary }} />
                         <h3 style={{fontFamily: data.design.font, fontSize: '1.2rem', marginBottom: '1rem'}}>Itinerario</h3>
                         
                         <div style={{ position: 'relative', padding: '0.5rem 0' }}>
@@ -806,9 +893,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                           {data.itinerary.map((item: any, i: number) => (
                             <div key={item.id || i} style={{ display: 'flex', alignItems: 'center', marginBottom: '1.2rem', position: 'relative', justifyContent: i % 2 === 0 ? 'flex-start' : 'flex-end' }}>
                               {/* Icono central */}
-                              <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: '28px', height: '28px', borderRadius: '50%', background: data.design.bgColor, border: `2px solid ${data.design.textColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', zIndex: 2 }}>
-                                {item.icon}
-                              </div>
+                              <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: '28px', height: '28px', borderRadius: '50%', background: data.design.bgColor, border: `2px solid ${data.design.textColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', zIndex: 2 }} dangerouslySetInnerHTML={{ __html: item.icon }} />
                               
                               {/* Contenido (Texto) */}
                               <div style={{ width: '42%', textAlign: i % 2 === 0 ? 'right' : 'left', padding: i % 2 === 0 ? '0 0.75rem 0 0' : '0 0 0 0.75rem' }}>
@@ -818,6 +903,33 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                             </div>
                           ))}
                         </div>
+                      </div>
+                    )}
+
+                    {data.visibility.generalGift && (
+                      <div style={{ width: '100%', maxWidth: '300px', marginBottom: '2rem' }}>
+                        <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.generalGift }} />
+                        <h3 style={{fontFamily: data.design.font, fontSize: '1.2rem', marginBottom: '0.5rem'}}>Regalo</h3>
+                        <p style={{ fontSize: '0.9rem' }}>{data.generalGift}</p>
+                      </div>
+                    )}
+
+                    {data.visibility.dressCode && (
+                      <div style={{ width: '100%', maxWidth: '300px', marginBottom: '2rem' }}>
+                        <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.dressCode }} />
+                        <h3 style={{fontFamily: data.design.font, fontSize: '1.2rem', marginBottom: '1rem'}}>Código de Vestimenta</h3>
+                        <div style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>
+                          {data.dressCode?.him && <div><strong>Para Él:</strong> {data.dressCode.him}</div>}
+                          {data.dressCode?.her && <div><strong>Para Ella:</strong> {data.dressCode.her}</div>}
+                          {data.dressCode?.general && <div style={{marginTop: '0.5rem'}}>{data.dressCode.general}</div>}
+                        </div>
+                      </div>
+                    )}
+
+                    {data.visibility.generalText && (
+                      <div style={{ width: '100%', maxWidth: '300px', marginBottom: '2rem' }}>
+                        <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.generalText }} />
+                        <p style={{ fontSize: '0.9rem' }}>{data.generalText}</p>
                       </div>
                     )}
 
@@ -856,117 +968,162 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                 <div className={styles.previewBody} style={{position: 'relative', zIndex: 20}}>
                   
                   {data.visibility.quote && (
-                    <div className={styles.previewSection}>
-                      <p style={{
-                        fontFamily: data.quote.font, 
-                        color: data.quote.color, 
-                        fontSize: data.quote.size, 
-                        lineHeight: 1.5,
-                        fontStyle: data.quote.font.includes('cursive') ? 'normal' : 'italic',
-                        padding: '1rem'
-                      }}>
-                        "{data.quote.text}"
-                      </p>
-                    </div>
+                    <AnimatedSection enableAnimation={id === 't-boda-04'} direction="left">
+                      <div className={styles.previewSection}>
+                        <p style={{
+                          fontFamily: data.quote.font, 
+                          color: data.quote.color, 
+                          fontSize: data.quote.size, 
+                          lineHeight: 1.5,
+                          fontStyle: data.quote.font.includes('cursive') ? 'normal' : 'italic',
+                          padding: '1rem'
+                        }}>
+                          &quot;{data.quote.text}&quot;
+                        </p>
+                      </div>
+                    </AnimatedSection>
                   )}
 
                   {data.visibility.countdown && (
-                    <div className={styles.previewSection}>
-                      <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{data.emojis.countdown}</div>
-                      <h3 style={{fontFamily: data.design.font}}>Faltan</h3>
-                      <Countdown 
-                        targetDate={data.date} 
-                        bgColor={data.countdownDesign.bgColor} 
-                        textColor={data.countdownDesign.textColor} 
-                        font={data.countdownDesign.font} 
-                      />
-                    </div>
+                    <AnimatedSection enableAnimation={id === 't-boda-04'} direction="right">
+                      <div className={styles.previewSection}>
+                        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.countdown }} />
+                        <h3 style={{fontFamily: data.design.font}}>Faltan</h3>
+                        <Countdown 
+                          targetDate={data.date} 
+                          bgColor={data.countdownDesign.bgColor} 
+                          textColor={data.countdownDesign.textColor} 
+                          font={data.countdownDesign.font} 
+                        />
+                      </div>
+                    </AnimatedSection>
                   )}
 
                   {data.visibility.carousel && (
-                    <div className={styles.previewSection}>
-                      <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{data.emojis.carousel}</div>
-                      <h3 style={{fontFamily: data.design.font}}>Nuestros Momentos</h3>
-                      <AutoCarousel photos={data.carouselPhotos} />
-                    </div>
+                    <AnimatedSection enableAnimation={id === 't-boda-04'} direction="left">
+                      <div className={styles.previewSection}>
+                        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.carousel }} />
+                        <h3 style={{fontFamily: data.design.font}}>Nuestros Momentos</h3>
+                        <AutoCarousel photos={data.carouselPhotos} />
+                      </div>
+                    </AnimatedSection>
                   )}
 
                   {data.visibility.itinerary && data.itinerary && data.itinerary.length > 0 && (
-                    <div className={styles.previewSection}>
-                      <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{data.emojis.itinerary}</div>
-                      <h3 style={{fontFamily: data.design.font}}>Itinerario</h3>
-                      
-                      <div style={{ position: 'relative', marginTop: '1.5rem', padding: '1rem 0' }}>
-                        {/* Línea central */}
-                        <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: '2px', background: `${data.design.textColor}40`, transform: 'translateX(-50%)' }}></div>
+                    <AnimatedSection enableAnimation={id === 't-boda-04'} direction="right">
+                      <div className={styles.previewSection}>
+                        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.itinerary }} />
+                        <h3 style={{fontFamily: data.design.font}}>Itinerario</h3>
                         
-                        {data.itinerary.map((item: any, i: number) => (
-                          <div key={item.id || i} style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', justifyContent: i % 2 === 0 ? 'flex-start' : 'flex-end' }}>
-                            {/* Icono central */}
-                            <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: '36px', height: '36px', borderRadius: '50%', background: data.design.bgColor, border: `2px solid ${data.design.textColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', zIndex: 2 }}>
-                              {item.icon}
+                        <div style={{ position: 'relative', marginTop: '1.5rem', padding: '1rem 0' }}>
+                          {/* Línea central */}
+                          <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: '2px', background: `${data.design.textColor}40`, transform: 'translateX(-50%)' }}></div>
+                          
+                          {data.itinerary.map((item: any, i: number) => (
+                            <div key={item.id || i} style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', justifyContent: i % 2 === 0 ? 'flex-start' : 'flex-end' }}>
+                              {/* Icono central */}
+                              <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: '36px', height: '36px', borderRadius: '50%', background: data.design.bgColor, border: `2px solid ${data.design.textColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', zIndex: 2 }} dangerouslySetInnerHTML={{ __html: item.icon }} />
+                              
+                              {/* Contenido (Texto) */}
+                              <div style={{ width: '42%', textAlign: i % 2 === 0 ? 'right' : 'left', padding: i % 2 === 0 ? '0 1.25rem 0 0' : '0 0 0 1.25rem' }}>
+                                <div style={{ fontWeight: 'bold', fontSize: '0.95rem', marginBottom: '0.2rem' }}>{item.time}</div>
+                                <div style={{ fontSize: '1rem' }}>{item.title}</div>
+                              </div>
                             </div>
-                            
-                            {/* Contenido (Texto) */}
-                            <div style={{ width: '42%', textAlign: i % 2 === 0 ? 'right' : 'left', padding: i % 2 === 0 ? '0 1.25rem 0 0' : '0 0 0 1.25rem' }}>
-                              <div style={{ fontWeight: 'bold', fontSize: '0.95rem', marginBottom: '0.2rem' }}>{item.time}</div>
-                              <div style={{ fontSize: '1rem' }}>{item.title}</div>
-                            </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    </AnimatedSection>
                   )}
 
                   {data.visibility.location && (
-                    <div className={styles.previewSection}>
-                      <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{data.emojis.location}</div>
-                      <h3 style={{fontFamily: data.design.font}}>Ubicación</h3>
-                      <p>{data.location}</p>
-                      {data.locationUrl && (
-                        <a href={data.locationUrl} target="_blank" rel="noreferrer" style={{
-                          display: 'inline-flex', 
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          marginTop: '1rem', 
-                          padding: '0.75rem 1.5rem', 
-                          background: data.design.textColor, 
-                          color: data.design.bgColor, 
-                          borderRadius: '9999px', 
-                          textDecoration: 'none', 
-                          fontWeight: 600,
-                          fontSize: '0.9rem',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                        }}>
-                          <MapPin size={18} />
-                          Abrir en Maps
-                        </a>
-                      )}
-                    </div>
+                    <AnimatedSection enableAnimation={id === 't-boda-04'} direction="left">
+                      <div className={styles.previewSection}>
+                        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.location }} />
+                        <h3 style={{fontFamily: data.design.font}}>Ubicación</h3>
+                        <p>{data.location}</p>
+                        {data.locationUrl && (
+                          <a href={data.locationUrl} target="_blank" rel="noreferrer" style={{
+                            display: 'inline-flex', 
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            marginTop: '1rem', 
+                            padding: '0.75rem 1.5rem', 
+                            background: data.design.textColor, 
+                            color: data.design.bgColor, 
+                            borderRadius: '9999px', 
+                            textDecoration: 'none', 
+                            fontWeight: 600,
+                            fontSize: '0.9rem',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                          }}>
+                            <MapPin size={18} />
+                            Abrir en Maps
+                          </a>
+                        )}
+                      </div>
+                    </AnimatedSection>
                   )}
                   
                   {data.visibility.gifts && data.gifts.length > 0 && (
-                    <div className={styles.previewSection}>
-                      <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{data.emojis.gifts}</div>
-                      <h3 style={{fontFamily: data.design.font}}>Mesa de Regalos</h3>
-                      <div style={{display:'flex', flexDirection:'column', gap:'0.5rem'}}>
-                        {data.gifts.map((g,i) => (
-                          <a key={g.id || i} href={g.url || "#"} target="_blank" rel="noreferrer" style={{padding:'0.75rem', background:'rgba(0,0,0,0.05)', borderRadius:'8px', border:`1px solid ${data.design.textColor}30`, color:data.design.textColor, textDecoration: 'none', display: 'block', fontSize: '0.95rem'}}>
-                            {g.store || "Nueva Mesa (Ej. Liverpool)"}
-                          </a>
-                        ))}
+                    <AnimatedSection enableAnimation={id === 't-boda-04'} direction="right">
+                      <div className={styles.previewSection}>
+                        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.gifts }} />
+                        <h3 style={{fontFamily: data.design.font}}>Mesa de Regalos</h3>
+                        <div style={{display:'flex', flexDirection:'column', gap:'0.5rem'}}>
+                          {data.gifts.map((g,i) => (
+                            <a key={g.id || i} href={g.url || "#"} target="_blank" rel="noreferrer" style={{padding:'0.75rem', background:'rgba(0,0,0,0.05)', borderRadius:'8px', border:`1px solid ${data.design.textColor}30`, color:data.design.textColor, textDecoration: 'none', display: 'block', fontSize: '0.95rem'}}>
+                              {g.store || "Nueva Mesa (Ej. Liverpool)"}
+                            </a>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    </AnimatedSection>
+                  )}
+
+                  {data.visibility.generalGift && (
+                    <AnimatedSection enableAnimation={id === 't-boda-04'} direction="right">
+                      <div className={styles.previewSection}>
+                        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.generalGift }} />
+                        <h3 style={{fontFamily: data.design.font}}>Mesa de Regalos</h3>
+                        <p style={{ marginTop: '1rem' }}>{data.generalGift}</p>
+                      </div>
+                    </AnimatedSection>
+                  )}
+
+                  {data.visibility.dressCode && (
+                    <AnimatedSection enableAnimation={id === 't-boda-04'} direction="left">
+                      <div className={styles.previewSection}>
+                        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.dressCode }} />
+                        <h3 style={{fontFamily: data.design.font}}>Código de Vestimenta</h3>
+                        <div style={{ fontSize: '1rem', lineHeight: '1.5', marginTop: '1rem' }}>
+                          {data.dressCode?.him && <div><strong>Para Él:</strong> {data.dressCode.him}</div>}
+                          {data.dressCode?.her && <div><strong>Para Ella:</strong> {data.dressCode.her}</div>}
+                          {data.dressCode?.general && <div style={{marginTop: '0.5rem'}}>{data.dressCode.general}</div>}
+                        </div>
+                      </div>
+                    </AnimatedSection>
+                  )}
+
+                  {data.visibility.generalText && (
+                    <AnimatedSection enableAnimation={id === 't-boda-04'} direction="left">
+                      <div className={styles.previewSection}>
+                        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.generalText }} />
+                        <p style={{ marginTop: '1rem' }}>{data.generalText}</p>
+                      </div>
+                    </AnimatedSection>
                   )}
 
                   {data.visibility.whatsapp && (
-                    <div className={styles.previewSection} style={{ paddingBottom: '3rem' }}>
-                      <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>{data.emojis.whatsapp}</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center', width: '100%' }}>
-                        <button style={{ background: '#25D366', color: 'white', border: 'none', padding: '0.75rem', borderRadius: '9999px', fontWeight: 600, width: '100%', maxWidth: '200px' }}>✓ Confirmar Asistencia</button>
-                        <button style={{ background: 'transparent', color: data.design.textColor, border: `1px solid ${data.design.textColor}50`, padding: '0.75rem', borderRadius: '9999px', fontWeight: 600, width: '100%', maxWidth: '200px' }}>✕ No podré asistir</button>
+                    <AnimatedSection enableAnimation={id === 't-boda-04'} direction="up">
+                      <div className={styles.previewSection} style={{ paddingBottom: '3rem' }}>
+                        <div style={{ fontSize: '2rem', marginBottom: '1rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.whatsapp }} />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center', width: '100%' }}>
+                          <button style={{ background: '#25D366', color: 'white', border: 'none', padding: '0.75rem', borderRadius: '9999px', fontWeight: 600, width: '100%', maxWidth: '200px' }}>✓ Confirmar Asistencia</button>
+                          <button style={{ background: 'transparent', color: data.design.textColor, border: `1px solid ${data.design.textColor}50`, padding: '0.75rem', borderRadius: '9999px', fontWeight: 600, width: '100%', maxWidth: '200px' }}>✕ No podré asistir</button>
+                        </div>
                       </div>
-                    </div>
+                    </AnimatedSection>
                   )}
                 </div>
               </div>
