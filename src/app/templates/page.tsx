@@ -6,6 +6,10 @@ const eventTemplates = [
   { id: "t-boda-01", title: "Boda Elegance", type: "Boda", color: "var(--primary-color)" },
   { id: "t-xv-01", title: "XV Años Magic", type: "XV Años", color: "var(--accent-color)" },
   { id: "t-bautizo-01", title: "Bautizo Serenity", type: "Bautizo", color: "#38bdf8" },
+  { id: "t-boda-02", title: "Boda Premium Beach", type: "Boda", color: "#60a5fa" },
+  { id: "t-xv-02", title: "Sencillo", type: "Una pagina", color: "#166534" },
+  { id: "t-boda-03", title: "Boda Noche (Dark)", type: "Boda", color: "#a855f7" },
+  { id: "t-boda-04", title: "Boda Girasoles (Pro)", type: "Boda", color: "#eab308" },
 ];
 
 export default function TemplatesPage() {
@@ -22,8 +26,8 @@ export default function TemplatesPage() {
         <div className={styles.grid}>
           {eventTemplates.map((template) => (
             <div key={template.id} className={`glass ${styles.card}`}>
-              <div 
-                className={styles.cardCover} 
+              <div
+                className={styles.cardCover}
                 style={{ background: `linear-gradient(135deg, ${template.color}40, transparent)` }}
               >
                 <span className={styles.typeTag}>{template.type}</span>

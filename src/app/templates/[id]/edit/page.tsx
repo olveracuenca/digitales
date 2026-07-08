@@ -10,10 +10,8 @@ import AudioPlayer from "@/components/AudioPlayer";
 import Countdown from "@/components/Countdown";
 import { CldUploadWidget } from 'next-cloudinary';
 
-export default function TemplateEditor({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
-  // Estado general
-  const [data, setData] = useState({
+const getDefaultData = (id: string) => {
+  const base = {
     eventName: "Mi Nuevo Evento",
     title: "Nuestra Boda",
     subtitle: "María & Juan",
@@ -33,6 +31,12 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
       "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?q=80&w=800"
     ],
     music: "",
+    itinerary: [
+      { id: 1, time: "20:00 hs", title: "Ceremonia", icon: "💍" },
+      { id: 2, time: "21:30 hs", title: "Recepción", icon: "🥂" },
+      { id: 3, time: "22:30 hs", title: "Cena", icon: "🍽️" },
+      { id: 4, time: "00:00 hs", title: "Baile", icon: "🪩" }
+    ],
     gifts: [
       { id: 1, store: "Liverpool", url: "https://liverpool.com.mx" }
     ],
@@ -48,13 +52,20 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
       location: "📍",
       gifts: "🎁",
       whatsapp: "💬",
-      falling: "✨ 💖 🌸 💍 🥂"
+      falling: "✨ 💖 🌸 💍 🥂",
+      itinerary: "🕒"
     },
     design: {
       bgColor: "#fdfbf7",
       textColor: "#1f2937",
       font: "serif",
       bgImage: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?q=80&w=800&opacity=0.1"
+    },
+    decorations: {
+      topLeft: "",
+      topRight: "",
+      bottomLeft: "",
+      bottomRight: ""
     },
     visibility: {
       quote: true,
@@ -65,9 +76,167 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
       whatsapp: true,
       bgImage: false,
       fallingIcons: false,
-      music: false
+      music: false,
+      decorations: false,
+      itinerary: false
     }
-  });
+  };
+
+  if (id === 't-boda-02') {
+    return {
+      ...base,
+      title: "Juliana & Carlos",
+      subtitle: "Nuestra Boda",
+      date: "2026-03-21T18:30",
+      mainPhoto: "https://images.unsplash.com/photo-1544124499-58912cbddaad?q=80&w=1000",
+      quote: {
+        text: "Con la bendición de Dios y de nuestros padres nos gustaría que nos acompañaras en nuestra boda",
+        color: "#475569",
+        font: "sans-serif",
+        size: "1rem"
+      },
+      design: {
+        ...base.design,
+        bgColor: "#f1f5f9",
+        textColor: "#1e293b",
+        font: "sans-serif"
+      },
+      visibility: {
+        ...base.visibility,
+        bgImage: true
+      }
+    };
+  }
+
+  if (id === 't-xv-02') {
+    return {
+      ...base,
+      title: "Valeria",
+      subtitle: "Mis 15 Años",
+      date: "2026-06-25T20:00",
+      mainPhoto: "https://images.unsplash.com/photo-1595955054117-7e61a00a0d69?q=80&w=1000",
+      quote: {
+        text: "Te espero para celebrar conmigo",
+        color: "#ffffff",
+        font: "serif",
+        size: "1.2rem"
+      },
+      design: {
+        ...base.design,
+        bgColor: "#14532d",
+        textColor: "#ffffff",
+        font: "serif",
+        bgImage: ""
+      },
+      emojis: {
+        ...base.emojis,
+        falling: "✨ 🦋 🌸 💚"
+      },
+      decorations: {
+        topLeft: "https://cdn-icons-png.flaticon.com/512/6122/6122561.png", // Nube blanca png o similar
+        topRight: "https://cdn-icons-png.flaticon.com/512/6122/6122561.png",
+        bottomLeft: "",
+        bottomRight: ""
+      },
+      visibility: {
+        ...base.visibility,
+        fallingIcons: true,
+        bgImage: false,
+        decorations: true
+      }
+    };
+  }
+
+  if (id === 't-boda-03') {
+    return {
+      ...base,
+      title: "Mariana & Andrés",
+      subtitle: "Nuestra Boda",
+      date: "2026-07-20T17:00",
+      mainPhoto: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=1000",
+      design: {
+        ...base.design,
+        bgColor: "#0f172a",
+        textColor: "#f472b6",
+        font: "serif",
+        bgImage: ""
+      },
+      countdownDesign: {
+        bgColor: "#f472b6",
+        textColor: "#0f172a",
+        font: "serif"
+      },
+      emojis: {
+        ...base.emojis,
+        falling: "✨ 💜 💫 🥂"
+      },
+      visibility: {
+        ...base.visibility,
+        fallingIcons: true,
+        bgImage: false
+      }
+    };
+  }
+
+  if (id === 't-boda-04') {
+    return {
+      ...base,
+      title: "Miguel & Cristina",
+      subtitle: "¡Contamos contigo!",
+      date: "2026-09-19T16:15",
+      mainPhoto: "https://images.unsplash.com/photo-1597148563725-7bc096738c64?q=80&w=1000",
+      quote: {
+        text: "Con la bendición de Dios y de nuestros padres cariñosamente nos invitan a su matrimonio",
+        color: "#422006",
+        font: "'Dancing Script', cursive",
+        size: "1.4rem"
+      },
+      design: {
+        ...base.design,
+        bgColor: "#fefce8",
+        textColor: "#713f12",
+        font: "serif",
+        bgImage: ""
+      },
+      countdownDesign: {
+        bgColor: "#ca8a04",
+        textColor: "#ffffff",
+        font: "sans-serif"
+      },
+      visibility: {
+        ...base.visibility,
+        bgImage: false
+      }
+    };
+  }
+
+  if (id.includes('xv')) {
+    return {
+      ...base,
+      title: "Mis XV Años",
+      subtitle: "Sofía",
+      mainPhoto: "https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?q=80&w=1000",
+      design: { ...base.design, bgColor: "#ffe4e6", textColor: "#9f1239" }
+    };
+  }
+  
+  if (id.includes('bautizo')) {
+    return {
+      ...base,
+      title: "Mi Bautizo",
+      subtitle: "Mateo",
+      mainPhoto: "https://images.unsplash.com/photo-1519689680058-324335c77eba?q=80&w=1000",
+      design: { ...base.design, bgColor: "#e0f2fe", textColor: "#0369a1" }
+    };
+  }
+
+  return base;
+};
+
+export default function TemplateEditor({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  // Estado general
+  const [data, setData] = useState(() => getDefaultData(id));
 
   const [saving, setSaving] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -130,6 +299,20 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
 
   const removeGift = (index: number) => {
     setData(prev => ({ ...prev, gifts: prev.gifts.filter((_, i) => i !== index) }));
+  };
+
+  const addItineraryItem = () => {
+    setData(prev => ({ ...prev, itinerary: [...prev.itinerary, { id: Date.now(), time: "", title: "", icon: "" }] }));
+  };
+
+  const updateItineraryItem = (index: number, field: string, value: string) => {
+    const newItinerary = [...data.itinerary];
+    newItinerary[index] = { ...newItinerary[index], [field]: value };
+    setData(prev => ({ ...prev, itinerary: newItinerary }));
+  };
+
+  const removeItineraryItem = (index: number) => {
+    setData(prev => ({ ...prev, itinerary: prev.itinerary.filter((_, i) => i !== index) }));
   };
 
   const handleSave = async () => {
@@ -198,6 +381,43 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                   <option value="'Dancing Script', cursive">Cursiva (Romántica)</option>
                 </select>
               </div>
+
+              {/* Decoraciones (solo si la plantilla lo soporta o está encendido) */}
+              {id === 't-xv-02' && (
+                <div className={styles.moduleItem}>
+                  <div className={styles.moduleHeader}>
+                    <div className={styles.moduleTitle}>
+                      <span>🎨 Decoraciones de Esquinas</span>
+                    </div>
+                    <button onClick={() => toggleVisibility('decorations')} className={styles.toggleBtn}>
+                      {data.visibility.decorations ? <Eye size={18} /> : <EyeOff size={18} />}
+                    </button>
+                  </div>
+                  {data.visibility.decorations && (
+                    <div className={styles.moduleBody}>
+                      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.5rem'}}>
+                        <div>
+                          <label style={{fontSize:'0.75rem', display:'block', marginBottom:'0.25rem'}}>Sup. Izquierda</label>
+                          <input type="text" value={data.decorations?.topLeft || ''} onChange={(e) => setData({...data, decorations: {...data.decorations, topLeft: e.target.value}})} className={styles.input} style={{fontSize:'0.75rem', padding:'0.25rem'}} placeholder="URL imagen png" />
+                        </div>
+                        <div>
+                          <label style={{fontSize:'0.75rem', display:'block', marginBottom:'0.25rem'}}>Sup. Derecha</label>
+                          <input type="text" value={data.decorations?.topRight || ''} onChange={(e) => setData({...data, decorations: {...data.decorations, topRight: e.target.value}})} className={styles.input} style={{fontSize:'0.75rem', padding:'0.25rem'}} placeholder="URL imagen png" />
+                        </div>
+                        <div>
+                          <label style={{fontSize:'0.75rem', display:'block', marginBottom:'0.25rem'}}>Inf. Izquierda</label>
+                          <input type="text" value={data.decorations?.bottomLeft || ''} onChange={(e) => setData({...data, decorations: {...data.decorations, bottomLeft: e.target.value}})} className={styles.input} style={{fontSize:'0.75rem', padding:'0.25rem'}} placeholder="URL imagen png" />
+                        </div>
+                        <div>
+                          <label style={{fontSize:'0.75rem', display:'block', marginBottom:'0.25rem'}}>Inf. Derecha</label>
+                          <input type="text" value={data.decorations?.bottomRight || ''} onChange={(e) => setData({...data, decorations: {...data.decorations, bottomRight: e.target.value}})} className={styles.input} style={{fontSize:'0.75rem', padding:'0.25rem'}} placeholder="URL imagen png" />
+                        </div>
+                      </div>
+                      <p style={{fontSize:'0.75rem', marginTop:'0.5rem', color:'var(--text-secondary)'}}>Sugerencia: Usa enlaces a imágenes PNG transparentes (ej. nubes, hojas).</p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className={styles.moduleItem}>
                 <div className={styles.moduleHeader}>
@@ -463,6 +683,33 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                 )}
               </div>
 
+              <div className={styles.moduleItem}>
+                <div className={styles.moduleHeader}>
+                  <div className={styles.moduleTitle}>
+                    <input type="text" name="itinerary" value={data.emojis.itinerary} onChange={handleEmojiChange} style={{width:'30px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <span>Itinerario (Timeline)</span>
+                  </div>
+                  <button onClick={() => toggleVisibility('itinerary')} className={styles.toggleBtn}>
+                    {data.visibility.itinerary ? <Eye size={18} /> : <EyeOff size={18} />}
+                  </button>
+                </div>
+                {data.visibility.itinerary && (
+                  <div className={styles.moduleBody}>
+                    {data.itinerary.map((item: any, i: number) => (
+                      <div key={item.id} style={{marginBottom:'1rem', padding:'1rem', background:'rgba(255,255,255,0.05)', borderRadius:'8px'}}>
+                        <div style={{display:'flex', gap:'0.5rem', marginBottom:'0.5rem'}}>
+                          <input type="text" value={item.time} onChange={e => updateItineraryItem(i, 'time', e.target.value)} placeholder="Ej. 20:00 hs" className={styles.input} style={{flex: 1}} />
+                          <input type="text" value={item.icon} onChange={e => updateItineraryItem(i, 'icon', e.target.value)} placeholder="Icono" className={styles.input} style={{width: '60px', textAlign: 'center'}} />
+                        </div>
+                        <input type="text" value={item.title} onChange={e => updateItineraryItem(i, 'title', e.target.value)} placeholder="Ej. Ceremonia" className={styles.input} style={{marginBottom:'0.5rem'}} />
+                        <button onClick={() => removeItineraryItem(i)} style={{color:'var(--accent-color)', fontSize:'0.875rem'}}>Eliminar</button>
+                      </div>
+                    ))}
+                    <button onClick={addItineraryItem} className={styles.secondaryBtn}>+ Agregar Evento</button>
+                  </div>
+                )}
+              </div>
+
             </section>
           </div>
         </div>
@@ -471,7 +718,107 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
         <div className={styles.previewPanel}>
           <div className={styles.previewContainer}>
             <div className={styles.mobileFrame}>
-              {/* Contenedor principal dinámico */}
+              {id === 't-xv-02' ? (
+                <div 
+                  className={styles.previewContent}
+                  style={{ 
+                    height: '100%', 
+                    overflow: 'hidden', 
+                    backgroundColor: data.design.bgColor, 
+                    color: data.design.textColor,
+                    fontFamily: data.design.font,
+                    position: 'relative',
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
+                >
+                  {/* Decoraciones Editables */}
+                  {data.visibility.decorations && (
+                    <>
+                      {data.decorations?.topLeft && <img src={data.decorations.topLeft} alt="" style={{position: 'absolute', top: '10px', left: '10px', width: '80px', zIndex: 20, pointerEvents: 'none'}} />}
+                      {data.decorations?.topRight && <img src={data.decorations.topRight} alt="" style={{position: 'absolute', top: '10px', right: '10px', width: '80px', zIndex: 20, pointerEvents: 'none'}} />}
+                      {data.decorations?.bottomLeft && <img src={data.decorations.bottomLeft} alt="" style={{position: 'absolute', bottom: '10px', left: '10px', width: '80px', zIndex: 20, pointerEvents: 'none'}} />}
+                      {data.decorations?.bottomRight && <img src={data.decorations.bottomRight} alt="" style={{position: 'absolute', bottom: '10px', right: '10px', width: '80px', zIndex: 20, pointerEvents: 'none'}} />}
+                    </>
+                  )}
+
+                  {data.visibility.fallingIcons && <FallingIcons iconString={data.emojis.falling} />}
+                  {data.visibility.music && data.music && <AudioPlayer src={data.music} isAbsolute={true} />}
+
+                  {/* Top Half - Image */}
+                  <div style={{
+                    height: '45%',
+                    width: '100%',
+                    backgroundImage: `url(${data.mainPhoto})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    borderBottomLeftRadius: '20px',
+                    borderBottomRightRadius: '20px',
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                    position: 'relative',
+                    zIndex: 10
+                  }}></div>
+
+                  {/* Bottom Half - Content */}
+                  <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '1.5rem', width: '100%', flex: 1, justifyContent: 'center' }}>
+                    <h4 style={{ fontFamily: data.design.font, fontSize: '0.8rem', letterSpacing: '0.1em', opacity: 0.9, marginBottom: '0.25rem' }}>{data.subtitle}</h4>
+                    <h1 style={{ fontFamily: data.design.font, fontSize: '2.5rem', fontWeight: 700, margin: '0 0 0.5rem 0', lineHeight: 1.1 }}>{data.title}</h1>
+                    
+                    <div style={{ marginBottom: '1rem', opacity: 0.9 }}>
+                      <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>{new Date(data.date).toLocaleDateString('es-ES')}</p>
+                    </div>
+
+                    {data.visibility.quote && (
+                      <p style={{ fontFamily: data.quote.font, fontSize: '0.85rem', marginBottom: '1rem', fontStyle: 'italic', maxWidth: '300px' }}>
+                        "{data.quote.text}"
+                      </p>
+                    )}
+
+                    {data.visibility.countdown && (
+                      <div style={{ transform: 'scale(0.65)', marginBottom: '1rem', marginTop: '-1rem' }}>
+                         <Countdown 
+                            targetDate={data.date} 
+                            bgColor={data.countdownDesign?.bgColor || 'rgba(255,255,255,0.2)'} 
+                            textColor={data.countdownDesign?.textColor || '#ffffff'} 
+                            font={data.countdownDesign?.font || data.design.font} 
+                          />
+                      </div>
+                    )}
+
+                    {data.visibility.itinerary && data.itinerary && data.itinerary.length > 0 && (
+                      <div style={{ width: '100%', maxWidth: '300px', marginBottom: '2rem' }}>
+                        <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{data.emojis.itinerary}</div>
+                        <h3 style={{fontFamily: data.design.font, fontSize: '1.2rem', marginBottom: '1rem'}}>Itinerario</h3>
+                        
+                        <div style={{ position: 'relative', padding: '0.5rem 0' }}>
+                          {/* Línea central */}
+                          <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: '2px', background: `${data.design.textColor}40`, transform: 'translateX(-50%)' }}></div>
+                          
+                          {data.itinerary.map((item: any, i: number) => (
+                            <div key={item.id || i} style={{ display: 'flex', alignItems: 'center', marginBottom: '1.2rem', position: 'relative', justifyContent: i % 2 === 0 ? 'flex-start' : 'flex-end' }}>
+                              {/* Icono central */}
+                              <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: '28px', height: '28px', borderRadius: '50%', background: data.design.bgColor, border: `2px solid ${data.design.textColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', zIndex: 2 }}>
+                                {item.icon}
+                              </div>
+                              
+                              {/* Contenido (Texto) */}
+                              <div style={{ width: '42%', textAlign: i % 2 === 0 ? 'right' : 'left', padding: i % 2 === 0 ? '0 0.75rem 0 0' : '0 0 0 0.75rem' }}>
+                                <div style={{ fontWeight: 'bold', fontSize: '0.8rem', marginBottom: '0.1rem' }}>{item.time}</div>
+                                <div style={{ fontSize: '0.85rem' }}>{item.title}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%', maxWidth: '250px' }}>
+                      <button style={{ background: '#25D366', color: 'white', padding: '0.5rem', borderRadius: '9999px', border: 'none', fontWeight: 600, fontSize: '0.8rem' }}>✓ Confirmar Asistencia</button>
+                      <button style={{ background: 'transparent', color: data.design.textColor, padding: '0.5rem', borderRadius: '9999px', border: `1px solid ${data.design.textColor}50`, fontWeight: 600, fontSize: '0.8rem' }}>✕ No podré asistir</button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
               <div 
                 className={styles.previewContent}
                 style={{ 
@@ -535,6 +882,33 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                     </div>
                   )}
 
+                  {data.visibility.itinerary && data.itinerary && data.itinerary.length > 0 && (
+                    <div className={styles.previewSection}>
+                      <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{data.emojis.itinerary}</div>
+                      <h3 style={{fontFamily: data.design.font}}>Itinerario</h3>
+                      
+                      <div style={{ position: 'relative', marginTop: '1.5rem', padding: '1rem 0' }}>
+                        {/* Línea central */}
+                        <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: '2px', background: `${data.design.textColor}40`, transform: 'translateX(-50%)' }}></div>
+                        
+                        {data.itinerary.map((item: any, i: number) => (
+                          <div key={item.id || i} style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', justifyContent: i % 2 === 0 ? 'flex-start' : 'flex-end' }}>
+                            {/* Icono central */}
+                            <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: '36px', height: '36px', borderRadius: '50%', background: data.design.bgColor, border: `2px solid ${data.design.textColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', zIndex: 2 }}>
+                              {item.icon}
+                            </div>
+                            
+                            {/* Contenido (Texto) */}
+                            <div style={{ width: '42%', textAlign: i % 2 === 0 ? 'right' : 'left', padding: i % 2 === 0 ? '0 1.25rem 0 0' : '0 0 0 1.25rem' }}>
+                              <div style={{ fontWeight: 'bold', fontSize: '0.95rem', marginBottom: '0.2rem' }}>{item.time}</div>
+                              <div style={{ fontSize: '1rem' }}>{item.title}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {data.visibility.location && (
                     <div className={styles.previewSection}>
                       <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{data.emojis.location}</div>
@@ -578,14 +952,16 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
 
                   {data.visibility.whatsapp && (
                     <div className={styles.previewSection} style={{ paddingBottom: '3rem' }}>
-                      <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{data.emojis.whatsapp}</div>
-                      <button className={styles.whatsappBtn}>
-                        Confirmar Asistencia
-                      </button>
+                      <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>{data.emojis.whatsapp}</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center', width: '100%' }}>
+                        <button style={{ background: '#25D366', color: 'white', border: 'none', padding: '0.75rem', borderRadius: '9999px', fontWeight: 600, width: '100%', maxWidth: '200px' }}>✓ Confirmar Asistencia</button>
+                        <button style={{ background: 'transparent', color: data.design.textColor, border: `1px solid ${data.design.textColor}50`, padding: '0.75rem', borderRadius: '9999px', fontWeight: 600, width: '100%', maxWidth: '200px' }}>✕ No podré asistir</button>
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
+              )}
             </div>
           </div>
         </div>
@@ -605,24 +981,51 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                 <code>{publicUrl}</code>
               </div>
 
-              <div className={styles.modalActions} style={{flexDirection: 'column'}}>
-                <button 
-                  className={styles.saveBtn} 
-                  style={{width: '100%', justifyContent: 'center'}}
-                  onClick={() => navigator.clipboard.writeText(publicUrl)}
-                >
-                  <Copy size={18} /> Copiar Enlace
-                </button>
-                <a 
-                  href={`https://wa.me/?text=${encodeURIComponent(whatsappMsg)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={styles.whatsappBtn}
-                  style={{width: '100%', justifyContent: 'center'}}
-                >
-                  <MessageCircle size={18} /> Compartir directo a WhatsApp
-                </a>
-                <button className={styles.cancelBtn} onClick={() => setShowShareModal(false)}>Cerrar</button>
+              <div className={styles.modalActions} style={{flexDirection: 'column', gap: '1rem'}}>
+                <div style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'var(--surface-color)' }}>
+                  <h4 style={{ marginBottom: '0.5rem' }}>Generador de Pases Individuales</h4>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>Crea un enlace único con la cantidad de pases que le tocan a cada invitado.</p>
+                  
+                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                    <input type="text" id="passName" placeholder="Ej. Familia Pérez" className={styles.input} style={{ flex: 2 }} />
+                    <input type="number" id="passCount" placeholder="Ej. 2" min="1" className={styles.input} style={{ flex: 1 }} />
+                  </div>
+                  
+                  <button 
+                    className={styles.secondaryBtn} 
+                    style={{width: '100%', justifyContent: 'center'}}
+                    onClick={() => {
+                      const name = (document.getElementById('passName') as HTMLInputElement).value || 'Invitado';
+                      const count = (document.getElementById('passCount') as HTMLInputElement).value || '1';
+                      const payload = btoa(encodeURIComponent(JSON.stringify({ n: name, q: count })));
+                      const passUrl = `${publicUrl}/pase?p=${payload}`;
+                      navigator.clipboard.writeText(passUrl);
+                      alert('¡Enlace de pase copiado al portapapeles!');
+                    }}
+                  >
+                    <Copy size={16} style={{marginRight: '0.25rem'}}/> Copiar Pase
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <button 
+                    className={styles.saveBtn} 
+                    style={{width: '100%', justifyContent: 'center'}}
+                    onClick={() => navigator.clipboard.writeText(publicUrl)}
+                  >
+                    <Copy size={18} /> Copiar Enlace Principal
+                  </button>
+                  <a 
+                    href={`https://wa.me/?text=${encodeURIComponent(whatsappMsg)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={styles.whatsappBtn}
+                    style={{width: '100%', justifyContent: 'center'}}
+                  >
+                    <MessageCircle size={18} /> Compartir directo a WhatsApp
+                  </a>
+                  <button className={styles.cancelBtn} onClick={() => setShowShareModal(false)}>Cerrar</button>
+                </div>
               </div>
             </div>
           </div>
