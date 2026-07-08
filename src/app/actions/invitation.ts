@@ -56,9 +56,90 @@ export async function saveInvitation(templateId: string, data: any) {
       },
     });
 
-    return { success: true, slug: invitation.slug };
+    return { success: true, slug: invitation.slug, id: invitation.id };
   } catch (error) {
     console.error("Error saving invitation:", error);
     return { success: false, error: "Error interno al guardar la invitación" };
+  }
+}
+
+export async function deleteInvitation(id: string) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !session.user.email) {
+      return { success: false, error: "No autorizado" };
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return { success: false, error: "Usuario no encontrado" };
+    }
+
+    const inv = await prisma.invitation.findUnique({ where: { id } });
+    if (!inv || inv.userId !== user.id) {
+        return { success: false, error: "Invitación no encontrada o no autorizada" };
+    }
+
+    await prisma.invitation.delete({
+      where: { id },
+    });
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting invitation:", error);
+    return { success: false, error: "Error interno al eliminar la invitación" };
+  }
+}
+
+export async function createGuestPass(invitationId: string, name: string, count: number) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) return { success: false, error: "No autorizado" };
+
+    const pass = await prisma.guestPass.create({
+      data: {
+        name,
+        passCount: count,
+        invitationId
+      }
+    });
+    return { success: true, pass };
+  } catch (error) {
+    console.error("Error creating pass:", error);
+    return { success: false, error: "Error interno al crear el pase" };
+  }
+}
+
+export async function getGuestPasses(invitationId: string) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) return { success: false, error: "No autorizado" };
+
+    const passes = await prisma.guestPass.findMany({
+      where: { invitationId },
+      orderBy: { createdAt: 'desc' }
+    });
+    return { success: true, passes };
+  } catch (error) {
+    console.error("Error fetching passes:", error);
+    return { success: false, error: "Error interno al cargar los pases" };
+  }
+}
+
+export async function deleteGuestPass(passId: string) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) return { success: false, error: "No autorizado" };
+
+    await prisma.guestPass.delete({
+      where: { id: passId }
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting pass:", error);
+    return { success: false, error: "Error interno al eliminar el pase" };
   }
 }

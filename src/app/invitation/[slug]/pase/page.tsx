@@ -18,8 +18,18 @@ export default async function PassPage({
   let guestName = "Invitado Especial";
   let passCount = "1";
   let rawPayload = "";
+  let passId = "";
 
-  if (typeof sp.p === 'string') {
+  if (typeof sp.t === 'string') {
+    passId = sp.t;
+    const dbPass = await prisma.guestPass.findUnique({
+      where: { id: passId }
+    });
+    if (dbPass) {
+      guestName = dbPass.name;
+      passCount = String(dbPass.passCount);
+    }
+  } else if (typeof sp.p === 'string') {
     try {
       rawPayload = sp.p;
       const decoded = JSON.parse(decodeURIComponent(atob(sp.p)));
@@ -144,7 +154,7 @@ export default async function PassPage({
       </div>
 
       <div style={{ marginTop: '2rem' }}>
-        <Link href={`/invitation/${slug}${rawPayload ? `?p=${rawPayload}` : (typeof sp.n === 'string' ? `?n=${sp.n}&q=${sp.q}` : '')}`} style={{
+        <Link href={`/invitation/${slug}${passId ? `?t=${passId}` : (rawPayload ? `?p=${rawPayload}` : (typeof sp.n === 'string' ? `?n=${sp.n}&q=${sp.q}` : ''))}`} style={{
           display: 'inline-block',
           padding: '1rem 2rem',
           background: 'transparent',

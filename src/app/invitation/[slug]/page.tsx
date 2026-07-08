@@ -37,7 +37,15 @@ export default async function PublicInvitation({
   let confirmMsg = encodeURIComponent(`¡Hola! Confirmo mi asistencia a ${eventTitle}. ¡Ahí nos vemos!`);
   let declineMsg = encodeURIComponent(`¡Hola! Lamentablemente no podré asistir a ${eventTitle}. ¡Gracias por la invitación!`);
 
-  if (typeof sp.p === 'string') {
+  if (typeof sp.t === 'string') {
+    const dbPass = await prisma.guestPass.findUnique({
+      where: { id: sp.t }
+    });
+    if (dbPass) {
+      confirmMsg = encodeURIComponent(`¡Hola! Confirmo la asistencia de ${dbPass.name}${dbPass.passCount ? ` (${dbPass.passCount} pases)` : ''} a ${eventTitle}. ¡Ahí nos vemos!`);
+      declineMsg = encodeURIComponent(`¡Hola! Lamentablemente la familia/invitado ${dbPass.name} no podrá asistir a ${eventTitle}. ¡Gracias por la invitación!`);
+    }
+  } else if (typeof sp.p === 'string') {
     try {
       const decoded = JSON.parse(decodeURIComponent(atob(sp.p)));
       if (decoded.n) {

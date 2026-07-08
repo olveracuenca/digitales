@@ -2,8 +2,9 @@ import { PrismaClient } from "@prisma/client";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import Link from "next/link";
-import { ExternalLink, Copy, Edit, Trash } from "lucide-react";
+import { ExternalLink, Copy, Edit, Trash, Users } from "lucide-react";
 import styles from "../users/users.module.css"; // Reuse table styles
+import DeleteInvitationButton from "./DeleteInvitationButton";
 
 const prisma = new PrismaClient();
 
@@ -74,12 +75,13 @@ export default async function InvitationsPage() {
                     <td>{new Date(inv.createdAt).toLocaleDateString()}</td>
                     <td>
                       <div style={{display: 'flex', gap: '1rem'}}>
-                        <Link href={`/templates/${inv.templateId}/edit`} className={styles.editBtn}>
+                        <Link href={`/admin/invitations/${inv.id}/guests`} className={styles.editBtn} title="Gestionar Invitados">
+                          <Users size={16} />
+                        </Link>
+                        <Link href={`/templates/${inv.templateId}/edit`} className={styles.editBtn} title="Editar">
                           <Edit size={16} />
                         </Link>
-                        <button className={styles.editBtn} style={{color: '#ef4444'}}>
-                          <Trash size={16} />
-                        </button>
+                        <DeleteInvitationButton id={inv.id} />
                       </div>
                     </td>
                   </tr>

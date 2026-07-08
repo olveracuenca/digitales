@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use } from "react";
+import { useState, use, useEffect } from "react";
 import AdminLayout from "@/app/admin/layout";
 import styles from "./editor.module.css";
 import { Save, Image as ImageIcon, MapPin, Clock, Gift, MessageCircle, Eye, EyeOff, Palette, Share2, Copy } from "lucide-react";
@@ -241,8 +241,16 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
   const [saving, setSaving] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [generatedSlug, setGeneratedSlug] = useState(`demo-${id}`);
+  const [generatedId, setGeneratedId] = useState("");
+  const [origin, setOrigin] = useState("https://cuencaolv.com");
 
-  const publicUrl = `https://cuencaolv.com/invitation/${generatedSlug}`;
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setOrigin(window.location.origin);
+    }
+  }, []);
+
+  const publicUrl = `${origin}/invitation/${generatedSlug}`;
   const whatsappMsg = `¡Hola! Te invito a mi evento, entra a este link para ver los detalles: ${publicUrl}`;
 
   const toggleVisibility = (section: keyof typeof data.visibility) => {
@@ -323,6 +331,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
       
       if (res.success && res.slug) {
         setGeneratedSlug(res.slug);
+        if (res.id) setGeneratedId(res.id);
         setShowShareModal(true);
       } else {
         alert("Error al guardar: " + res.error);
@@ -994,13 +1003,31 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                   <button 
                     className={styles.secondaryBtn} 
                     style={{width: '100%', justifyContent: 'center'}}
-                    onClick={() => {
+                    onClick={async () => {
                       const name = (document.getElementById('passName') as HTMLInputElement).value || 'Invitado';
-                      const count = (document.getElementById('passCount') as HTMLInputElement).value || '1';
-                      const payload = btoa(encodeURIComponent(JSON.stringify({ n: name, q: count })));
-                      const passUrl = `${publicUrl}/pase?p=${payload}`;
-                      navigator.clipboard.writeText(passUrl);
-                      alert('¡Enlace de pase copiado al portapapeles!');
+                      const count = parseInt((document.getElementById('passCount') as HTMLInputElement).value) || 1;
+                      
+                      try {
+                        const { createGuestPass } = await import('@/app/actions/invitation');
+                        const res = await createGuestPass(generatedId, name, count);
+                        
+                        if (res.success && res.pass) {
+                          const passUrl = `${publicUrl}/pase?t=${res.pass.id}`;
+                          navigator.clipboard.writeText(passUrl);
+                          alert('¡Pase guardado en BD y enlace copiado al portapapeles!');
+                        } else {
+                          // Fallback a versión anterior
+                          const payload = btoa(encodeURIComponent(JSON.stringify({ n: name, q: count })));
+                          const passUrl = `${publicUrl}/pase?p=${payload}`;
+                          navigator.clipboard.writeText(passUrl);
+                          alert('¡Pase temporal generado (no guardado)!');
+                        }
+                      } catch (e) {
+                        const payload = btoa(encodeURIComponent(JSON.stringify({ n: name, q: count })));
+                        const passUrl = `${publicUrl}/pase?p=${payload}`;
+                        navigator.clipboard.writeText(passUrl);
+                        alert('¡Pase temporal generado (no guardado)!');
+                      }
                     }}
                   >
                     <Copy size={16} style={{marginRight: '0.25rem'}}/> Copiar Pase

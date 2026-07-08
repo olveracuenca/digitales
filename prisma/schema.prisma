@@ -40,6 +40,7 @@ model Invitation {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   templateId String
   template   Template @relation(fields: [templateId], references: [id])
+  guestPasses GuestPass[]
   
   // Data for the invitation (photos, texts, config for sections)
   data       String   // JSON stringified data
@@ -49,4 +50,16 @@ model Invitation {
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
+}
+
+model GuestPass {
+  id           String     @id @default(cuid())
+  name         String
+  passCount    Int        @default(1)
+  invitationId String
+  invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([invitationId])
 }
