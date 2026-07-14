@@ -1,3 +1,4 @@
+import type { Metadata, ResolvingMetadata } from "next";
 import { PrismaClient } from "@prisma/client";
 import styles from "../../templates/[id]/edit/editor.module.css";
 import { notFound } from "next/navigation";
@@ -10,6 +11,43 @@ import { MapPin } from "lucide-react";
 import RsvpForm from "@/components/RsvpForm";
 
 const prisma = new PrismaClient();
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ slug: string }> }
+): Promise<Metadata> {
+  const { slug } = await params;
+  const invitation = await prisma.invitation.findUnique({
+    where: { slug },
+  });
+
+  if (!invitation) return {};
+  
+  try {
+    const data = JSON.parse(invitation.data);
+    const title = data.title || 'Estás Invitado';
+    const description = data.subtitle || 'Te invitamos a acompañarnos en este día especial.';
+    const image = data.mainPhoto || '';
+
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        images: image ? [image] : [],
+        type: 'website',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: image ? [image] : [],
+      }
+    };
+  } catch(e) {
+    return {};
+  }
+}
 
 export default async function PublicInvitation({ 
   params,
@@ -63,6 +101,246 @@ export default async function PublicInvitation({
     declineMsg = encodeURIComponent(`¡Hola! Lamentablemente la familia/invitado ${sp.n} no podrá asistir a ${eventTitle}. ¡Gracias por la invitación!`);
   }
 
+  // --- PLANTILLA t-baby-shower (Glassmorphism Pink Dream) ---
+  if (invitation.templateId === 't-baby-shower') {
+    return (
+      <div 
+        style={{ 
+          width: '100%', 
+          minHeight: '100vh', 
+          background: data.design.bgColor, 
+          color: data.design.textColor,
+          fontFamily: data.design.font,
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          padding: '30px 20px',
+        }}
+      >
+        {/* Decoraciones Editables */}
+        {data.visibility.decorations && (
+          <>
+            {data.decorations?.topLeft && <img src={data.decorations.topLeft} alt="" style={{position: 'absolute', top: '10px', left: '10px', width: '80px', zIndex: 20, pointerEvents: 'none'}} />}
+            {data.decorations?.topRight && <img src={data.decorations.topRight} alt="" style={{position: 'absolute', top: '10px', right: '10px', width: '80px', zIndex: 20, pointerEvents: 'none'}} />}
+            {data.decorations?.bottomLeft && <img src={data.decorations.bottomLeft} alt="" style={{position: 'absolute', bottom: '10px', left: '10px', width: '80px', zIndex: 20, pointerEvents: 'none'}} />}
+            {data.decorations?.bottomRight && <img src={data.decorations.bottomRight} alt="" style={{position: 'absolute', bottom: '10px', right: '10px', width: '80px', zIndex: 20, pointerEvents: 'none'}} />}
+          </>
+        )}
+
+        {data.visibility.fallingIcons && <FallingIcons iconString={data.emojis.falling} />}
+        {data.visibility.music && data.music && <AudioPlayer src={data.music} isAbsolute={true} />}
+
+        <header style={{textAlign: 'center', marginBottom: '24px', zIndex: 2, position: 'relative'}}>
+          <span style={{fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '6px', display: 'inline-block', opacity: 0.8}}>
+            ¡Te invitamos a celebrar!
+          </span>
+          <h1 style={{fontFamily: (data.design.titleFont || data.design.font), fontSize: '38px', fontWeight: 400, lineHeight: 1.1, marginBottom: '8px'}}>
+            {data.title}
+          </h1>
+          <p style={{fontSize: '12px', letterSpacing: '0.5px', opacity: 0.7}}>
+            {data.subtitle}
+          </p>
+        </header>
+
+        <AnimatedSection direction="up">
+          <div className={styles.photoHover} style={{
+            width: '170px', height: '170px', borderRadius: '50%', overflow: 'hidden', marginBottom: '20px', margin: '0 auto',
+            border: `4px solid rgba(255,255,255,0.55)`, boxShadow: '0 10px 20px rgba(221, 165, 165, 0.15)', zIndex: 2, position: 'relative'
+          }}>
+            <img src={data.mainPhoto} alt="" style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+          </div>
+        </AnimatedSection>
+
+        <AnimatedSection direction="up">
+          <div style={{textAlign: 'center', marginBottom: '30px', zIndex: 2, position: 'relative', width: '100%'}}>
+            {data.visibility.quote && (
+              <h2 style={{fontFamily: data.quote.font, fontSize: data.quote.size, fontWeight: 400, color: data.quote.color, marginBottom: '8px', textShadow: '1px 1px 0 rgba(255, 255, 255, 0.5)'}}>
+                {data.quote.text}
+              </h2>
+            )}
+            <div style={{width: '50px', height: '1.5px', backgroundColor: data.design.textColor, margin: '0 auto', borderRadius: '2px', opacity: 0.6}}></div>
+          </div>
+        </AnimatedSection>
+
+        {data.visibility.countdown && (
+          <AnimatedSection direction="up">
+           <div className="glass-card-hover" style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+              borderRadius: '20px', padding: '24px', width: '100%', marginBottom: '20px', boxShadow: '0 10px 25px rgba(221, 165, 165, 0.15)',
+              zIndex: 2, textAlign: 'center', position: 'relative', maxWidth: '400px', margin: '0 auto'
+           }}>
+              <h3 style={{fontSize: '11px', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '12px', opacity: 0.8}}>Faltan</h3>
+              <div style={{ transform: 'scale(0.85)' }}>
+                <Countdown 
+                    targetDate={data.date} 
+                    bgColor={data.countdownDesign?.bgColor || 'rgba(255,255,255,0.45)'} 
+                    textColor={data.countdownDesign?.textColor || data.design.textColor} 
+                    font={data.countdownDesign?.font || data.design.font} 
+                />
+              </div>
+           </div>
+          </AnimatedSection>
+        )}
+
+        <div style={{width: '100%', maxWidth: '400px', zIndex: 2, position: 'relative'}}>
+           {data.visibility.carousel && (
+              <AnimatedSection direction="left">
+                <div className="glass-card-hover" style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+                    borderRadius: '20px', padding: '20px', width: '100%', marginBottom: '16px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
+                    textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
+                }}>
+                   <div style={{ fontSize: '26px', marginBottom: '8px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.05))' }} dangerouslySetInnerHTML={{ __html: data.emojis.carousel }} />
+                   <h4 style={{fontFamily: data.design.font, fontSize: '16px', fontWeight: 600, marginBottom: '8px'}}>Nuestros Momentos</h4>
+                   <AutoCarousel photos={data.carouselPhotos} />
+                </div>
+              </AnimatedSection>
+           )}
+
+           {data.visibility.location && (
+              <AnimatedSection direction="right">
+                <div className="glass-card-hover" style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+                    borderRadius: '20px', padding: '20px', width: '100%', marginBottom: '16px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
+                    textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
+                }}>
+                   <div style={{ fontSize: '26px', marginBottom: '8px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.05))' }} dangerouslySetInnerHTML={{ __html: data.emojis.location }} />
+                   <h4 style={{fontFamily: data.design.font, fontSize: '16px', fontWeight: 600, marginBottom: '8px'}}>Ubicación</h4>
+                   <p style={{fontSize: '13px', fontWeight: 600, lineHeight: 1.4, marginBottom: '2px'}}>{data.location}</p>
+                           {data.address && <p style={{fontSize: '12px', fontWeight: 400, opacity: 0.9, lineHeight: 1.3, marginBottom: '4px'}}>{data.address}</p>}
+                   {data.locationUrl && (
+                        <a href={data.locationUrl} target="_blank" rel="noreferrer" style={{
+                            display: 'inline-block', padding: '10px 20px', borderRadius: '25px', fontSize: '11px', fontWeight: 600, textDecoration: 'none',
+                            textTransform: 'uppercase', letterSpacing: '1px', marginTop: '12px', backgroundColor: 'transparent', color: data.design.textColor,
+                            border: `1px solid ${data.design.textColor}`
+                        }}>Abrir en Maps</a>
+                   )}
+                </div>
+              </AnimatedSection>
+           )}
+           
+           {data.visibility.gifts && data.gifts.length > 0 && (
+              <AnimatedSection direction="left">
+                <div className="glass-card-hover" style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+                    borderRadius: '20px', padding: '20px', width: '100%', marginBottom: '16px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
+                    textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
+                }}>
+                   <div style={{ fontSize: '26px', marginBottom: '8px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.05))' }} dangerouslySetInnerHTML={{ __html: data.emojis.gifts }} />
+                   <h4 style={{fontFamily: data.design.font, fontSize: '16px', fontWeight: 600, marginBottom: '8px'}}>Mesa de Regalos</h4>
+                   <div style={{display: 'flex', flexDirection: 'column', gap: '8px', width: '100%'}}>
+                     {data.gifts.map((g: any, i: number) => (
+                        g.store && (
+                          <a key={i} href={g.url || "#"} target="_blank" rel="noreferrer" style={{
+                              display: 'inline-block', padding: '10px 20px', borderRadius: '25px', fontSize: '11px', fontWeight: 600, textDecoration: 'none',
+                              textTransform: 'uppercase', letterSpacing: '1px', backgroundColor: 'transparent', color: data.design.textColor,
+                              border: `1px solid ${data.design.textColor}`
+                          }}>
+                            {g.store}
+                          </a>
+                        )
+                     ))}
+                   </div>
+                </div>
+              </AnimatedSection>
+           )}
+
+           {data.visibility.generalGift && (
+              <AnimatedSection direction="right">
+                <div className="glass-card-hover" style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+                    borderRadius: '20px', padding: '20px', width: '100%', marginBottom: '16px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
+                    textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
+                }}>
+                   <div style={{ fontSize: '26px', marginBottom: '8px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.05))' }} dangerouslySetInnerHTML={{ __html: data.emojis.generalGift }} />
+                   <h4 style={{fontFamily: data.design.font, fontSize: '16px', fontWeight: 600, marginBottom: '8px'}}>Regalo</h4>
+                   <p style={{fontSize: '13px', fontWeight: 500, lineHeight: 1.4, marginBottom: '4px'}}>{data.generalGift}</p>
+                </div>
+              </AnimatedSection>
+           )}
+
+           {data.visibility.dressCode && (
+              <AnimatedSection direction="left">
+                <div className="glass-card-hover" style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+                    borderRadius: '20px', padding: '20px', width: '100%', marginBottom: '16px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
+                    textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
+                }}>
+                   <div style={{ fontSize: '26px', marginBottom: '8px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.05))' }} dangerouslySetInnerHTML={{ __html: data.emojis.dressCode }} />
+                   <h4 style={{fontFamily: data.design.font, fontSize: '16px', fontWeight: 600, marginBottom: '8px'}}>Código de Vestimenta</h4>
+                   <div style={{fontSize: '13px', fontWeight: 500, lineHeight: 1.4, marginBottom: '4px'}}>
+                     {data.dressCode?.him && <div><strong>Para Él:</strong> {data.dressCode.him}</div>}
+                     {data.dressCode?.her && <div><strong>Para Ella:</strong> {data.dressCode.her}</div>}
+                     {data.dressCode?.general && <div style={{marginTop: '0.5rem'}}>{data.dressCode.general}</div>}
+                   </div>
+                </div>
+              </AnimatedSection>
+           )}
+
+           {data.visibility.generalText && (
+              <AnimatedSection direction="right">
+                <div className="glass-card-hover" style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+                    borderRadius: '20px', padding: '20px', width: '100%', marginBottom: '16px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
+                    textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
+                }}>
+                   <div style={{ fontSize: '26px', marginBottom: '8px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.05))' }} dangerouslySetInnerHTML={{ __html: data.emojis.generalText }} />
+                   <p style={{fontSize: '13px', fontWeight: 500, lineHeight: 1.4, marginBottom: '4px'}}>{data.generalText}</p>
+                </div>
+              </AnimatedSection>
+           )}
+
+           {data.visibility.whatsapp && !data.visibility.rsvp && (
+              <AnimatedSection direction="up">
+                <div className="glass-card-hover" style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+                    borderRadius: '20px', padding: '20px', width: '100%', marginBottom: '16px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
+                    textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
+                }}>
+                   <h3 style={{fontFamily: data.design.font, fontSize: '18px', marginBottom: '12px'}}>Confirmar Asistencia</h3>
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+                     <a href={`https://wa.me/${data.phone}?text=${confirmMsg}`} target="_blank" rel="noreferrer" style={{
+                         backgroundColor: data.design.textColor, color: data.design.bgColor, boxShadow: `0 4px 12px ${data.design.textColor}40`,
+                         padding: '12px 24px', fontSize: '12px', display: 'inline-block', borderRadius: '25px', fontWeight: 600,
+                         textTransform: 'uppercase', letterSpacing: '1px', border: '1px solid #FFFFFF', textDecoration: 'none'
+                     }}>✓ Confirmar Asistencia</a>
+                     <a href={`https://wa.me/${data.phone}?text=${declineMsg}`} target="_blank" rel="noreferrer" style={{
+                         backgroundColor: 'transparent', color: data.design.textColor, border: `1px solid ${data.design.textColor}`,
+                         padding: '12px 24px', fontSize: '12px', display: 'inline-block', borderRadius: '25px', fontWeight: 600,
+                         textTransform: 'uppercase', letterSpacing: '1px', textDecoration: 'none'
+                     }}>✕ No podré asistir</a>
+                   </div>
+                </div>
+              </AnimatedSection>
+           )}
+
+           {data.visibility.rsvp && (
+              <AnimatedSection direction="up">
+                <div className="glass-card-hover" style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+                    borderRadius: '20px', padding: '20px', width: '100%', marginBottom: '16px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
+                    textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
+                }}>
+                   <RsvpForm 
+                     invitationId={invitation.id} 
+                     design={data.design} 
+                     guestPass={dbPass || undefined} 
+                     whatsapp={{
+                       enabled: data.visibility.whatsapp || false,
+                       number: data.whatsapp || data.phone || "",
+                       confirmMsg,
+                       declineMsg
+                     }} 
+                   />
+                </div>
+              </AnimatedSection>
+           )}
+        </div>
+      </div>
+    );
+  }
+
   // --- PLANTILLA t-xv-02 (Pantalla Única Sin Scroll) ---
   if (invitation.templateId === 't-xv-02') {
     return (
@@ -109,7 +387,7 @@ export default async function PublicInvitation({
         {/* Bottom Half - Content */}
         <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '2rem', width: '100%', flex: 1, justifyContent: 'center' }}>
           <h4 style={{ fontFamily: data.design.font, fontSize: '1.25rem', letterSpacing: '0.1em', opacity: 0.9, marginBottom: '0.5rem' }}>{data.subtitle}</h4>
-          <h1 style={{ fontFamily: data.design.font, fontSize: '3.5rem', fontWeight: 700, margin: '0 0 1rem 0', lineHeight: 1.1 }}>{data.title}</h1>
+          <h1 style={{ fontFamily: (data.design.titleFont || data.design.font), fontSize: '3.5rem', fontWeight: 700, margin: '0 0 1rem 0', lineHeight: 1.1 }}>{data.title}</h1>
           
           <div style={{ marginBottom: '1.5rem', opacity: 0.9 }}>
             <p style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.25rem' }}>

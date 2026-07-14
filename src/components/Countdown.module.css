@@ -12,18 +12,25 @@
   justify-content: center;
   width: 60px;
   height: 60px;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+  transition: transform 0.3s ease;
+}
+
+.timeBox:hover {
+  transform: scale(1.1);
 }
 
 .timeBox span {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   line-height: 1;
 }
 
 .timeBox small {
-  font-size: 0.75rem;
-  opacity: 0.9;
-  margin-top: 2px;
+  font-size: 9px;
+  text-transform: uppercase;
+  margin-top: 3px;
+  opacity: 0.8;
+  letter-spacing: 0.5px;
 }

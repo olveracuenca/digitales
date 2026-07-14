@@ -78,7 +78,7 @@ export default async function InvitationsPage() {
                         <Link href={`/admin/invitations/${inv.id}/guests`} className={styles.editBtn} title="Gestionar Invitados">
                           <Users size={16} />
                         </Link>
-                        <Link href={`/templates/${inv.templateId}/edit`} className={styles.editBtn} title="Editar">
+                        <Link href={`/templates/${inv.templateId}/edit?invId=${inv.id}`} className={styles.editBtn} title="Editar">
                           <Edit size={16} />
                         </Link>
                         <DeleteInvitationButton id={inv.id} />

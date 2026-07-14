@@ -6,7 +6,25 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const prisma = new PrismaClient();
 
-export async function saveInvitation(templateId: string, data: any) {
+export async function getInvitationById(id: string) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !session.user.email) return null;
+    
+    const user = await prisma.user.findUnique({ where: { email: session.user.email } });
+    if (!user) return null;
+
+    const inv = await prisma.invitation.findUnique({ where: { id } });
+    if (!inv || inv.userId !== user.id) return null;
+    
+    return inv;
+  } catch (error) {
+    console.error("Error fetching invitation:", error);
+    return null;
+  }
+}
+
+export async function saveInvitation(templateId: string, data: any, invitationId?: string) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user || !session.user.email) {
@@ -32,6 +50,20 @@ export async function saveInvitation(templateId: string, data: any) {
         defaultData: "{}",
       }
     });
+
+    if (invitationId) {
+      // Intentar actualizar la invitación existente
+      const existing = await prisma.invitation.findUnique({ where: { id: invitationId } });
+      if (existing && existing.userId === user.id) {
+        const updated = await prisma.invitation.update({
+          where: { id: invitationId },
+          data: {
+            data: JSON.stringify(data),
+          }
+        });
+        return { success: true, slug: updated.slug, id: updated.id };
+      }
+    }
 
     // Generar un slug único basado en el eventName o el título
     const baseSlug = (data.eventName || data.title || "evento")

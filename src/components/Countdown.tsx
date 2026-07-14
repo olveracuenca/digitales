@@ -44,19 +44,19 @@ export default function Countdown({
 
   return (
     <div className={styles.countdownContainer}>
-      <div className={styles.timeBox} style={{ background: bgColor, color: textColor, fontFamily: font }}>
+      <div className={styles.timeBox} style={{ background: bgColor, color: textColor, fontFamily: font, border: '1px solid rgba(255, 255, 255, 0.6)' }}>
         <span>{timeLeft.days.toString().padStart(2, '0')}</span>
         <small style={{ color: textColor }}>Días</small>
       </div>
-      <div className={styles.timeBox} style={{ background: bgColor, color: textColor, fontFamily: font }}>
+      <div className={styles.timeBox} style={{ background: bgColor, color: textColor, fontFamily: font, border: '1px solid rgba(255, 255, 255, 0.6)' }}>
         <span>{timeLeft.hours.toString().padStart(2, '0')}</span>
         <small style={{ color: textColor }}>Hrs</small>
       </div>
-      <div className={styles.timeBox} style={{ background: bgColor, color: textColor, fontFamily: font }}>
+      <div className={styles.timeBox} style={{ background: bgColor, color: textColor, fontFamily: font, border: '1px solid rgba(255, 255, 255, 0.6)' }}>
         <span>{timeLeft.minutes.toString().padStart(2, '0')}</span>
         <small style={{ color: textColor }}>Min</small>
       </div>
-      <div className={styles.timeBox} style={{ background: bgColor, color: textColor, fontFamily: font }}>
+      <div className={styles.timeBox} style={{ background: bgColor, color: textColor, fontFamily: font, border: '1px solid rgba(255, 255, 255, 0.6)' }}>
         <span>{timeLeft.seconds.toString().padStart(2, '0')}</span>
         <small style={{ color: textColor }}>Seg</small>
       </div>

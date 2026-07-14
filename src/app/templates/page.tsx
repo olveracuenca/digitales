@@ -10,6 +10,7 @@ const eventTemplates = [
   { id: "t-xv-02", title: "Sencillo", type: "Una pagina", color: "#166534" },
   { id: "t-boda-03", title: "Boda Noche (Dark)", type: "Boda", color: "#a855f7" },
   { id: "t-boda-04", title: "Boda Girasoles (Pro)", type: "Boda", color: "#eab308" },
+  { id: "t-baby-shower", title: "baby shower(Pro)", type: "Baby Shower", color: "#f472b6" },
 ];
 
 export default function TemplatesPage() {

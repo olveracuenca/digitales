@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, use, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import AdminLayout from "@/app/admin/layout";
 import styles from "./editor.module.css";
 import { Save, Image as ImageIcon, MapPin, Clock, Gift, MessageCircle, Eye, EyeOff, Palette, Share2, Copy, Music, Type, ArrowLeft, Check, Upload, Trash2, Smartphone, Download, Map as MapIcon, Plus } from "lucide-react";
@@ -23,6 +24,7 @@ const getDefaultData = (id: string) => {
       font: "sans-serif"
     },
     location: "Hacienda San José",
+    address: "",
     locationUrl: "https://maps.google.com/?q=Hacienda+San+Jose",
     whatsapp: "521234567890",
     mainPhoto: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=1000",
@@ -71,6 +73,7 @@ const getDefaultData = (id: string) => {
       bgColor: "#fdfbf7",
       textColor: "#1f2937",
       font: "serif",
+      titleFont: "serif",
       bgImage: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?q=80&w=800&opacity=0.1"
     },
     decorations: {
@@ -226,6 +229,44 @@ const getDefaultData = (id: string) => {
     };
   }
 
+  if (id === 't-baby-shower') {
+    return {
+      ...base,
+      title: "Baby Shower",
+      subtitle: "Esperando con amor a nuestra pequeña",
+      date: "2026-10-10T16:00",
+      mainPhoto: "https://images.unsplash.com/photo-1519689680058-324335c77eba?q=80&w=1000",
+      quote: {
+        text: "Grettell Georgina",
+        color: "#6C4B49",
+        font: "'Great Vibes', cursive",
+        size: "2.5rem"
+      },
+      design: {
+        ...base.design,
+        bgColor: "#FFF5F5",
+        textColor: "#6C4B49",
+        font: "'Montserrat', sans-serif",
+        bgImage: ""
+      },
+      countdownDesign: {
+        bgColor: "rgba(255, 255, 255, 0.45)",
+        textColor: "#6C4B49",
+        font: "'Montserrat', sans-serif"
+      },
+      emojis: {
+        ...base.emojis,
+        falling: "☁️ 💖 ✨ 🌸"
+      },
+      visibility: {
+        ...base.visibility,
+        fallingIcons: true,
+        bgImage: false,
+        decorations: false
+      }
+    };
+  }
+
   if (id.includes('xv')) {
     return {
       ...base,
@@ -251,8 +292,25 @@ const getDefaultData = (id: string) => {
 
 export default function TemplateEditor({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const searchParams = useSearchParams();
+  const invId = searchParams.get('invId');
+  
   // Estado general
   const [data, setData] = useState(() => getDefaultData(id));
+
+  useEffect(() => {
+    if (invId) {
+      import('@/app/actions/invitation').then(({ getInvitationById }) => {
+        getInvitationById(invId).then(inv => {
+          if (inv && inv.data) {
+            setData(JSON.parse(inv.data));
+            setGeneratedSlug(inv.slug);
+            setGeneratedId(inv.id);
+          }
+        });
+      });
+    }
+  }, [invId]);
 
   const [saving, setSaving] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -343,7 +401,8 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
     setSaving(true);
     try {
       const { saveInvitation } = await import('@/app/actions/invitation');
-      const res = await saveInvitation(id, data);
+      const currentId = generatedId || invId || undefined;
+      const res = await saveInvitation(id, data, currentId);
       
       if (res.success && res.slug) {
         setGeneratedSlug(res.slug);
@@ -398,13 +457,23 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                 </div>
               </div>
               
-              <div className={styles.inputGroup}>
-                <label>Tipo de Letra Principal</label>
-                <select name="font" value={data.design.font} onChange={handleDesignChange} className={styles.input}>
-                  <option value="serif">Elegante (Serif)</option>
-                  <option value="sans-serif">Moderna (Sans-Serif)</option>
-                  <option value="'Dancing Script', cursive">Cursiva (Romántica)</option>
-                </select>
+              <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem'}}>
+                <div className={styles.inputGroup}>
+                  <label>Tipo de Letra Principal</label>
+                  <select name="font" value={data.design.font} onChange={handleDesignChange} className={styles.input}>
+                    <option value="serif">Elegante Básica (Serif)</option>
+                    <option value="sans-serif">Moderna Básica (Sans-Serif)</option>
+                    <option value="'Playfair Display', serif">Clásica (Playfair Display)</option>
+                    <option value="'Lora', serif">Sofisticada (Lora)</option>
+                    <option value="'Montserrat', sans-serif">Limpia (Montserrat)</option>
+                    <option value="'Cinzel', serif">Épica (Cinzel)</option>
+                    <option value="'Dancing Script', cursive">Cursiva Romántica (Dancing Script)</option>
+                    <option value="'Great Vibes', cursive">Cursiva Elegante (Great Vibes)</option>
+                    <option value="'Pacifico', cursive">Cursiva Casual (Pacifico)</option>
+                    <option value="'Amatic SC', cursive">Divertida (Amatic SC)</option>
+</select>
+                </div>
+                
               </div>
 
               {/* Decoraciones (solo si la plantilla lo soporta o está encendido) */}
@@ -515,6 +584,23 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                 <label>Título del Evento</label>
                 <input type="text" name="title" value={data.title} onChange={handleChange} className={styles.input} />
               </div>
+              <div className={styles.inputGroup} style={{marginTop: '1rem'}}>
+                <label>Tipo de Letra del Título</label>
+                <select name="titleFont" value={data.design.titleFont || data.design.font} onChange={handleDesignChange} className={styles.input}>
+
+                    <option value="serif">Elegante Básica (Serif)</option>
+                    <option value="sans-serif">Moderna Básica (Sans-Serif)</option>
+                    <option value="'Playfair Display', serif">Clásica (Playfair Display)</option>
+                    <option value="'Lora', serif">Sofisticada (Lora)</option>
+                    <option value="'Montserrat', sans-serif">Limpia (Montserrat)</option>
+                    <option value="'Cinzel', serif">Épica (Cinzel)</option>
+                    <option value="'Dancing Script', cursive">Cursiva Romántica (Dancing Script)</option>
+                    <option value="'Great Vibes', cursive">Cursiva Elegante (Great Vibes)</option>
+                    <option value="'Pacifico', cursive">Cursiva Casual (Pacifico)</option>
+                    <option value="'Amatic SC', cursive">Divertida (Amatic SC)</option>
+
+                </select>
+              </div>
               <div className={styles.inputGroup}>
                 <label>Subtítulo (Nombres)</label>
                 <input type="text" name="subtitle" value={data.subtitle} onChange={handleChange} className={styles.input} />
@@ -558,9 +644,18 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                       <div style={{flex:2}}>
                         <label style={{fontSize:'0.875rem', display:'block', marginBottom:'0.25rem'}}>Fuente</label>
                         <select name="font" value={data.quote.font} onChange={handleQuoteChange} className={styles.input} style={{padding:'0.5rem'}}>
-                          <option value="serif">Serif</option>
-                          <option value="sans-serif">Sans-Serif</option>
-                          <option value="'Dancing Script', cursive">Cursiva</option>
+
+                                              <option value="serif">Elegante Básica (Serif)</option>
+                                              <option value="sans-serif">Moderna Básica (Sans-Serif)</option>
+                                              <option value="'Playfair Display', serif">Clásica (Playfair Display)</option>
+                                              <option value="'Lora', serif">Sofisticada (Lora)</option>
+                                              <option value="'Montserrat', sans-serif">Limpia (Montserrat)</option>
+                                              <option value="'Cinzel', serif">Épica (Cinzel)</option>
+                                              <option value="'Dancing Script', cursive">Cursiva Romántica (Dancing Script)</option>
+                                              <option value="'Great Vibes', cursive">Cursiva Elegante (Great Vibes)</option>
+                                              <option value="'Pacifico', cursive">Cursiva Casual (Pacifico)</option>
+                                              <option value="'Amatic SC', cursive">Divertida (Amatic SC)</option>
+
                         </select>
                       </div>
                       <div style={{flex:1}}>
@@ -597,11 +692,19 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                     <div style={{marginTop:'1rem'}}>
                       <label style={{fontSize:'0.875rem'}}>Tipo de Letra:</label>
                       <select name="font" value={data.countdownDesign.font} onChange={handleCountdownDesignChange} className={styles.input} style={{marginTop:'0.5rem'}}>
-                        <option value="sans-serif">Moderno (Sans-serif)</option>
-                        <option value="serif">Elegante (Serif)</option>
-                        <option value="'Courier New', monospace">Clásico (Monospace)</option>
-                        <option value="cursive">Romántico (Cursive)</option>
-                      </select>
+
+                                              <option value="serif">Elegante Básica (Serif)</option>
+                                              <option value="sans-serif">Moderna Básica (Sans-Serif)</option>
+                                              <option value="'Playfair Display', serif">Clásica (Playfair Display)</option>
+                                              <option value="'Lora', serif">Sofisticada (Lora)</option>
+                                              <option value="'Montserrat', sans-serif">Limpia (Montserrat)</option>
+                                              <option value="'Cinzel', serif">Épica (Cinzel)</option>
+                                              <option value="'Dancing Script', cursive">Cursiva Romántica (Dancing Script)</option>
+                                              <option value="'Great Vibes', cursive">Cursiva Elegante (Great Vibes)</option>
+                                              <option value="'Pacifico', cursive">Cursiva Casual (Pacifico)</option>
+                                              <option value="'Amatic SC', cursive">Divertida (Amatic SC)</option>
+
+                        </select>
                     </div>
                   </div>
                 )}
@@ -659,6 +762,8 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                   <div className={styles.moduleBody}>
                     <label style={{fontSize:'0.875rem'}}>Nombre del lugar / Dirección:</label>
                     <textarea name="location" value={data.location} onChange={handleChange} className={styles.input} rows={2} style={{marginTop:'0.5rem', marginBottom:'1rem'}} />
+                    <label style={{fontSize:'0.875rem', display: 'block', marginTop: '0.5rem'}}>Dirección específica:</label>
+                    <textarea name="address" value={data.address} onChange={handleChange} className={styles.input} rows={2} style={{marginTop:'0.5rem', marginBottom:'1rem'}} placeholder="Ej. Av. Siempre Viva 123" />
                     <label style={{fontSize:'0.875rem'}}>Enlace de Google Maps:</label>
                     <input type="text" name="locationUrl" value={data.locationUrl} onChange={handleChange} className={styles.input} placeholder="https://maps.google.com/..." style={{marginTop:'0.5rem'}} />
                   </div>
@@ -836,7 +941,242 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
         <div className={styles.previewPanel}>
           <div className={styles.previewContainer}>
             <div className={styles.mobileFrame}>
-              {id === 't-xv-02' ? (
+              {id === 't-baby-shower' ? (
+                 <div 
+                  className={styles.previewContent}
+                  style={{ 
+                    height: '100%', 
+                    overflowY: 'auto', 
+                    background: data.design.bgColor, 
+                    color: data.design.textColor,
+                    fontFamily: data.design.font,
+                    position: 'relative',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    padding: '30px 20px',
+                    transition: 'background 0.4s ease',
+                  }}
+                >
+                  {/* Decoraciones Editables */}
+                  {data.visibility.decorations && (
+                    <>
+                      {data.decorations?.topLeft && <img src={data.decorations.topLeft} alt="" style={{position: 'absolute', top: '10px', left: '10px', width: '80px', zIndex: 20, pointerEvents: 'none'}} />}
+                      {data.decorations?.topRight && <img src={data.decorations.topRight} alt="" style={{position: 'absolute', top: '10px', right: '10px', width: '80px', zIndex: 20, pointerEvents: 'none'}} />}
+                      {data.decorations?.bottomLeft && <img src={data.decorations.bottomLeft} alt="" style={{position: 'absolute', bottom: '10px', left: '10px', width: '80px', zIndex: 20, pointerEvents: 'none'}} />}
+                      {data.decorations?.bottomRight && <img src={data.decorations.bottomRight} alt="" style={{position: 'absolute', bottom: '10px', right: '10px', width: '80px', zIndex: 20, pointerEvents: 'none'}} />}
+                    </>
+                  )}
+
+                  {data.visibility.fallingIcons && <FallingIcons iconString={data.emojis.falling} />}
+                  {data.visibility.music && data.music && <AudioPlayer src={data.music} isAbsolute={true} />}
+
+                  <header style={{textAlign: 'center', marginBottom: '24px', zIndex: 2, position: 'relative'}}>
+                    <span style={{fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '6px', display: 'inline-block', opacity: 0.8}}>
+                      ¡Te invitamos a celebrar!
+                    </span>
+                    <h1 style={{fontFamily: (data.design.titleFont || data.design.font), fontSize: '38px', fontWeight: 400, lineHeight: 1.1, marginBottom: '8px'}}>
+                      {data.title}
+                    </h1>
+                    <p style={{fontSize: '12px', letterSpacing: '0.5px', opacity: 0.7}}>
+                      {data.subtitle}
+                    </p>
+                  </header>
+
+                  <div className={styles.photoHover} style={{
+                    width: '170px', height: '170px', borderRadius: '50%', overflow: 'hidden', marginBottom: '20px', 
+                    border: `4px solid rgba(255,255,255,0.55)`, boxShadow: '0 10px 20px rgba(221, 165, 165, 0.15)', zIndex: 2, position: 'relative'
+                  }}>
+                    <img src={data.mainPhoto} alt="" style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+                  </div>
+
+                  <div style={{textAlign: 'center', marginBottom: '30px', zIndex: 2, position: 'relative', width: '100%'}}>
+                    {data.visibility.quote && (
+                      <h2 style={{fontFamily: data.quote.font, fontSize: data.quote.size, fontWeight: 400, color: data.quote.color, marginBottom: '8px', textShadow: '1px 1px 0 rgba(255, 255, 255, 0.5)'}}>
+                        {data.quote.text}
+                      </h2>
+                    )}
+                    <div style={{width: '50px', height: '1.5px', backgroundColor: data.design.textColor, margin: '0 auto', borderRadius: '2px', opacity: 0.6}}></div>
+                  </div>
+
+                  {data.visibility.countdown && (
+                     <div className="glass-card-hover" style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+                        borderRadius: '20px', padding: '24px', width: '100%', marginBottom: '20px', boxShadow: '0 10px 25px rgba(221, 165, 165, 0.15)',
+                        zIndex: 2, textAlign: 'center', position: 'relative'
+                     }}>
+                        <h3 style={{fontSize: '11px', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '12px', opacity: 0.8}}>Faltan</h3>
+                        <div style={{ transform: 'scale(0.85)' }}>
+                          <Countdown 
+                              targetDate={data.date} 
+                              bgColor={data.countdownDesign?.bgColor || 'rgba(255,255,255,0.45)'} 
+                              textColor={data.countdownDesign?.textColor || data.design.textColor} 
+                              font={data.countdownDesign?.font || data.design.font} 
+                          />
+                        </div>
+                                </div>
+        )}
+
+        {data.date && (
+              <div className="glass-card-hover" style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+                  borderRadius: '20px', padding: '24px', width: '100%', marginBottom: '20px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
+                  textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2, position: 'relative'
+              }}>
+                 <div style={{ fontSize: '26px', marginBottom: '8px' }}>📅</div>
+                 <h4 style={{fontFamily: data.design.font, fontSize: '18px', fontWeight: 600, marginBottom: '8px', color: data.design.textColor}}>¿Cuándo?</h4>
+                 <p style={{fontSize: '14px', fontWeight: 500, color: data.design.textColor, textTransform: 'capitalize'}}>
+                   {new Date(data.date).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                 </p>
+                 <p style={{fontSize: '12px', opacity: 0.8, color: data.design.textColor, marginTop: '4px'}}>
+                   A las {new Date(data.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                 </p>
+              </div>
+        )}
+
+                  <div style={{width: '100%', zIndex: 2, position: 'relative'}}>
+                     {data.visibility.carousel && (
+                        <div className="glass-card-hover" style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+                            borderRadius: '20px', padding: '20px', width: '100%', marginBottom: '16px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
+                            textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
+                        }}>
+                           <div style={{ fontSize: '26px', marginBottom: '8px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.05))' }} dangerouslySetInnerHTML={{ __html: data.emojis.carousel }} />
+                           <h4 style={{fontFamily: data.design.font, fontSize: '16px', fontWeight: 600, marginBottom: '8px'}}>Nuestros Momentos</h4>
+                           <AutoCarousel photos={data.carouselPhotos} />
+                        </div>
+                     )}
+
+                     {data.visibility.location && (
+                        <div className="glass-card-hover" style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+                            borderRadius: '20px', padding: '20px', width: '100%', marginBottom: '16px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
+                            textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
+                        }}>
+                           <div style={{ fontSize: '26px', marginBottom: '8px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.05))' }} dangerouslySetInnerHTML={{ __html: data.emojis.location }} />
+                           <h4 style={{fontFamily: data.design.font, fontSize: '16px', fontWeight: 600, marginBottom: '8px'}}>Ubicación</h4>
+                           <p style={{fontSize: '13px', fontWeight: 600, lineHeight: 1.4, marginBottom: '2px'}}>{data.location}</p>
+                           {data.address && <p style={{fontSize: '12px', fontWeight: 400, opacity: 0.9, lineHeight: 1.3, marginBottom: '4px'}}>{data.address}</p>}
+                           {data.locationUrl && (
+                                <a href={data.locationUrl} target="_blank" rel="noreferrer" style={{
+                                    display: 'inline-block', padding: '10px 20px', borderRadius: '25px', fontSize: '11px', fontWeight: 600, textDecoration: 'none',
+                                    textTransform: 'uppercase', letterSpacing: '1px', marginTop: '12px', backgroundColor: 'transparent', color: data.design.textColor,
+                                    border: `1px solid ${data.design.textColor}`
+                                }}>Abrir en Maps</a>
+                           )}
+                        </div>
+                     )}
+                     
+                     {data.visibility.gifts && data.gifts.length > 0 && (
+                        <div className="glass-card-hover" style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+                            borderRadius: '20px', padding: '20px', width: '100%', marginBottom: '16px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
+                            textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
+                        }}>
+                           <div style={{ fontSize: '26px', marginBottom: '8px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.05))' }} dangerouslySetInnerHTML={{ __html: data.emojis.gifts }} />
+                           <h4 style={{fontFamily: data.design.font, fontSize: '16px', fontWeight: 600, marginBottom: '8px'}}>Mesa de Regalos</h4>
+                           <div style={{display: 'flex', flexDirection: 'column', gap: '8px', width: '100%'}}>
+                             {data.gifts.map((g: any, i: number) => (
+                                g.store && (
+                                  <a key={i} href={g.url || "#"} target="_blank" rel="noreferrer" style={{
+                                      display: 'inline-block', padding: '10px 20px', borderRadius: '25px', fontSize: '11px', fontWeight: 600, textDecoration: 'none',
+                                      textTransform: 'uppercase', letterSpacing: '1px', backgroundColor: 'transparent', color: data.design.textColor,
+                                      border: `1px solid ${data.design.textColor}`
+                                  }}>
+                                    {g.store}
+                                  </a>
+                                )
+                             ))}
+                           </div>
+                        </div>
+                     )}
+
+                     {data.visibility.generalGift && (
+                        <div className="glass-card-hover" style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+                            borderRadius: '20px', padding: '20px', width: '100%', marginBottom: '16px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
+                            textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
+                        }}>
+                           <div style={{ fontSize: '26px', marginBottom: '8px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.05))' }} dangerouslySetInnerHTML={{ __html: data.emojis.generalGift }} />
+                           <h4 style={{fontFamily: data.design.font, fontSize: '16px', fontWeight: 600, marginBottom: '8px'}}>Regalo</h4>
+                           <p style={{fontSize: '13px', fontWeight: 500, lineHeight: 1.4, marginBottom: '4px'}}>{data.generalGift}</p>
+                        </div>
+                     )}
+
+                     {data.visibility.dressCode && (
+                        <div className="glass-card-hover" style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+                            borderRadius: '20px', padding: '20px', width: '100%', marginBottom: '16px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
+                            textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
+                        }}>
+                           <div style={{ fontSize: '26px', marginBottom: '8px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.05))' }} dangerouslySetInnerHTML={{ __html: data.emojis.dressCode }} />
+                           <h4 style={{fontFamily: data.design.font, fontSize: '16px', fontWeight: 600, marginBottom: '8px'}}>Código de Vestimenta</h4>
+                           <div style={{fontSize: '13px', fontWeight: 500, lineHeight: 1.4, marginBottom: '4px'}}>
+                             {data.dressCode?.him && <div><strong>Para Él:</strong> {data.dressCode.him}</div>}
+                             {data.dressCode?.her && <div><strong>Para Ella:</strong> {data.dressCode.her}</div>}
+                             {data.dressCode?.general && <div style={{marginTop: '0.5rem'}}>{data.dressCode.general}</div>}
+                           </div>
+                        </div>
+                     )}
+
+                     {data.visibility.generalText && (
+                        <div className="glass-card-hover" style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+                            borderRadius: '20px', padding: '20px', width: '100%', marginBottom: '16px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
+                            textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
+                        }}>
+                           <div style={{ fontSize: '26px', marginBottom: '8px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.05))' }} dangerouslySetInnerHTML={{ __html: data.emojis.generalText }} />
+                           <p style={{fontSize: '13px', fontWeight: 500, lineHeight: 1.4, marginBottom: '4px'}}>{data.generalText}</p>
+                        </div>
+                     )}
+
+                     {data.visibility.whatsapp && !data.visibility.rsvp && (
+                        <div className="glass-card-hover" style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+                            borderRadius: '20px', padding: '20px', width: '100%', marginBottom: '16px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
+                            textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
+                        }}>
+                           <h3 style={{fontFamily: data.design.font, fontSize: '18px', marginBottom: '12px'}}>Confirmar Asistencia</h3>
+                           <button style={{
+                               backgroundColor: data.design.textColor, color: data.design.bgColor, boxShadow: `0 4px 12px ${data.design.textColor}40`,
+                               padding: '12px 24px', fontSize: '12px', display: 'inline-block', borderRadius: '25px', fontWeight: 600,
+                               textTransform: 'uppercase', letterSpacing: '1px', border: '1px solid #FFFFFF', marginBottom: '8px', width: '100%'
+                           }}>✓ Confirmar Asistencia</button>
+                           <button style={{
+                               backgroundColor: 'transparent', color: data.design.textColor, border: `1px solid ${data.design.textColor}`,
+                               padding: '12px 24px', fontSize: '12px', display: 'inline-block', borderRadius: '25px', fontWeight: 600,
+                               textTransform: 'uppercase', letterSpacing: '1px', width: '100%'
+                           }}>✕ No podré asistir</button>
+                        </div>
+                     )}
+
+                     {data.visibility.rsvp && (
+                        <div className="glass-card-hover" style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+                            borderRadius: '20px', padding: '20px', width: '100%', marginBottom: '16px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
+                            textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
+                        }}>
+                           <h3 style={{fontFamily: data.design.font, fontSize: '18px', marginBottom: '10px', color: '#1a1f36'}}>¿Nos acompañas?</h3>
+                           <p style={{fontSize: '13px', opacity: 0.8, marginBottom: '16px', color: '#3c4257'}}>Por favor confirma tu asistencia al evento.</p>
+                           <div style={{textAlign: 'left', marginBottom: '16px'}}>
+                             <label style={{fontSize: '12px', display: 'block', marginBottom: '4px', color: '#3c4257'}}>Nombre y Apellido</label>
+                             <input type="text" placeholder="Ej. Juan Pérez" style={{
+                               width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e3e8ee', backgroundColor: '#ffffff', color: '#3c4257'
+                             }} disabled />
+                           </div>
+                           <div style={{display: 'flex', gap: '8px', marginBottom: '16px'}}>
+                             <button style={{flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #e3e8ee', backgroundColor: '#ffffff', fontSize: '12px', color: '#3c4257'}}>✓ Sí, asistiré</button>
+                             <button style={{flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #e3e8ee', backgroundColor: '#ffffff', fontSize: '12px', color: '#3c4257'}}>✕ No podré asistir</button>
+                           </div>
+                           <button style={{
+                               backgroundColor: '#8792a2', color: '#FFFFFF', padding: '12px', borderRadius: '8px', fontWeight: 'bold', width: '100%', border: 'none'
+                           }}>Confirmar Respuesta</button>
+                        </div>
+                     )}
+                  </div>
+                  <div style={{height: '40px'}}></div>
+                </div>
+              ) : id === 't-xv-02' ? (
                 <div 
                   className={styles.previewContent}
                   style={{ 
@@ -880,7 +1220,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                   {/* Bottom Half - Content */}
                   <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '1.5rem', width: '100%', flex: 1, justifyContent: 'center' }}>
                     <h4 style={{ fontFamily: data.design.font, fontSize: '0.8rem', letterSpacing: '0.1em', opacity: 0.9, marginBottom: '0.25rem' }}>{data.subtitle}</h4>
-                    <h1 style={{ fontFamily: data.design.font, fontSize: '2.5rem', fontWeight: 700, margin: '0 0 0.5rem 0', lineHeight: 1.1 }}>{data.title}</h1>
+                    <h1 style={{ fontFamily: (data.design.titleFont || data.design.font), fontSize: '2.5rem', fontWeight: 700, margin: '0 0 0.5rem 0', lineHeight: 1.1 }}>{data.title}</h1>
                     
                     <div style={{ marginBottom: '1rem', opacity: 0.9 }}>
                       <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>{new Date(data.date).toLocaleDateString('es-ES')}</p>
