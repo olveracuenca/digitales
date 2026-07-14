@@ -64,7 +64,8 @@ const getDefaultData = (id: string) => {
       generalGift: '<i class="fa-solid fa-envelope"></i>',
       generalText: '<i class="fa-solid fa-message"></i>',
       whatsapp: '<i class="fa-brands fa-whatsapp"></i>',
-      falling: "✨ 💖 🌸 💍 🥂"
+      falling: "✨ 💖 🌸 💍 🥂",
+      rsvp: '<i class="fa-solid fa-check-to-slot"></i>'
     },
     design: {
       bgColor: "#fdfbf7",
@@ -92,7 +93,8 @@ const getDefaultData = (id: string) => {
       itinerary: false,
       dressCode: false,
       generalGift: false,
-      generalText: false
+      generalText: false,
+      rsvp: false
     }
   };
 
@@ -778,6 +780,26 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                       rows={3} 
                       placeholder="Ej. No olvides llevar tu regalo." 
                     />
+                  </div>
+                )}
+              </div>
+
+              {/* RSVP */}
+              <div className={styles.moduleCard}>
+                <div className={styles.moduleHeader}>
+                  <div style={{display:'flex', alignItems:'center', gap:'0.5rem'}}>
+                    <input type="text" name="rsvp" value={data.emojis.rsvp} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <span>Confirmación de Asistencia (RSVP Público)</span>
+                  </div>
+                  <button onClick={() => toggleVisibility('rsvp')} className={styles.toggleBtn}>
+                    {data.visibility.rsvp ? <Eye size={18} /> : <EyeOff size={18} />}
+                  </button>
+                </div>
+                {data.visibility.rsvp && (
+                  <div className={styles.moduleBody}>
+                    <p style={{fontSize: '0.875rem', color: 'var(--text-secondary)'}}>
+                      Al habilitar esta opción, aparecerá un formulario público al final de la invitación para que los invitados puedan confirmar su asistencia. Podrás ver los resultados en el Panel de Administración.
+                    </p>
                   </div>
                 )}
               </div>

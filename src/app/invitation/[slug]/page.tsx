@@ -7,6 +7,7 @@ import AudioPlayer from "@/components/AudioPlayer";
 import Countdown from "@/components/Countdown";
 import AnimatedSection from "@/components/AnimatedSection";
 import { MapPin } from "lucide-react";
+import RsvpForm from "@/components/RsvpForm";
 
 const prisma = new PrismaClient();
 
@@ -38,8 +39,9 @@ export default async function PublicInvitation({
   let confirmMsg = encodeURIComponent(`¡Hola! Confirmo mi asistencia a ${eventTitle}. ¡Ahí nos vemos!`);
   let declineMsg = encodeURIComponent(`¡Hola! Lamentablemente no podré asistir a ${eventTitle}. ¡Gracias por la invitación!`);
 
+  let dbPass: any = null;
   if (typeof sp.t === 'string') {
-    const dbPass = await prisma.guestPass.findUnique({
+    dbPass = await prisma.guestPass.findUnique({
       where: { id: sp.t }
     });
     if (dbPass) {
@@ -187,14 +189,27 @@ export default async function PublicInvitation({
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <a href={`https://wa.me/${data.whatsapp}?text=${confirmMsg}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#25D366', color: 'white', padding: '0.875rem 1.5rem', borderRadius: '9999px', fontWeight: 600, textDecoration: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
-              ✓ Confirmar Asistencia
-            </a>
-            <a href={`https://wa.me/${data.whatsapp}?text=${declineMsg}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'transparent', color: data.design.textColor, border: `2px solid ${data.design.textColor}50`, padding: '0.875rem 1.5rem', borderRadius: '9999px', fontWeight: 600, textDecoration: 'none' }}>
-              ✕ No podré asistir
-            </a>
-          </div>
+          {data.visibility.whatsapp && !data.visibility.rsvp && (
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <a href={`https://wa.me/${data.whatsapp}?text=${confirmMsg}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#25D366', color: 'white', padding: '0.875rem 1.5rem', borderRadius: '9999px', fontWeight: 600, textDecoration: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+                ✓ Confirmar Asistencia
+              </a>
+              <a href={`https://wa.me/${data.whatsapp}?text=${declineMsg}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'transparent', color: data.design.textColor, border: `2px solid ${data.design.textColor}50`, padding: '0.875rem 1.5rem', borderRadius: '9999px', fontWeight: 600, textDecoration: 'none' }}>
+                ✕ No podré asistir
+              </a>
+            </div>
+          )}
+
+          {data.visibility.rsvp && (
+            <div style={{ marginTop: '3rem', width: '100%', maxWidth: '500px' }}>
+              <RsvpForm 
+                invitationId={invitation.id} 
+                design={data.design} 
+                guestPass={typeof sp.t === 'string' && dbPass ? { id: dbPass.id, name: dbPass.name, passCount: dbPass.passCount } : undefined}
+                whatsapp={{ enabled: data.visibility.whatsapp, number: data.whatsapp, confirmMsg, declineMsg }}
+              />
+            </div>
+          )}
         </div>
       </div>
     );
@@ -379,7 +394,7 @@ export default async function PublicInvitation({
           </AnimatedSection>
         )}
 
-        {data.visibility.whatsapp && (
+        {data.visibility.whatsapp && !data.visibility.rsvp && (
           <AnimatedSection enableAnimation={invitation.templateId === 't-boda-04'} direction="up">
             <div className={styles.previewSection} style={{ paddingBottom: '3rem' }}>
               <div style={{ fontSize: '3rem', marginBottom: '1.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.whatsapp }} />
@@ -392,6 +407,17 @@ export default async function PublicInvitation({
                 </a>
               </div>
             </div>
+          </AnimatedSection>
+        )}
+
+        {data.visibility.rsvp && (
+          <AnimatedSection enableAnimation={invitation.templateId === 't-boda-04'} direction="up">
+            <RsvpForm 
+              invitationId={invitation.id} 
+              design={data.design} 
+              guestPass={typeof sp.t === 'string' && dbPass ? { id: dbPass.id, name: dbPass.name, passCount: dbPass.passCount } : undefined}
+              whatsapp={{ enabled: data.visibility.whatsapp, number: data.whatsapp, confirmMsg, declineMsg }}
+            />
           </AnimatedSection>
         )}
       </div>

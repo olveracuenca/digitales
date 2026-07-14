@@ -143,3 +143,46 @@ export async function deleteGuestPass(passId: string) {
     return { success: false, error: "Error interno al eliminar el pase" };
   }
 }
+
+export async function submitRsvp(
+  invitationId: string, 
+  name: string, 
+  status: string, 
+  companions: number = 0,
+  guestPassId?: string
+) {
+  try {
+    const data: any = {
+      invitationId,
+      name,
+      status,
+      companions
+    };
+    if (guestPassId) {
+      data.guestPassId = guestPassId;
+    }
+    const rsvp = await prisma.rsvp.create({
+      data
+    });
+    return { success: true, rsvp };
+  } catch (error) {
+    console.error("Error submitting RSVP:", error);
+    return { success: false, error: "Error interno al procesar la confirmación" };
+  }
+}
+
+export async function getRsvps(invitationId: string) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) return { success: false, error: "No autorizado" };
+
+    const rsvps = await prisma.rsvp.findMany({
+      where: { invitationId },
+      orderBy: { createdAt: 'desc' }
+    });
+    return { success: true, rsvps };
+  } catch (error) {
+    console.error("Error fetching RSVPs:", error);
+    return { success: false, error: "Error interno al cargar las confirmaciones" };
+  }
+}

@@ -49,6 +49,8 @@ model Invitation {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  rsvps       Rsvp[]
+
   @@index([userId])
 }
 
@@ -57,6 +59,21 @@ model GuestPass {
   name         String
   passCount    Int        @default(1)
   invitationId String
+  invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([invitationId])
+}
+
+model Rsvp {
+  id           String     @id @default(cuid())
+  name         String
+  status       String     // e.g., "CONFIRMED", "DECLINED"
+  companions   Int        @default(0)
+  contactInfo  String?
+  invitationId String
+  guestPassId  String?    @unique
   invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt

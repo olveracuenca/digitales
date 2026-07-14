@@ -33,11 +33,17 @@ export default async function GuestsPage({ params }: { params: Promise<{ id: str
     orderBy: { createdAt: "desc" },
   });
 
+  const rsvps = await prisma.rsvp.findMany({
+    where: { invitationId: id },
+    orderBy: { createdAt: "desc" },
+  });
+
   return (
     <div className="animate-fade-in" style={{ padding: "2rem" }}>
       <GuestList 
         invitationId={id} 
-        initialPasses={passes} 
+        initialPasses={passes}
+        initialRsvps={rsvps}
         invitationSlug={invitation.slug} 
       />
     </div>
