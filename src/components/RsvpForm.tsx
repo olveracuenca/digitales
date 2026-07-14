@@ -37,8 +37,9 @@ export default function RsvpForm({
 
     if (res.success) {
       if (whatsapp?.enabled && whatsapp.number) {
+        const cleanNumber = whatsapp.number.replace(/\D/g, '');
         const msg = status === "CONFIRMED" ? whatsapp.confirmMsg : whatsapp.declineMsg;
-        window.open(`https://wa.me/${whatsapp.number}?text=${msg}`, "_blank");
+        window.open(`https://wa.me/${cleanNumber}?text=${encodeURIComponent(msg)}`, "_blank");
       }
       setSubmitted(true);
     } else {
