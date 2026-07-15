@@ -80,6 +80,7 @@ export default async function PublicInvitation({
   
   let dbPass: any = null;
   let guestPassProp: any = undefined;
+  let existingRsvp: any = null;
 
   if (typeof sp.t === 'string') {
     dbPass = await prisma.guestPass.findUnique({
@@ -89,6 +90,10 @@ export default async function PublicInvitation({
       guestPassProp = { id: dbPass.id, name: dbPass.name, passCount: dbPass.passCount };
       confirmMsg = encodeURIComponent(`¡Hola! Confirmo la asistencia de ${dbPass.name}${dbPass.passCount ? ` (${dbPass.passCount} pases)` : ''} a ${eventTitle}. ¡Ahí nos vemos!`);
       declineMsg = encodeURIComponent(`¡Hola! Lamentablemente la familia/invitado ${dbPass.name} no podrá asistir a ${eventTitle}. ¡Gracias por la invitación!`);
+      
+      existingRsvp = await prisma.rsvp.findFirst({
+        where: { guestPassId: dbPass.id }
+      });
     }
   } else if (typeof sp.p === 'string') {
     try {
@@ -324,19 +329,36 @@ export default async function PublicInvitation({
                     borderRadius: '20px', padding: '20px', width: '100%', marginBottom: '16px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
                     textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
                 }}>
-                   <h3 style={{fontFamily: data.design.font, fontSize: '18px', marginBottom: '12px'}}>Confirmar Asistencia</h3>
-                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
-                     <a href={`https://wa.me/${cleanPhone}?text=${confirmMsg}`} target="_blank" rel="noreferrer" style={{
-                         backgroundColor: data.design.textColor, color: data.design.bgColor, boxShadow: `0 4px 12px ${data.design.textColor}40`,
-                         padding: '12px 24px', fontSize: '12px', display: 'inline-block', borderRadius: '25px', fontWeight: 600,
-                         textTransform: 'uppercase', letterSpacing: '1px', border: '1px solid #FFFFFF', textDecoration: 'none'
-                     }}>✓ Confirmar Asistencia</a>
-                     <a href={`https://wa.me/${cleanPhone}?text=${declineMsg}`} target="_blank" rel="noreferrer" style={{
-                         backgroundColor: 'transparent', color: data.design.textColor, border: `1px solid ${data.design.textColor}`,
-                         padding: '12px 24px', fontSize: '12px', display: 'inline-block', borderRadius: '25px', fontWeight: 600,
-                         textTransform: 'uppercase', letterSpacing: '1px', textDecoration: 'none'
-                     }}>✕ No podré asistir</a>
-                   </div>
+                   {existingRsvp ? (
+                     <>
+                       <div style={{ fontSize: '26px', marginBottom: '8px' }}>{existingRsvp.status === 'CONFIRMED' ? '✅' : '❌'}</div>
+                       <h3 style={{fontFamily: data.design.font, fontSize: '18px', marginBottom: '12px'}}>
+                         {existingRsvp.status === 'CONFIRMED' ? '¡Ya confirmaste tu asistencia!' : 'Lamentamos que no puedas asistir'}
+                       </h3>
+                       <p style={{fontSize: '13px', opacity: 0.8, marginBottom: '0'}}>Gracias por informarnos.</p>
+                     </>
+                   ) : !guestPassProp ? (
+                     <>
+                       <h3 style={{fontFamily: data.design.font, fontSize: '18px', marginBottom: '8px'}}>Confirmar Asistencia</h3>
+                       <p style={{fontSize: '13px', opacity: 0.8, marginBottom: '0'}}>Para confirmar tu asistencia, por favor utiliza tu enlace personalizado.</p>
+                     </>
+                   ) : (
+                     <>
+                       <h3 style={{fontFamily: data.design.font, fontSize: '18px', marginBottom: '12px'}}>Confirmar Asistencia</h3>
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+                         <a href={`https://wa.me/${cleanPhone}?text=${confirmMsg}`} target="_blank" rel="noreferrer" style={{
+                             backgroundColor: data.design.textColor, color: data.design.bgColor, boxShadow: `0 4px 12px ${data.design.textColor}40`,
+                             padding: '12px 24px', fontSize: '12px', display: 'inline-block', borderRadius: '25px', fontWeight: 600,
+                             textTransform: 'uppercase', letterSpacing: '1px', border: '1px solid #FFFFFF', textDecoration: 'none'
+                         }}>✓ Confirmar Asistencia</a>
+                         <a href={`https://wa.me/${cleanPhone}?text=${declineMsg}`} target="_blank" rel="noreferrer" style={{
+                             backgroundColor: 'transparent', color: data.design.textColor, border: `1px solid ${data.design.textColor}`,
+                             padding: '12px 24px', fontSize: '12px', display: 'inline-block', borderRadius: '25px', fontWeight: 600,
+                             textTransform: 'uppercase', letterSpacing: '1px', textDecoration: 'none'
+                         }}>✕ No podré asistir</a>
+                       </div>
+                     </>
+                   )}
                 </div>
               </AnimatedSection>
            )}
@@ -348,17 +370,32 @@ export default async function PublicInvitation({
                     borderRadius: '20px', padding: '20px', width: '100%', marginBottom: '16px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
                     textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
                 }}>
-                   <RsvpForm 
-                     invitationId={invitation.id} 
-                     design={data.design} 
-                     guestPass={guestPassProp} 
-                     whatsapp={{
-                       enabled: data.visibility.whatsapp || false,
-                       number: cleanPhone,
-                       confirmMsg,
-                       declineMsg
-                     }} 
-                   />
+                   {existingRsvp ? (
+                     <>
+                       <div style={{ fontSize: '26px', marginBottom: '8px' }}>{existingRsvp.status === 'CONFIRMED' ? '✅' : '❌'}</div>
+                       <h3 style={{fontFamily: data.design.font, fontSize: '18px', marginBottom: '12px'}}>
+                         {existingRsvp.status === 'CONFIRMED' ? '¡Ya confirmaste tu asistencia!' : 'Lamentamos que no puedas asistir'}
+                       </h3>
+                       <p style={{fontSize: '13px', opacity: 0.8, marginBottom: '0'}}>Gracias por responder.</p>
+                     </>
+                   ) : !guestPassProp ? (
+                     <>
+                       <h3 style={{fontFamily: data.design.font, fontSize: '18px', marginBottom: '8px'}}>Confirmar Asistencia</h3>
+                       <p style={{fontSize: '13px', opacity: 0.8, marginBottom: '0'}}>Para confirmar tu asistencia, por favor utiliza tu enlace personalizado.</p>
+                     </>
+                   ) : (
+                     <RsvpForm 
+                       invitationId={invitation.id} 
+                       design={data.design} 
+                       guestPass={guestPassProp} 
+                       whatsapp={{
+                         enabled: data.visibility.whatsapp || false,
+                         number: cleanPhone,
+                         confirmMsg,
+                         declineMsg
+                       }} 
+                     />
+                   )}
                 </div>
               </AnimatedSection>
            )}
@@ -498,24 +535,55 @@ export default async function PublicInvitation({
           )}
 
           {data.visibility.whatsapp && !data.visibility.rsvp && (
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <a href={`https://wa.me/${cleanPhone}?text=${confirmMsg}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#25D366', color: 'white', padding: '0.875rem 1.5rem', borderRadius: '9999px', fontWeight: 600, textDecoration: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
-                ✓ Confirmar Asistencia
-              </a>
-              <a href={`https://wa.me/${cleanPhone}?text=${declineMsg}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'transparent', color: data.design.textColor, border: `2px solid ${data.design.textColor}50`, padding: '0.875rem 1.5rem', borderRadius: '9999px', fontWeight: 600, textDecoration: 'none' }}>
-                ✕ No podré asistir
-              </a>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', width: '100%' }}>
+              {existingRsvp ? (
+                <div style={{ background: 'rgba(255,255,255,0.1)', padding: '1.5rem', borderRadius: '16px', textAlign: 'center', border: `1px solid ${data.design.textColor}30` }}>
+                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{existingRsvp.status === 'CONFIRMED' ? '✅' : '❌'}</div>
+                  <h3 style={{fontFamily: data.design.font, fontSize: '1.2rem', marginBottom: '0'}}>
+                    {existingRsvp.status === 'CONFIRMED' ? '¡Ya confirmaste tu asistencia!' : 'Lamentamos que no puedas asistir'}
+                  </h3>
+                </div>
+              ) : !guestPassProp ? (
+                <div style={{ textAlign: 'center', padding: '1rem' }}>
+                  <h3 style={{fontFamily: data.design.font, fontSize: '1.2rem', marginBottom: '0.5rem'}}>Confirmar Asistencia</h3>
+                  <p style={{ opacity: 0.8 }}>Para confirmar tu asistencia, por favor utiliza tu enlace personalizado.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <a href={`https://wa.me/${cleanPhone}?text=${confirmMsg}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#25D366', color: 'white', padding: '0.875rem 1.5rem', borderRadius: '9999px', fontWeight: 600, textDecoration: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+                    ✓ Confirmar Asistencia
+                  </a>
+                  <a href={`https://wa.me/${cleanPhone}?text=${declineMsg}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'transparent', color: data.design.textColor, border: `2px solid ${data.design.textColor}50`, padding: '0.875rem 1.5rem', borderRadius: '9999px', fontWeight: 600, textDecoration: 'none' }}>
+                    ✕ No podré asistir
+                  </a>
+                </div>
+              )}
             </div>
           )}
 
           {data.visibility.rsvp && (
             <div style={{ marginTop: '3rem', width: '100%', maxWidth: '500px' }}>
-              <RsvpForm 
-                invitationId={invitation.id} 
-                design={data.design} 
-                guestPass={guestPassProp}
-                whatsapp={{ enabled: data.visibility.whatsapp, number: cleanPhone, confirmMsg, declineMsg }}
-              />
+              {existingRsvp ? (
+                <div style={{ background: 'rgba(255,255,255,0.1)', padding: '2rem', borderRadius: '16px', textAlign: 'center', border: `1px solid ${data.design.textColor}30` }}>
+                  <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{existingRsvp.status === 'CONFIRMED' ? '✅' : '❌'}</div>
+                  <h3 style={{fontFamily: data.design.font, fontSize: '1.4rem', marginBottom: '0.5rem'}}>
+                    {existingRsvp.status === 'CONFIRMED' ? '¡Ya confirmaste tu asistencia!' : 'Lamentamos que no puedas asistir'}
+                  </h3>
+                  <p style={{ opacity: 0.8 }}>Gracias por responder.</p>
+                </div>
+              ) : !guestPassProp ? (
+                <div style={{ textAlign: 'center', padding: '1rem' }}>
+                  <h3 style={{fontFamily: data.design.font, fontSize: '1.4rem', marginBottom: '0.5rem'}}>Confirmar Asistencia</h3>
+                  <p style={{ opacity: 0.8 }}>Para confirmar tu asistencia, por favor utiliza tu enlace personalizado.</p>
+                </div>
+              ) : (
+                <RsvpForm 
+                  invitationId={invitation.id} 
+                  design={data.design} 
+                  guestPass={guestPassProp}
+                  whatsapp={{ enabled: data.visibility.whatsapp, number: cleanPhone, confirmMsg, declineMsg }}
+                />
+              )}
             </div>
           )}
         </div>
@@ -721,26 +789,60 @@ export default async function PublicInvitation({
           <AnimatedSection enableAnimation={invitation.templateId === 't-boda-04'} direction="up">
             <div className={styles.previewSection} style={{ paddingBottom: '3rem' }}>
               <div style={{ fontSize: '3rem', marginBottom: '1.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.whatsapp }} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
-                <a href={`https://wa.me/${cleanPhone}?text=${confirmMsg}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#25D366', color: 'white', padding: '1rem 2rem', borderRadius: '9999px', fontWeight: 600, textDecoration: 'none', width: '100%', maxWidth: '300px', justifyContent: 'center' }}>
-                  ✓ Confirmar Asistencia
-                </a>
-                <a href={`https://wa.me/${cleanPhone}?text=${declineMsg}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'transparent', border: `2px solid ${data.design.textColor}50`, color: data.design.textColor, padding: '1rem 2rem', borderRadius: '9999px', fontWeight: 600, textDecoration: 'none', width: '100%', maxWidth: '300px', justifyContent: 'center' }}>
-                  ✕ No podré asistir
-                </a>
-              </div>
+              
+              {existingRsvp ? (
+                <div style={{ background: 'rgba(255,255,255,0.1)', padding: '2rem', borderRadius: '16px', textAlign: 'center', border: `1px solid ${data.design.textColor}30` }}>
+                  <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{existingRsvp.status === 'CONFIRMED' ? '✅' : '❌'}</div>
+                  <h3 style={{fontFamily: data.design.font, fontSize: '1.4rem', marginBottom: '0.5rem'}}>
+                    {existingRsvp.status === 'CONFIRMED' ? '¡Ya confirmaste tu asistencia!' : 'Lamentamos que no puedas asistir'}
+                  </h3>
+                  <p style={{ opacity: 0.8 }}>Gracias por responder.</p>
+                </div>
+              ) : !guestPassProp ? (
+                <div style={{ textAlign: 'center', padding: '1rem' }}>
+                  <p style={{ opacity: 0.9, fontSize: '1.1rem' }}>Para confirmar tu asistencia, por favor utiliza tu enlace personalizado.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
+                  <a href={`https://wa.me/${cleanPhone}?text=${confirmMsg}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#25D366', color: 'white', padding: '1rem 2rem', borderRadius: '9999px', fontWeight: 600, textDecoration: 'none', width: '100%', maxWidth: '300px', justifyContent: 'center' }}>
+                    ✓ Confirmar Asistencia
+                  </a>
+                  <a href={`https://wa.me/${cleanPhone}?text=${declineMsg}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'transparent', border: `2px solid ${data.design.textColor}50`, color: data.design.textColor, padding: '1rem 2rem', borderRadius: '9999px', fontWeight: 600, textDecoration: 'none', width: '100%', maxWidth: '300px', justifyContent: 'center' }}>
+                    ✕ No podré asistir
+                  </a>
+                </div>
+              )}
             </div>
           </AnimatedSection>
         )}
 
         {data.visibility.rsvp && (
           <AnimatedSection enableAnimation={invitation.templateId === 't-boda-04'} direction="up">
-            <RsvpForm 
-              invitationId={invitation.id} 
-              design={data.design} 
-              guestPass={guestPassProp}
-              whatsapp={{ enabled: data.visibility.whatsapp, number: cleanPhone, confirmMsg, declineMsg }}
-            />
+            {existingRsvp ? (
+              <div className={styles.previewSection} style={{ paddingBottom: '3rem' }}>
+                <div style={{ background: 'rgba(255,255,255,0.1)', padding: '2rem', borderRadius: '16px', textAlign: 'center', border: `1px solid ${data.design.textColor}30` }}>
+                  <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{existingRsvp.status === 'CONFIRMED' ? '✅' : '❌'}</div>
+                  <h3 style={{fontFamily: data.design.font, fontSize: '1.4rem', marginBottom: '0.5rem'}}>
+                    {existingRsvp.status === 'CONFIRMED' ? '¡Ya confirmaste tu asistencia!' : 'Lamentamos que no puedas asistir'}
+                  </h3>
+                  <p style={{ opacity: 0.8 }}>Gracias por responder.</p>
+                </div>
+              </div>
+            ) : !guestPassProp ? (
+              <div className={styles.previewSection} style={{ paddingBottom: '3rem' }}>
+                <div style={{ textAlign: 'center', padding: '1rem' }}>
+                  <h3 style={{fontFamily: data.design.font, fontSize: '1.4rem', marginBottom: '0.5rem'}}>Confirmar Asistencia</h3>
+                  <p style={{ opacity: 0.9, fontSize: '1.1rem' }}>Para confirmar tu asistencia, por favor utiliza tu enlace personalizado.</p>
+                </div>
+              </div>
+            ) : (
+              <RsvpForm 
+                invitationId={invitation.id} 
+                design={data.design} 
+                guestPass={guestPassProp}
+                whatsapp={{ enabled: data.visibility.whatsapp, number: cleanPhone, confirmMsg, declineMsg }}
+              />
+            )}
           </AnimatedSection>
         )}
       </div>
