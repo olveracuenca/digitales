@@ -171,24 +171,6 @@ export default async function PublicInvitation({
           </div>
         </AnimatedSection>
 
-        {data.date && (
-          <div className="glass-card-hover" style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
-              borderRadius: '20px', padding: '24px', width: '100%', marginBottom: '20px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
-              textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2, position: 'relative',
-              maxWidth: '400px', margin: '0 auto 20px auto', opacity: 1, transform: 'none'
-          }}>
-             <div style={{ fontSize: '26px', marginBottom: '8px' }}>📅</div>
-             <h4 style={{fontFamily: data.design.font, fontSize: '18px', fontWeight: 600, marginBottom: '8px', color: data.design.textColor}}>¿Cuándo?</h4>
-             <p style={{fontSize: '14px', fontWeight: 500, color: data.design.textColor, textTransform: 'capitalize'}}>
-               {new Date(data.date).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-             </p>
-             <p style={{fontSize: '12px', opacity: 0.8, color: data.design.textColor, marginTop: '4px'}}>
-               A las {new Date(data.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}
-             </p>
-          </div>
-        )}
-
         {data.visibility.countdown && (
           <AnimatedSection direction="up">
            <div className="glass-card-hover" style={{
@@ -207,6 +189,24 @@ export default async function PublicInvitation({
               </div>
            </div>
           </AnimatedSection>
+        )}
+
+        {data.date && (
+          <div className="glass-card-hover" style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+              borderRadius: '20px', padding: '24px', width: '100%', marginBottom: '20px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
+              textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2, position: 'relative',
+              maxWidth: '400px', margin: '0 auto 20px auto', opacity: 1, transform: 'none'
+          }}>
+             <div style={{ fontSize: '26px', marginBottom: '8px' }}>📅</div>
+             <h4 style={{fontFamily: data.design.font, fontSize: '18px', fontWeight: 600, marginBottom: '8px', color: data.design.textColor}}>¿Cuándo?</h4>
+             <p style={{fontSize: '14px', fontWeight: 500, color: data.design.textColor, textTransform: 'capitalize'}}>
+               {new Date(data.date).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+             </p>
+             <p style={{fontSize: '12px', opacity: 0.8, color: data.design.textColor, marginTop: '4px'}}>
+               A las {new Date(data.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}
+             </p>
+          </div>
         )}
 
         <div style={{width: '100%', maxWidth: '400px', zIndex: 2, position: 'relative'}}>
@@ -415,6 +415,23 @@ export default async function PublicInvitation({
           <h4 style={{ fontFamily: data.design.font, fontSize: '1.25rem', letterSpacing: '0.1em', opacity: 0.9, marginBottom: '0.5rem' }}>{data.subtitle}</h4>
           <h1 style={{ fontFamily: (data.design.titleFont || data.design.font), fontSize: '3.5rem', fontWeight: 700, margin: '0 0 1rem 0', lineHeight: 1.1 }}>{data.title}</h1>
           
+          {data.visibility.countdown && (
+            <div style={{ transform: 'scale(0.85)', marginBottom: '2rem' }}>
+               <Countdown 
+                  targetDate={data.date} 
+                  bgColor={data.countdownDesign?.bgColor || 'rgba(255,255,255,0.2)'} 
+                  textColor={data.countdownDesign?.textColor || '#ffffff'} 
+                  font={data.countdownDesign?.font || data.design.font} 
+                />
+            </div>
+          )}
+
+          {data.visibility.quote && (
+            <p style={{ fontFamily: data.quote.font, fontSize: data.quote.size || '1.1rem', marginBottom: '2rem', fontStyle: 'italic', maxWidth: '400px' }}>
+              "{data.quote.text}"
+            </p>
+          )}
+
           {data.date && (
             <div style={{ width: '100%', maxWidth: '300px', marginBottom: '1.5rem', opacity: 1, transform: 'none' }}>
                <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>📅</div>
@@ -425,23 +442,6 @@ export default async function PublicInvitation({
                <p style={{ fontSize: '0.8rem', opacity: 0.9 }}>
                  A las {new Date(data.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}
                </p>
-            </div>
-          )}
-
-          {data.visibility.quote && (
-            <p style={{ fontFamily: data.quote.font, fontSize: data.quote.size || '1.1rem', marginBottom: '2rem', fontStyle: 'italic', maxWidth: '400px' }}>
-              "{data.quote.text}"
-            </p>
-          )}
-
-          {data.visibility.countdown && (
-            <div style={{ transform: 'scale(0.85)', marginBottom: '2rem' }}>
-               <Countdown 
-                  targetDate={data.date} 
-                  bgColor={data.countdownDesign?.bgColor || 'rgba(255,255,255,0.2)'} 
-                  textColor={data.countdownDesign?.textColor || '#ffffff'} 
-                  font={data.countdownDesign?.font || data.design.font} 
-                />
             </div>
           )}
 

@@ -1270,6 +1270,23 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                     <h4 style={{ fontFamily: data.design.font, fontSize: '0.8rem', letterSpacing: '0.1em', opacity: 0.9, marginBottom: '0.25rem' }}>{data.subtitle}</h4>
                     <h1 style={{ fontFamily: (data.design.titleFont || data.design.font), fontSize: '2.5rem', fontWeight: 700, margin: '0 0 0.5rem 0', lineHeight: 1.1 }}>{data.title}</h1>
                     
+                    {data.visibility.countdown && (
+                      <div style={{ transform: 'scale(0.65)', marginBottom: '1rem', marginTop: '-1rem' }}>
+                         <Countdown 
+                            targetDate={data.date} 
+                            bgColor={data.countdownDesign?.bgColor || 'rgba(255,255,255,0.2)'} 
+                            textColor={data.countdownDesign?.textColor || '#ffffff'} 
+                            font={data.countdownDesign?.font || data.design.font} 
+                          />
+                      </div>
+                    )}
+
+                    {data.visibility.quote && (
+                      <p style={{ fontFamily: data.quote.font, fontSize: '0.85rem', marginBottom: '1rem', fontStyle: 'italic', maxWidth: '300px' }}>
+                        &quot;{data.quote.text}&quot;
+                      </p>
+                    )}
+
                     {data.date && (
                       <div style={{ width: '100%', maxWidth: '300px', marginBottom: '1.5rem', opacity: 1, transform: 'none' }}>
                          <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>📅</div>
@@ -1312,23 +1329,6 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                             border: `1px solid ${data.design.textColor}50`
                           }}>Mapa</a>
                         )}
-                      </div>
-                    )}
-
-                    {data.visibility.quote && (
-                      <p style={{ fontFamily: data.quote.font, fontSize: '0.85rem', marginBottom: '1rem', fontStyle: 'italic', maxWidth: '300px' }}>
-                        &quot;{data.quote.text}&quot;
-                      </p>
-                    )}
-
-                    {data.visibility.countdown && (
-                      <div style={{ transform: 'scale(0.65)', marginBottom: '1rem', marginTop: '-1rem' }}>
-                         <Countdown 
-                            targetDate={data.date} 
-                            bgColor={data.countdownDesign?.bgColor || 'rgba(255,255,255,0.2)'} 
-                            textColor={data.countdownDesign?.textColor || '#ffffff'} 
-                            font={data.countdownDesign?.font || data.design.font} 
-                          />
                       </div>
                     )}
 
