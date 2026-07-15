@@ -171,6 +171,24 @@ export default async function PublicInvitation({
           </div>
         </AnimatedSection>
 
+        {data.date && (
+          <div className="glass-card-hover" style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+              borderRadius: '20px', padding: '24px', width: '100%', marginBottom: '20px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
+              textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2, position: 'relative',
+              maxWidth: '400px', margin: '0 auto 20px auto', opacity: 1, transform: 'none'
+          }}>
+             <div style={{ fontSize: '26px', marginBottom: '8px' }}>📅</div>
+             <h4 style={{fontFamily: data.design.font, fontSize: '18px', fontWeight: 600, marginBottom: '8px', color: data.design.textColor}}>¿Cuándo?</h4>
+             <p style={{fontSize: '14px', fontWeight: 500, color: data.design.textColor, textTransform: 'capitalize'}}>
+               {new Date(data.date).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+             </p>
+             <p style={{fontSize: '12px', opacity: 0.8, color: data.design.textColor, marginTop: '4px'}}>
+               A las {new Date(data.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}
+             </p>
+          </div>
+        )}
+
         {data.visibility.countdown && (
           <AnimatedSection direction="up">
            <div className="glass-card-hover" style={{
@@ -397,14 +415,18 @@ export default async function PublicInvitation({
           <h4 style={{ fontFamily: data.design.font, fontSize: '1.25rem', letterSpacing: '0.1em', opacity: 0.9, marginBottom: '0.5rem' }}>{data.subtitle}</h4>
           <h1 style={{ fontFamily: (data.design.titleFont || data.design.font), fontSize: '3.5rem', fontWeight: 700, margin: '0 0 1rem 0', lineHeight: 1.1 }}>{data.title}</h1>
           
-          <div style={{ marginBottom: '1.5rem', opacity: 0.9 }}>
-            <p style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.25rem' }}>
-              {new Date(data.date).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </p>
-            <p style={{ fontSize: '1.1rem' }}>
-              {new Date(data.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-            </p>
-          </div>
+          {data.date && (
+            <div style={{ width: '100%', maxWidth: '300px', marginBottom: '1.5rem', opacity: 1, transform: 'none' }}>
+               <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>📅</div>
+               <h3 style={{fontFamily: data.design.font, fontSize: '1.2rem', marginBottom: '0.25rem'}}>¿Cuándo?</h3>
+               <p style={{ fontSize: '0.9rem', fontWeight: 600, textTransform: 'capitalize', marginBottom: '0.1rem' }}>
+                 {new Date(data.date).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+               </p>
+               <p style={{ fontSize: '0.8rem', opacity: 0.9 }}>
+                 A las {new Date(data.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}
+               </p>
+            </div>
+          )}
 
           {data.visibility.quote && (
             <p style={{ fontFamily: data.quote.font, fontSize: data.quote.size || '1.1rem', marginBottom: '2rem', fontStyle: 'italic', maxWidth: '400px' }}>
@@ -559,6 +581,21 @@ export default async function PublicInvitation({
                 textColor={data.countdownDesign?.textColor || data.design.bgColor} 
                 font={data.countdownDesign?.font || data.design.font} 
               />
+            </div>
+          </AnimatedSection>
+        )}
+
+        {data.date && (
+          <AnimatedSection enableAnimation={invitation.templateId === 't-boda-04'} direction="left">
+            <div className={styles.previewSection} style={{ width: '100%', opacity: 1, transform: 'none' }}>
+               <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📅</div>
+               <h3 style={{fontFamily: data.design.font}}>¿Cuándo?</h3>
+               <p style={{fontSize: '1.1rem', fontWeight: 600, textTransform: 'capitalize', margin: '0.5rem 0'}}>
+                 {new Date(data.date).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+               </p>
+               <p style={{fontSize: '0.9rem', opacity: 0.8}}>
+                 A las {new Date(data.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}
+               </p>
             </div>
           </AnimatedSection>
         )}
