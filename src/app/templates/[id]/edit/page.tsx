@@ -26,6 +26,9 @@ const getDefaultData = (id: string) => {
     location: "Hacienda San José",
     address: "",
     locationUrl: "https://maps.google.com/?q=Hacienda+San+Jose",
+    secondaryLocation: "Iglesia San Juan",
+    secondaryAddress: "",
+    secondaryLocationUrl: "https://maps.google.com/?q=Iglesia+San+Juan",
     whatsapp: "521234567890",
     mainPhoto: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=1000",
     carouselPhotos: [
@@ -61,6 +64,7 @@ const getDefaultData = (id: string) => {
       carousel: '<i class="fa-solid fa-camera"></i>',
       itinerary: '<i class="fa-solid fa-list"></i>',
       location: '<i class="fa-solid fa-location-dot"></i>',
+      secondaryLocation: '<i class="fa-solid fa-church"></i>',
       gifts: '<i class="fa-solid fa-gift"></i>',
       dressCode: '<i class="fa-solid fa-shirt"></i>',
       generalGift: '<i class="fa-solid fa-envelope"></i>',
@@ -87,6 +91,7 @@ const getDefaultData = (id: string) => {
       carousel: true,
       countdown: true,
       location: true,
+      secondaryLocation: false,
       gifts: true,
       whatsapp: true,
       bgImage: false,
@@ -548,7 +553,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                 {data.visibility.fallingIcons && (
                   <div className={styles.moduleBody}>
                     <label style={{fontSize:'0.875rem', color:'var(--text-secondary)'}}>Iconos a utilizar (separados por espacio):</label>
-                    <input type="text" name="falling" value={data.emojis.falling} onChange={handleEmojiChange} className={styles.input} style={{marginTop:'0.5rem'}} />
+                    <input type="text" name="falling" value={data.emojis.falling} onChange={handleEmojiChange} className={styles.input} style={{marginTop:'0.5rem', color: 'white'}} />
                   </div>
                 )}
               </div>
@@ -670,7 +675,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
               <div className={styles.moduleItem}>
                 <div className={styles.moduleHeader}>
                   <div className={styles.moduleTitle}>
-                    <input type="text" name="countdown" value={data.emojis.countdown} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <input type="text" name="countdown" value={data.emojis.countdown} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)', color: 'white'}} />
                     <span>Cuenta Regresiva</span>
                   </div>
                   <button onClick={() => toggleVisibility('countdown')} className={styles.toggleBtn}>
@@ -713,7 +718,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
               <div className={styles.moduleItem}>
                 <div className={styles.moduleHeader}>
                   <div className={styles.moduleTitle}>
-                    <input type="text" name="carousel" value={data.emojis.carousel} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <input type="text" name="carousel" value={data.emojis.carousel} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)', color: 'white'}} />
                     <span>Carrusel Automático (5s)</span>
                   </div>
                   <button onClick={() => toggleVisibility('carousel')} className={styles.toggleBtn}>
@@ -751,7 +756,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
               <div className={styles.moduleItem}>
                 <div className={styles.moduleHeader}>
                   <div className={styles.moduleTitle}>
-                    <input type="text" name="location" value={data.emojis.location} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <input type="text" name="location" value={data.emojis.location} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)', color: 'white'}} />
                     <span>Ubicación</span>
                   </div>
                   <button onClick={() => toggleVisibility('location')} className={styles.toggleBtn}>
@@ -773,7 +778,29 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
               <div className={styles.moduleItem}>
                 <div className={styles.moduleHeader}>
                   <div className={styles.moduleTitle}>
-                    <input type="text" name="gifts" value={data.emojis.gifts} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <input type="text" name="secondaryLocation" value={data.emojis.secondaryLocation} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)', color: 'white'}} />
+                    <span>Ubicación Secundaria (Misa/Recepción)</span>
+                  </div>
+                  <button onClick={() => toggleVisibility('secondaryLocation')} className={styles.toggleBtn}>
+                    {data.visibility.secondaryLocation ? <Eye size={18} /> : <EyeOff size={18} />}
+                  </button>
+                </div>
+                {data.visibility.secondaryLocation && (
+                  <div className={styles.moduleBody}>
+                    <label style={{fontSize:'0.875rem'}}>Nombre del lugar / Dirección (Secundaria):</label>
+                    <textarea name="secondaryLocation" value={data.secondaryLocation} onChange={handleChange} className={styles.input} rows={2} style={{marginTop:'0.5rem', marginBottom:'1rem'}} />
+                    <label style={{fontSize:'0.875rem', display: 'block', marginTop: '0.5rem'}}>Dirección específica:</label>
+                    <textarea name="secondaryAddress" value={data.secondaryAddress} onChange={handleChange} className={styles.input} rows={2} style={{marginTop:'0.5rem', marginBottom:'1rem'}} placeholder="Ej. Calle de la Iglesia 456" />
+                    <label style={{fontSize:'0.875rem'}}>Enlace de Google Maps:</label>
+                    <input type="text" name="secondaryLocationUrl" value={data.secondaryLocationUrl} onChange={handleChange} className={styles.input} placeholder="https://maps.google.com/..." style={{marginTop:'0.5rem'}} />
+                  </div>
+                )}
+              </div>
+
+              <div className={styles.moduleItem}>
+                <div className={styles.moduleHeader}>
+                  <div className={styles.moduleTitle}>
+                    <input type="text" name="gifts" value={data.emojis.gifts} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)', color: 'white'}} />
                     <span>Mesa de Regalos (Max 3)</span>
                   </div>
                   <button onClick={() => toggleVisibility('gifts')} className={styles.toggleBtn}>
@@ -799,7 +826,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
               <div className={styles.moduleItem}>
                 <div className={styles.moduleHeader}>
                   <div className={styles.moduleTitle}>
-                    <input type="text" name="whatsapp" value={data.emojis.whatsapp} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <input type="text" name="whatsapp" value={data.emojis.whatsapp} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)', color: 'white'}} />
                     <span>Confirmación WhatsApp</span>
                   </div>
                   <button onClick={() => toggleVisibility('whatsapp')} className={styles.toggleBtn}>
@@ -816,7 +843,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
               <div className={styles.moduleItem}>
                 <div className={styles.moduleHeader}>
                   <div className={styles.moduleTitle}>
-                    <input type="text" name="itinerary" value={data.emojis.itinerary} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <input type="text" name="itinerary" value={data.emojis.itinerary} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)', color: 'white'}} />
                     <span>Itinerario (Timeline)</span>
                   </div>
                   <button onClick={() => toggleVisibility('itinerary')} className={styles.toggleBtn}>
@@ -829,7 +856,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                       <div key={item.id} style={{marginBottom:'1rem', padding:'1rem', background:'rgba(255,255,255,0.05)', borderRadius:'8px'}}>
                         <div style={{display:'flex', gap:'0.5rem', marginBottom:'0.5rem'}}>
                           <input type="text" value={item.time} onChange={e => updateItineraryItem(i, 'time', e.target.value)} placeholder="Ej. 20:00 hs" className={styles.input} style={{flex: 1}} />
-                          <input type="text" value={item.icon} onChange={e => updateItineraryItem(i, 'icon', e.target.value)} placeholder="Icono HTML" className={styles.input} style={{flex: 1, minWidth: '120px', textAlign: 'center'}} />
+                          <input type="text" value={item.icon} onChange={e => updateItineraryItem(i, 'icon', e.target.value)} placeholder="Icono HTML" className={styles.input} style={{flex: 1, minWidth: '120px', textAlign: 'center', color: 'white'}} />
                         </div>
                         <input type="text" value={item.title} onChange={e => updateItineraryItem(i, 'title', e.target.value)} placeholder="Ej. Ceremonia" className={styles.input} style={{marginBottom:'0.5rem'}} />
                         <button onClick={() => removeItineraryItem(i)} style={{color:'var(--accent-color)', fontSize:'0.875rem'}}>Eliminar</button>
@@ -844,7 +871,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
               <div className={styles.moduleCard}>
                 <div className={styles.moduleHeader}>
                   <div style={{display:'flex', alignItems:'center', gap:'0.5rem'}}>
-                    <input type="text" name="dressCode" value={data.emojis.dressCode} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <input type="text" name="dressCode" value={data.emojis.dressCode} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)', color: 'white'}} />
                     <span>Código de Vestimenta</span>
                   </div>
                   <button onClick={() => toggleVisibility('dressCode')} className={styles.toggleBtn}>
@@ -869,7 +896,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
               <div className={styles.moduleCard}>
                 <div className={styles.moduleHeader}>
                   <div style={{display:'flex', alignItems:'center', gap:'0.5rem'}}>
-                    <input type="text" name="generalGift" value={data.emojis.generalGift} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <input type="text" name="generalGift" value={data.emojis.generalGift} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)', color: 'white'}} />
                     <span>Regalo General</span>
                   </div>
                   <button onClick={() => toggleVisibility('generalGift')} className={styles.toggleBtn}>
@@ -893,7 +920,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
               <div className={styles.moduleCard}>
                 <div className={styles.moduleHeader}>
                   <div style={{display:'flex', alignItems:'center', gap:'0.5rem'}}>
-                    <input type="text" name="rsvp" value={data.emojis.rsvp} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <input type="text" name="rsvp" value={data.emojis.rsvp} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)', color: 'white'}} />
                     <span>Confirmación de Asistencia (RSVP Público)</span>
                   </div>
                   <button onClick={() => toggleVisibility('rsvp')} className={styles.toggleBtn}>
@@ -913,7 +940,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
               <div className={styles.moduleCard}>
                 <div className={styles.moduleHeader}>
                   <div style={{display:'flex', alignItems:'center', gap:'0.5rem'}}>
-                    <input type="text" name="generalText" value={data.emojis.generalText} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)'}} />
+                    <input type="text" name="generalText" value={data.emojis.generalText} onChange={handleEmojiChange} style={{width:'120px', background:'transparent', border:'none', fontSize:'1.2rem', textAlign:'center', borderBottom:'1px solid var(--border-color)', color: 'white'}} />
                     <span>Texto General</span>
                   </div>
                   <button onClick={() => toggleVisibility('generalText')} className={styles.toggleBtn}>
@@ -1021,7 +1048,8 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
               <div className="glass-card-hover" style={{
                   backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
                   borderRadius: '20px', padding: '24px', width: '100%', marginBottom: '20px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
-                  textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2, position: 'relative'
+                  textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2, position: 'relative',
+                  opacity: 1, transform: 'none'
               }}>
                  <div style={{ fontSize: '26px', marginBottom: '8px' }}>📅</div>
                  <h4 style={{fontFamily: data.design.font, fontSize: '18px', fontWeight: 600, marginBottom: '8px', color: data.design.textColor}}>¿Cuándo?</h4>
@@ -1059,6 +1087,26 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                            {data.address && <p style={{fontSize: '12px', fontWeight: 400, opacity: 0.9, lineHeight: 1.3, marginBottom: '4px'}}>{data.address}</p>}
                            {data.locationUrl && (
                                 <a href={data.locationUrl} target="_blank" rel="noreferrer" style={{
+                                    display: 'inline-block', padding: '10px 20px', borderRadius: '25px', fontSize: '11px', fontWeight: 600, textDecoration: 'none',
+                                    textTransform: 'uppercase', letterSpacing: '1px', marginTop: '12px', backgroundColor: 'transparent', color: data.design.textColor,
+                                    border: `1px solid ${data.design.textColor}`
+                                }}>Abrir en Maps</a>
+                           )}
+                        </div>
+                     )}
+
+                     {data.visibility.secondaryLocation && (
+                        <div className="glass-card-hover" style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.4)',
+                            borderRadius: '20px', padding: '20px', width: '100%', marginBottom: '16px', boxShadow: '0 8px 20px rgba(221, 165, 165, 0.15)',
+                            textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
+                        }}>
+                           <div style={{ fontSize: '26px', marginBottom: '8px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.05))' }} dangerouslySetInnerHTML={{ __html: data.emojis.secondaryLocation }} />
+                           <h4 style={{fontFamily: data.design.font, fontSize: '16px', fontWeight: 600, marginBottom: '8px'}}>Ubicación Secundaria</h4>
+                           <p style={{fontSize: '13px', fontWeight: 600, lineHeight: 1.4, marginBottom: '2px'}}>{data.secondaryLocation}</p>
+                           {data.secondaryAddress && <p style={{fontSize: '12px', fontWeight: 400, opacity: 0.9, lineHeight: 1.3, marginBottom: '4px'}}>{data.secondaryAddress}</p>}
+                           {data.secondaryLocationUrl && (
+                                <a href={data.secondaryLocationUrl} target="_blank" rel="noreferrer" style={{
                                     display: 'inline-block', padding: '10px 20px', borderRadius: '25px', fontSize: '11px', fontWeight: 600, textDecoration: 'none',
                                     textTransform: 'uppercase', letterSpacing: '1px', marginTop: '12px', backgroundColor: 'transparent', color: data.design.textColor,
                                     border: `1px solid ${data.design.textColor}`
@@ -1222,9 +1270,50 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                     <h4 style={{ fontFamily: data.design.font, fontSize: '0.8rem', letterSpacing: '0.1em', opacity: 0.9, marginBottom: '0.25rem' }}>{data.subtitle}</h4>
                     <h1 style={{ fontFamily: (data.design.titleFont || data.design.font), fontSize: '2.5rem', fontWeight: 700, margin: '0 0 0.5rem 0', lineHeight: 1.1 }}>{data.title}</h1>
                     
-                    <div style={{ marginBottom: '1rem', opacity: 0.9 }}>
-                      <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>{new Date(data.date).toLocaleDateString('es-ES')}</p>
-                    </div>
+                    {data.date && (
+                      <div style={{ width: '100%', maxWidth: '300px', marginBottom: '1.5rem', opacity: 1, transform: 'none' }}>
+                         <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>📅</div>
+                         <h3 style={{fontFamily: data.design.font, fontSize: '1.2rem', marginBottom: '0.25rem'}}>¿Cuándo?</h3>
+                         <p style={{ fontSize: '0.9rem', fontWeight: 600, textTransform: 'capitalize', marginBottom: '0.1rem' }}>
+                           {new Date(data.date).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                         </p>
+                         <p style={{ fontSize: '0.8rem', opacity: 0.9 }}>
+                           A las {new Date(data.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                         </p>
+                      </div>
+                    )}
+
+                    {data.visibility.location && (
+                      <div style={{ width: '100%', maxWidth: '300px', marginBottom: '1.5rem' }}>
+                        <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.location }} />
+                        <h3 style={{fontFamily: data.design.font, fontSize: '1.2rem', marginBottom: '0.25rem'}}>Ubicación</h3>
+                        <p style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.1rem' }}>{data.location}</p>
+                        {data.address && <p style={{ fontSize: '0.8rem', opacity: 0.9 }}>{data.address}</p>}
+                        {data.locationUrl && (
+                          <a href={data.locationUrl} target="_blank" rel="noreferrer" style={{
+                            display: 'inline-block', padding: '0.4rem 1rem', borderRadius: '25px', fontSize: '0.75rem', fontWeight: 600, textDecoration: 'none',
+                            textTransform: 'uppercase', letterSpacing: '1px', marginTop: '0.5rem', backgroundColor: 'transparent', color: data.design.textColor,
+                            border: `1px solid ${data.design.textColor}50`
+                          }}>Mapa</a>
+                        )}
+                      </div>
+                    )}
+
+                    {data.visibility.secondaryLocation && (
+                      <div style={{ width: '100%', maxWidth: '300px', marginBottom: '1.5rem' }}>
+                        <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.secondaryLocation }} />
+                        <h3 style={{fontFamily: data.design.font, fontSize: '1.2rem', marginBottom: '0.25rem'}}>Ubicación Secundaria</h3>
+                        <p style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.1rem' }}>{data.secondaryLocation}</p>
+                        {data.secondaryAddress && <p style={{ fontSize: '0.8rem', opacity: 0.9 }}>{data.secondaryAddress}</p>}
+                        {data.secondaryLocationUrl && (
+                          <a href={data.secondaryLocationUrl} target="_blank" rel="noreferrer" style={{
+                            display: 'inline-block', padding: '0.4rem 1rem', borderRadius: '25px', fontSize: '0.75rem', fontWeight: 600, textDecoration: 'none',
+                            textTransform: 'uppercase', letterSpacing: '1px', marginTop: '0.5rem', backgroundColor: 'transparent', color: data.design.textColor,
+                            border: `1px solid ${data.design.textColor}50`
+                          }}>Mapa</a>
+                        )}
+                      </div>
+                    )}
 
                     {data.visibility.quote && (
                       <p style={{ fontFamily: data.quote.font, fontSize: '0.85rem', marginBottom: '1rem', fontStyle: 'italic', maxWidth: '300px' }}>
@@ -1361,6 +1450,21 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                     </AnimatedSection>
                   )}
 
+                  {data.date && (
+                    <AnimatedSection enableAnimation={id === 't-boda-04'} direction="left">
+                      <div className={styles.previewSection} style={{ width: '100%', opacity: 1, transform: 'none' }}>
+                         <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📅</div>
+                         <h3 style={{fontFamily: data.design.font}}>¿Cuándo?</h3>
+                         <p style={{fontSize: '1.1rem', fontWeight: 600, textTransform: 'capitalize', margin: '0.5rem 0'}}>
+                           {new Date(data.date).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                         </p>
+                         <p style={{fontSize: '0.9rem', opacity: 0.8}}>
+                           A las {new Date(data.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                         </p>
+                      </div>
+                    </AnimatedSection>
+                  )}
+
                   {data.visibility.carousel && (
                     <AnimatedSection enableAnimation={id === 't-boda-04'} direction="left">
                       <div className={styles.previewSection}>
@@ -1426,7 +1530,37 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                       </div>
                     </AnimatedSection>
                   )}
-                  
+
+                  {data.visibility.secondaryLocation && (
+                    <AnimatedSection enableAnimation={id === 't-boda-04'} direction="right">
+                      <div className={styles.previewSection}>
+                        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: data.emojis.secondaryLocation }} />
+                        <h3 style={{fontFamily: data.design.font}}>Ubicación Secundaria</h3>
+                        <p>{data.secondaryLocation}</p>
+                        {data.secondaryLocationUrl && (
+                          <a href={data.secondaryLocationUrl} target="_blank" rel="noreferrer" style={{
+                            display: 'inline-flex', 
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            marginTop: '1rem', 
+                            padding: '0.75rem 1.5rem', 
+                            background: data.design.textColor, 
+                            color: data.design.bgColor, 
+                            borderRadius: '9999px', 
+                            textDecoration: 'none', 
+                            fontWeight: 600,
+                            fontSize: '0.9rem',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                          }}>
+                            <MapPin size={18} />
+                            Abrir en Maps
+                          </a>
+                        )}
+                      </div>
+                    </AnimatedSection>
+                  )}
+
+
                   {data.visibility.gifts && data.gifts.length > 0 && (
                     <AnimatedSection enableAnimation={id === 't-boda-04'} direction="right">
                       <div className={styles.previewSection}>
