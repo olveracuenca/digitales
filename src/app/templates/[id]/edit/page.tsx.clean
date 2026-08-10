@@ -143,7 +143,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
 
   return (
     <AdminLayout>
-      <div className={`animate-fade-in ${styles.editorLayout}`}>
+      <div className={\`animate-fade-in \${styles.editorLayout}\`}>
         <TemplateForm 
           id={id} data={data} setData={setData} saving={saving} handleSave={handleSave} 
           toggleVisibility={toggleVisibility} handleChange={handleChange} handleDesignChange={handleDesignChange} 
@@ -195,7 +195,7 @@ export default function TemplateEditor({ params }: { params: Promise<{ id: strin
                     <Copy size={18} /> Copiar Enlace Principal
                   </button>
                   <a 
-                    href={`https://wa.me/?text=${encodeURIComponent(whatsappMsg)}`} 
+                    href={\`https://wa.me/?text=\${encodeURIComponent(whatsappMsg)}\`} 
                     target="_blank" 
                     rel="noreferrer" 
                     className={styles.whatsappBtn}

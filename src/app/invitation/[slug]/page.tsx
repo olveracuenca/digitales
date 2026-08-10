@@ -108,6 +108,7 @@ export default async function PublicInvitation({
   }
 
   const cleanPhone = String(data.whatsapp || data.phone || "").replace(/\D/g, '');
+  const rsvpPhone = String(data.rsvpPhone || data.whatsapp || data.phone || "").replace(/\D/g, '');
 
   // --- PLANTILLA t-baby-shower (Glassmorphism Pink Dream) ---
   if (invitation.templateId === 't-baby-shower') {
@@ -354,7 +355,7 @@ export default async function PublicInvitation({
                      guestPass={guestPassProp} 
                      whatsapp={{
                        enabled: data.visibility.whatsapp || false,
-                       number: cleanPhone,
+                       number: rsvpPhone,
                        confirmMsg,
                        declineMsg
                      }} 
@@ -514,7 +515,7 @@ export default async function PublicInvitation({
                 invitationId={invitation.id} 
                 design={data.design} 
                 guestPass={guestPassProp}
-                whatsapp={{ enabled: data.visibility.whatsapp, number: cleanPhone, confirmMsg, declineMsg }}
+                whatsapp={{ enabled: data.visibility.whatsapp, number: rsvpPhone, confirmMsg, declineMsg }}
               />
             </div>
           )}
@@ -739,7 +740,7 @@ export default async function PublicInvitation({
               invitationId={invitation.id} 
               design={data.design} 
               guestPass={guestPassProp}
-              whatsapp={{ enabled: data.visibility.whatsapp, number: cleanPhone, confirmMsg, declineMsg }}
+              whatsapp={{ enabled: data.visibility.whatsapp, number: rsvpPhone, confirmMsg, declineMsg }}
             />
           </AnimatedSection>
         )}
