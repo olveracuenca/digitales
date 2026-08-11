@@ -214,6 +214,8 @@
 
 .previewHero {
   height: 60%;
+  min-height: 380px;
+  flex-shrink: 0;
   background-size: cover;
   background-position: center;
   position: relative;

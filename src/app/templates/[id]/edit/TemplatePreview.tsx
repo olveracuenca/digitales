@@ -57,7 +57,7 @@ export default function TemplatePreview({ id, data }: { id: string, data: Templa
                   </header>
 
                   <div className={styles.photoHover} style={{
-                    width: '170px', height: '170px', borderRadius: '50%', overflow: 'hidden', marginBottom: '20px', 
+                    width: '170px', height: '170px', flexShrink: 0, borderRadius: '50%', overflow: 'hidden', marginBottom: '20px', 
                     border: `4px solid rgba(255,255,255,0.55)`, boxShadow: '0 10px 20px rgba(221, 165, 165, 0.15)', zIndex: 2, position: 'relative'
                   }}>
                     <img src={data.mainPhoto} alt="" style={{width: '100%', height: '100%', objectFit: 'cover'}} />
@@ -300,6 +300,8 @@ export default function TemplatePreview({ id, data }: { id: string, data: Templa
                   {/* Top Half - Image */}
                   <div style={{
                     height: '45%',
+                    minHeight: '45%',
+                    flexShrink: 0,
                     width: '100%',
                     backgroundImage: `url(${data.mainPhoto})`,
                     backgroundSize: 'cover',
