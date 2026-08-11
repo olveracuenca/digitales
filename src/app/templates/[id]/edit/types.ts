@@ -28,7 +28,10 @@ export interface TemplateData {
   secondaryAddress: string;
   secondaryLocationUrl: string;
   whatsapp: string;
+  whatsappMessage?: string;
+  whatsappDeclineMessage?: string;
   rsvpPhone: string;
+  rsvpContacts?: { label: string; phone: string }[];
   mainPhoto: string;
   carouselPhotos: string[];
   music: string;

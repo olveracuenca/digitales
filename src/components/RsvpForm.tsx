@@ -14,11 +14,17 @@ export default function RsvpForm({
   invitationId: string, 
   design?: any,
   guestPass?: { id: string, name: string, passCount: number },
-  whatsapp?: { enabled: boolean, number: string, confirmMsg: string, declineMsg: string }
+  whatsapp?: { enabled: boolean, number: string, contacts?: { label: string, phone: string }[], confirmMsg: string, declineMsg: string }
 }) {
-  // If guestPass is provided, pre-fill name and lock it.
   const [name, setName] = useState(guestPass?.name || "");
   const [status, setStatus] = useState<"CONFIRMED" | "DECLINED" | null>(null);
+  
+  // Contacts logic
+  const hasMultipleContacts = whatsapp?.contacts && whatsapp.contacts.length > 0;
+  const [selectedContact, setSelectedContact] = useState<string>(
+    hasMultipleContacts ? whatsapp.contacts![0].phone : ""
+  );
+
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -27,8 +33,6 @@ export default function RsvpForm({
     if (!name.trim() || !status) return;
 
     setLoading(true);
-    // If guestPass is used, companions = passCount - 1 (since 1 is the main guest)
-    // If no guestPass, companions is 0 since we removed the manual input
     const companions = guestPass ? Math.max(0, guestPass.passCount - 1) : 0;
     const guestPassId = guestPass?.id;
 
@@ -36,9 +40,13 @@ export default function RsvpForm({
     setLoading(false);
 
     if (res.success) {
-      if (whatsapp?.enabled && whatsapp.number) {
-        const cleanNumber = whatsapp.number.replace(/\D/g, '');
-        const msg = status === "CONFIRMED" ? whatsapp.confirmMsg : whatsapp.declineMsg;
+      const targetPhone = hasMultipleContacts ? selectedContact : whatsapp?.number;
+      if (whatsapp?.enabled && targetPhone) {
+        const cleanNumber = targetPhone.replace(/\D/g, '');
+        let rawMsg = status === "CONFIRMED" ? whatsapp.confirmMsg : whatsapp.declineMsg;
+        const nameToUse = guestPass ? `${name}${guestPass.passCount > 1 ? ` (${guestPass.passCount} pases)` : ''}` : name;
+        const msg = rawMsg.replace(/\{\{nombre\}\}/g, nameToUse);
+        
         window.open(`https://wa.me/${cleanNumber}?text=${encodeURIComponent(msg)}`, "_blank");
       }
       setSubmitted(true);
@@ -132,6 +140,31 @@ export default function RsvpForm({
             No podré asistir
           </button>
         </div>
+
+        {hasMultipleContacts && whatsapp?.enabled && (
+          <div className={styles.inputGroup} style={{ marginTop: '1rem' }}>
+            <label style={{ color: textColor }}>¿A quién deseas confirmar?</label>
+            <select
+              value={selectedContact}
+              onChange={(e) => setSelectedContact(e.target.value)}
+              className={styles.input}
+              style={{
+                borderColor: textColor,
+                color: textColor,
+                backgroundColor: "transparent",
+                padding: "0.75rem",
+                borderRadius: "8px",
+                width: "100%"
+              }}
+            >
+              {whatsapp.contacts!.map((c, i) => (
+                <option key={i} value={c.phone} style={{ color: '#000' }}>
+                  {c.label || `Contacto ${i + 1}`}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <button 
           type="submit" 

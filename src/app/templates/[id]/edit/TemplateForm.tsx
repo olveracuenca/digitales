@@ -514,9 +514,89 @@ export default function TemplateForm({
                 </div>
                 {data.visibility.rsvp && (
                   <div className={styles.moduleBody}>
-                    <p style={{fontSize: '0.875rem', color: 'var(--text-secondary)'}}>
+                    <p style={{fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1rem'}}>
                       Al habilitar esta opción, aparecerá un formulario público al final de la invitación para que los invitados puedan confirmar su asistencia. Podrás ver los resultados en el Panel de Administración.
                     </p>
+                    <label style={{fontSize:'0.875rem'}}>Número de WhatsApp para notificaciones (Opcional):</label>
+                    <input type="text" name="rsvpPhone" value={data.rsvpPhone || ''} onChange={handleChange} className={styles.input} placeholder="Ej. +521234567890" style={{marginTop:'0.5rem', marginBottom:'1rem'}} />
+                    
+                    <p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem'}}>
+                      <strong>Variables:</strong> Puedes usar <code>{`{{nombre}}`}</code> para el nombre del invitado y <code>{`{{evento}}`}</code> para el título del evento.
+                    </p>
+                    
+                    <label style={{fontSize:'0.875rem'}}>Mensaje de confirmación para WhatsApp:</label>
+                    <textarea 
+                      value={data.whatsappMessage || ''} 
+                      onChange={e => setData({...data, whatsappMessage: e.target.value})} 
+                      className={styles.input} 
+                      rows={2} 
+                      style={{marginTop:'0.5rem', marginBottom:'1rem'}}
+                      placeholder="Ej. ¡Hola! Confirmo la asistencia de {{nombre}} a {{evento}}." 
+                    />
+
+                    <label style={{fontSize:'0.875rem'}}>Mensaje de rechazo para WhatsApp:</label>
+                    <textarea 
+                      value={data.whatsappDeclineMessage || ''} 
+                      onChange={e => setData({...data, whatsappDeclineMessage: e.target.value})} 
+                      className={styles.input} 
+                      rows={2} 
+                      style={{marginTop:'0.5rem', marginBottom:'1.5rem'}}
+                      placeholder="Ej. ¡Hola! Lamentablemente {{nombre}} no podrá asistir a {{evento}}." 
+                    />
+
+                    <hr style={{border: 'none', borderTop: '1px solid var(--border-color)', margin: '1.5rem 0'}} />
+                    <h4 style={{fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.5rem'}}>Contactos Múltiples (Opcional)</h4>
+                    <p style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1rem'}}>
+                      Si deseas que el invitado pueda elegir a quién confirmar (ej. Novia, Novio, Mamá), agrega los contactos aquí. Si agregas contactos, estos reemplazarán al número general de arriba.
+                    </p>
+
+                    {(data.rsvpContacts || []).map((contact: any, index: number) => (
+                      <div key={index} style={{display: 'flex', gap: '0.5rem', marginBottom: '0.5rem'}}>
+                        <input
+                          type="text"
+                          placeholder="Etiqueta (Ej. Novio)"
+                          className={styles.input}
+                          value={contact.label}
+                          onChange={(e) => {
+                            const newContacts = [...(data.rsvpContacts || [])];
+                            newContacts[index].label = e.target.value;
+                            setData({ ...data, rsvpContacts: newContacts });
+                          }}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Teléfono"
+                          className={styles.input}
+                          value={contact.phone}
+                          onChange={(e) => {
+                            const newContacts = [...(data.rsvpContacts || [])];
+                            newContacts[index].phone = e.target.value;
+                            setData({ ...data, rsvpContacts: newContacts });
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className={styles.deleteBtn}
+                          onClick={() => {
+                            const newContacts = (data.rsvpContacts || []).filter((_: any, i: number) => i !== index);
+                            setData({ ...data, rsvpContacts: newContacts });
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                    
+                    {(!data.rsvpContacts || data.rsvpContacts.length < 3) && (
+                      <button 
+                        type="button"
+                        className={styles.secondaryBtn} 
+                        style={{marginTop: '0.5rem'}}
+                        onClick={() => setData({ ...data, rsvpContacts: [...(data.rsvpContacts || []), { label: "", phone: "" }] })}
+                      >
+                        + Agregar Contacto
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

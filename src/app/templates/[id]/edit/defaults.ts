@@ -18,7 +18,10 @@ export const getDefaultData = (id: string): TemplateData => {
     secondaryAddress: "",
     secondaryLocationUrl: "https://maps.google.com/?q=Iglesia+San+Juan",
     whatsapp: "",
+    whatsappMessage: "¡Hola! Confirmo la asistencia de {{nombre}} a {{evento}}. ¡Ahí nos vemos!",
+    whatsappDeclineMessage: "¡Hola! Lamentablemente {{nombre}} no podrá asistir a {{evento}}. ¡Gracias por la invitación!",
     rsvpPhone: "",
+    rsvpContacts: [],
     mainPhoto: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=1000",
     carouselPhotos: [
       "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=800",

@@ -1,6 +1,7 @@
 const fs = require('fs');
+const path = require('path');
 
-let editPath = 'd:/ia/cuencaolv-app/src/app/templates/[id]/edit/page.tsx';
+let editPath = path.join(__dirname, 'src/app/templates/[id]/edit/page.tsx');
 let editContent = fs.readFileSync(editPath, 'utf8');
 
 // Add address to getDefaultData base
@@ -26,7 +27,7 @@ editContent = editContent.replace(
 
 fs.writeFileSync(editPath, editContent);
 
-let invPath = 'd:/ia/cuencaolv-app/src/app/invitation/[slug]/page.tsx';
+let invPath = path.join(__dirname, 'src/app/invitation/[slug]/page.tsx');
 let invContent = fs.readFileSync(invPath, 'utf8');
 invContent = invContent.replace(
   /<p style=\{\{fontSize:\s*'13px',\s*fontWeight:\s*500,\s*lineHeight:\s*1\.4,\s*marginBottom:\s*'4px'\}\}>\{data\.location\}<\/p>/g,
