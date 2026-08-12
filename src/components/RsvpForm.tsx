@@ -42,7 +42,10 @@ export default function RsvpForm({
     if (res.success) {
       const targetPhone = hasMultipleContacts ? selectedContact : whatsapp?.number;
       if (whatsapp?.enabled && targetPhone) {
-        const cleanNumber = targetPhone.replace(/\D/g, '');
+        let cleanNumber = targetPhone.replace(/\D/g, '');
+        if (cleanNumber.length === 10) {
+          cleanNumber = '52' + cleanNumber;
+        }
         let rawMsg = status === "CONFIRMED" ? whatsapp.confirmMsg : whatsapp.declineMsg;
         const nameToUse = guestPass ? `${name}${guestPass.passCount > 1 ? ` (${guestPass.passCount} pases)` : ''}` : name;
         const msg = rawMsg.replace(/\{\{nombre\}\}/g, nameToUse);
