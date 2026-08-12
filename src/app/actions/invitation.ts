@@ -218,3 +218,55 @@ export async function getRsvps(invitationId: string) {
     return { success: false, error: "Error interno al cargar las confirmaciones" };
   }
 }
+
+export async function deleteRsvp(rsvpId: string) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) return { success: false, error: "No autorizado" };
+
+    const user = await prisma.user.findUnique({ where: { email: session.user.email } });
+    if (!user) return { success: false, error: "Usuario no encontrado" };
+
+    const rsvp = await prisma.rsvp.findUnique({
+      where: { id: rsvpId },
+      include: { invitation: true }
+    });
+
+    if (!rsvp || rsvp.invitation.userId !== user.id) {
+      return { success: false, error: "RSVP no encontrado o no autorizado" };
+    }
+
+    await prisma.rsvp.delete({
+      where: { id: rsvpId }
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting RSVP:", error);
+    return { success: false, error: "Error interno al eliminar la confirmación" };
+  }
+}
+
+export async function deleteAllRsvps(invitationId: string) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) return { success: false, error: "No autorizado" };
+
+    const user = await prisma.user.findUnique({ where: { email: session.user.email } });
+    if (!user) return { success: false, error: "Usuario no encontrado" };
+
+    const inv = await prisma.invitation.findUnique({ where: { id: invitationId } });
+    if (!inv || inv.userId !== user.id) {
+      return { success: false, error: "Invitación no encontrada o no autorizada" };
+    }
+
+    await prisma.rsvp.deleteMany({
+      where: { invitationId }
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting all RSVPs:", error);
+    return { success: false, error: "Error interno al vaciar las confirmaciones" };
+  }
+}

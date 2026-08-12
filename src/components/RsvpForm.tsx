@@ -47,7 +47,7 @@ export default function RsvpForm({
         const nameToUse = guestPass ? `${name}${guestPass.passCount > 1 ? ` (${guestPass.passCount} pases)` : ''}` : name;
         const msg = rawMsg.replace(/\{\{nombre\}\}/g, nameToUse);
         
-        window.open(`https://wa.me/${cleanNumber}?text=${encodeURIComponent(msg)}`, "_blank");
+        window.location.href = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(msg)}`;
       }
       setSubmitted(true);
     } else {

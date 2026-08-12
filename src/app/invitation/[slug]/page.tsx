@@ -73,7 +73,7 @@ export default async function PublicInvitation({
   const data = JSON.parse(invitation.data);
 
   // Mensajes para WhatsApp
-  const eventTitle = data.title || "el evento";
+  const eventTitle = data.eventName || data.title || "el evento";
   const defaultConfirm = "¡Hola! Confirmo la asistencia de {{nombre}} a {{evento}}. ¡Ahí nos vemos!";
   const defaultDecline = "¡Hola! Lamentablemente {{nombre}} no podrá asistir a {{evento}}. ¡Gracias por la invitación!";
   
@@ -82,7 +82,10 @@ export default async function PublicInvitation({
 
   const buildMsg = (template: string, name: string | null) => {
     let msg = template.replace(/\{\{evento\}\}/g, eventTitle);
-    msg = msg.replace(/\{\{nombre\}\}/g, name || "mi");
+    if (name) {
+      msg = msg.replace(/\{\{nombre\}\}/g, name);
+    }
+    // If name is null, we leave {{nombre}} intact so RsvpForm can replace it dynamically
     return msg;
   };
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createGuestPass, deleteGuestPass } from "@/app/actions/invitation";
+import { createGuestPass, deleteGuestPass, deleteRsvp, deleteAllRsvps } from "@/app/actions/invitation";
 import { Trash, Copy, Plus, Users, ArrowLeft, CheckCircle, XCircle, UserCheck } from "lucide-react";
 import Link from "next/link";
 import styles from "../../../users/users.module.css";
@@ -63,15 +63,43 @@ export default function GuestList({
     }
   };
 
+  const handleDeleteRsvp = async (rsvpId: string) => {
+    if (!confirm("¿Eliminar esta confirmación?")) return;
+    
+    const res = await deleteRsvp(rsvpId);
+    if (res.success) {
+      setRsvps(rsvps.filter((r: any) => r.id !== rsvpId));
+      router.refresh();
+    } else {
+      alert(res.error || "Error al eliminar la confirmación");
+    }
+  };
+
+  const handleDeleteAllRsvps = async () => {
+    if (!confirm("¿Estás seguro de que deseas eliminar TODAS las confirmaciones? Esta acción no se puede deshacer.")) return;
+    
+    setLoading(true);
+    const res = await deleteAllRsvps(invitationId);
+    setLoading(false);
+    
+    if (res.success) {
+      setRsvps([]);
+      router.refresh();
+      alert("Todas las confirmaciones han sido eliminadas.");
+    } else {
+      alert(res.error || "Error al eliminar las confirmaciones");
+    }
+  };
+
   const copyLink = (passId: string) => {
     const url = `${origin}/invitation/${invitationSlug}?t=${passId}`;
     navigator.clipboard.writeText(url);
     alert("¡Enlace copiado!");
   };
 
-  const confirmedCount = rsvps.filter(r => r.status === "CONFIRMED").length;
-  const declinedCount = rsvps.filter(r => r.status === "DECLINED").length;
-  const totalCompanions = rsvps.filter(r => r.status === "CONFIRMED").reduce((acc, r) => acc + (r.companions || 0), 0);
+  const confirmedCount = rsvps.filter((r: any) => r.status === "CONFIRMED").length;
+  const declinedCount = rsvps.filter((r: any) => r.status === "DECLINED").length;
+  const totalCompanions = rsvps.filter((r: any) => r.status === "CONFIRMED").reduce((acc: number, r: any) => acc + (r.companions || 0), 0);
   const totalAttending = confirmedCount + totalCompanions;
 
   return (
@@ -180,7 +208,7 @@ export default function GuestList({
                   </tr>
                 ) : (
                   passes.map(pass => {
-                    const rsvpForPass = rsvps.find(r => r.guestPassId === pass.id);
+                    const rsvpForPass = rsvps.find((r: any) => r.guestPassId === pass.id);
                     return (
                       <tr key={pass.id}>
                         <td style={{fontWeight: 600}}>{pass.name}</td>
@@ -228,6 +256,24 @@ export default function GuestList({
       {activeTab === "rsvps" && (
         <div className="animate-fade-in">
           
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <h3 style={{ margin: 0 }}>Resumen de Confirmaciones</h3>
+            {rsvps.length > 0 && (
+              <button 
+                onClick={handleDeleteAllRsvps} 
+                disabled={loading}
+                style={{ 
+                  display: 'flex', alignItems: 'center', gap: '0.5rem', 
+                  padding: '0.5rem 1rem', background: '#fee2e2', color: '#ef4444', 
+                  border: '1px solid #fca5a5', borderRadius: '6px', cursor: 'pointer',
+                  fontWeight: 600, fontSize: '0.85rem'
+                }}
+              >
+                <Trash size={16} /> {loading ? "Borrando..." : "Borrar Todo el Registro"}
+              </button>
+            )}
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
             <div style={{ background: 'var(--surface-color)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
               <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Total Personas Confirmadas</div>
@@ -259,17 +305,18 @@ export default function GuestList({
                   <th>Total Confirmados</th>
                   <th>Origen</th>
                   <th>Fecha</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {rsvps.length === 0 ? (
                   <tr>
-                    <td colSpan={6} style={{ textAlign: "center", padding: "3rem", color: "var(--text-secondary)" }}>
+                    <td colSpan={7} style={{ textAlign: "center", padding: "3rem", color: "var(--text-secondary)" }}>
                       Aún no hay respuestas de confirmación de asistencia.
                     </td>
                   </tr>
                 ) : (
-                  rsvps.map(rsvp => (
+                  rsvps.map((rsvp: any) => (
                     <tr key={rsvp.id}>
                       <td style={{fontWeight: 600}}>{rsvp.name}</td>
                       <td>
@@ -295,6 +342,11 @@ export default function GuestList({
                         )}
                       </td>
                       <td>{new Date(rsvp.createdAt).toLocaleString()}</td>
+                      <td>
+                        <button onClick={() => handleDeleteRsvp(rsvp.id)} className={styles.editBtn} style={{color: '#ef4444'}} title="Eliminar Confirmación">
+                          <Trash size={16} />
+                        </button>
+                      </td>
                     </tr>
                   ))
                 )}
