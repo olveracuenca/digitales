@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/authOptions";
 import Link from "next/link";
 import { ExternalLink, Copy, Edit, Trash, Users } from "lucide-react";
 import styles from "../users/users.module.css"; // Reuse table styles

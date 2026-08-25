@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import styles from "./admin.module.css";
-import { LayoutDashboard, Users, FileText, LogOut, Download } from "lucide-react";
+import { LayoutDashboard, Users, FileText, LogOut, Download, Wallet } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
@@ -44,6 +44,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link href="/admin/youtube-downloader" className={styles.navItem}>
             <Download size={20} />
             <span className={styles.sidebarText}>Descargar MP3</span>
+          </Link>
+          <Link href="/admin/finanzas" className={styles.navItem}>
+            <Wallet size={20} />
+            <span className={styles.sidebarText}>Finanzas</span>
           </Link>
         </nav>
         
