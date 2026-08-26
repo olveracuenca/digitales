@@ -5,7 +5,7 @@ class View {
     this.lucide = window.lucide;
   }
 
-  updateHero(currWeek, appState) {
+  updateHero(currWeek, appState, weeks, currIdx) {
     document.getElementById('currentWeekBadge').innerText = `Semana ${currWeek.num.toString().padStart(2, '0')}`;
     document.getElementById('currentDateRange').innerText = `${currWeek.periodStr} (${currWeek.monthStr})`;
 
@@ -26,9 +26,18 @@ class View {
     const realSpent = weekTx.reduce((acc, t) => acc + Number(t.monto), 0);
     document.getElementById('heroGastoReal').innerText = `$${realSpent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
     
-    const remanente = currWeek.baseIncome - realSpent;
-    document.getElementById('heroRemanente').innerText = `$${remanente.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
-    document.getElementById('heroRemanente').className = `text-2xl md:text-3xl font-black tracking-tight drop-shadow-md ${remanente >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+    // Compute cumulative rolling balance up to current week
+    let rollingBalance = 0;
+    for (let i = 0; i <= currIdx; i++) {
+        const w = weeks[i];
+        const wTxs = appState.transactions.filter(t => t.semanaNum === w.num);
+        const wGastado = wTxs.filter(t => t.tipo === 'GASTO').reduce((a, b) => a + Number(b.monto), 0);
+        const wIngresos = w.baseIncome + wTxs.filter(t => t.tipo === 'INGRESO').reduce((a, b) => a + Number(b.monto), 0);
+        rollingBalance += (wIngresos - wGastado);
+    }
+
+    document.getElementById('heroRemanente').innerText = `$${rollingBalance.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+    document.getElementById('heroRemanente').className = `text-2xl md:text-3xl font-black tracking-tight drop-shadow-md ${rollingBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
   }
 
   renderCharts(appState) {
@@ -106,16 +115,20 @@ class View {
     const query = (document.getElementById('filtroSemana')?.value || '').toLowerCase();
     container.innerHTML = '';
 
+    let rollingBalance = 0;
+
     weeks.forEach((w, idx) => {
       const isCurrent = idx === currentWeekIdx;
-      
-      const matchText = `${w.num} ${w.periodStr} ${w.monthStr} ${w.quincenaStr} ${w.scheduledItems.map(i=>i.name).join(' ')}`.toLowerCase();
-      if (query && !matchText.includes(query)) return;
 
       const weekTxs = appState.transactions.filter(t => t.semanaNum === w.num);
       const totalGastado = weekTxs.filter(t => t.tipo === 'GASTO').reduce((a, b) => a + Number(b.monto), 0);
       const totalIngresos = w.baseIncome + weekTxs.filter(t => t.tipo === 'INGRESO').reduce((a, b) => a + Number(b.monto), 0);
       const balance = totalIngresos - totalGastado;
+
+      rollingBalance += balance;
+      
+      const matchText = `${w.num} ${w.periodStr} ${w.monthStr} ${w.quincenaStr} ${w.scheduledItems.map(i=>i.name).join(' ')}`.toLowerCase();
+      if (query && !matchText.includes(query)) return;
 
       const card = document.createElement('div');
       card.className = `p-5 rounded-2xl border transition-all duration-300 hover:shadow-xl ${
@@ -182,8 +195,8 @@ class View {
             </div>
           </div>
 
-          <div class="flex items-center gap-4 sm:gap-6">
-            <div class="flex gap-4 text-xs font-medium">
+          <div class="flex items-center gap-2 sm:gap-4">
+            <div class="flex gap-4 text-xs font-medium mr-2">
               <div class="flex flex-col">
                 <span class="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Ingresos</span>
                 <span class="text-emerald-400/80">$${totalIngresos.toLocaleString()}</span>
@@ -193,9 +206,13 @@ class View {
                 <span class="text-rose-400/80">$${totalGastado.toLocaleString()}</span>
               </div>
             </div>
-            <div class="px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800/80 shadow-inner min-w-[100px] text-center flex flex-col justify-center">
-              <span class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-0.5">Balance</span>
+            <div class="px-3 sm:px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800/80 shadow-inner min-w-[80px] sm:min-w-[100px] text-center flex flex-col justify-center">
+              <span class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-0.5">Flujo Sem.</span>
               <span class="text-sm font-black ${balance >= 0 ? 'text-emerald-400' : 'text-rose-400'}">$${balance.toLocaleString()}</span>
+            </div>
+            <div class="px-3 sm:px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 shadow-inner min-w-[80px] sm:min-w-[100px] text-center flex flex-col justify-center">
+              <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Acumulado</span>
+              <span class="text-sm font-black ${rollingBalance >= 0 ? 'text-emerald-300' : 'text-rose-300'}">$${rollingBalance.toLocaleString()}</span>
             </div>
           </div>
         </div>

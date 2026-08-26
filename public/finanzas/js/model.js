@@ -1,19 +1,19 @@
 const INITIAL_DEBTS = [
   { id: 'deb-1', nombre: 'Carro Yaris', acreedor: 'Crédito Automotriz', inicial: 84000, mensual: 4000, dia: 15, quincena: 'Quincena 1', restante: 80000, fin: 'Mayo 2028', color: 'rose', pagadoEsteMes: false },
   { id: 'deb-2', nombre: 'Préstamo Carranza', acreedor: 'Préstamo Personal', inicial: 21500, mensual: 4000, dia: 30, quincena: 'Quincena 2', restante: 17500, fin: 'Febrero 2027', color: 'amber', pagadoEsteMes: false },
-  { id: 'deb-3', nombre: 'Préstamo Padre', acreedor: 'Deuda Familiar', inicial: 8000, mensual: 1100, dia: 20, quincena: 'Quincena 2', restante: 6900, fin: 'Abril 2027', color: 'teal', pagadoEsteMes: false },
-  { id: 'deb-4', nombre: 'Plan Celular (Equipo)', acreedor: 'Telefonía', inicial: 6300, mensual: 700, dia: 25, quincena: 'Quincena 2', restante: 6300, fin: 'Mayo 2027', color: 'indigo', pagadoEsteMes: false },
+  { id: 'deb-3', nombre: 'Préstamo Padre', acreedor: 'Deuda Familiar', inicial: 8000, mensual: 1100, dia: 20, quincena: 'Quincena 1', restante: 6900, fin: 'Abril 2027', color: 'teal', pagadoEsteMes: false },
+  { id: 'deb-4', nombre: 'Plan Celular (Equipo)', acreedor: 'Telefonía', inicial: 6300, mensual: 700, dia: 25, quincena: 'Quincena 1', restante: 6300, fin: 'Mayo 2027', color: 'indigo', pagadoEsteMes: false },
 ];
 
 const INITIAL_FIXED = [
-  { id: 'fix-1', concepto: 'Luz (CFE)', categoria: 'Servicios Hogar', monto: 500, dia: 10, quincena: 'Quincena 1', pagado: false },
-  { id: 'fix-2', concepto: 'Agua Potable', categoria: 'Servicios Hogar', monto: 300, dia: 12, quincena: 'Quincena 1', pagado: false },
-  { id: 'fix-3', concepto: 'Internet Fibra Hogar', categoria: 'Telecomunicaciones', monto: 1000, dia: 18, quincena: 'Quincena 2', pagado: false },
-  { id: 'fix-4', concepto: 'Gas Natural / LP', categoria: 'Servicios Hogar', monto: 50, dia: 22, quincena: 'Quincena 2', pagado: false },
-  { id: 'fix-5', concepto: 'Mandado / Despensa (Q1)', categoria: 'Alimentación', monto: 1400, dia: 1, quincena: 'Quincena 1', pagado: false },
-  { id: 'fix-6', concepto: 'Mandado / Despensa (Q2)', categoria: 'Alimentación', monto: 1400, dia: 16, quincena: 'Quincena 2', pagado: false },
-  { id: 'fix-7', concepto: 'Gasolina Vehículo (Q1)', categoria: 'Transporte', monto: 500, dia: 1, quincena: 'Quincena 1', pagado: false },
-  { id: 'fix-8', concepto: 'Gasolina Vehículo (Q2)', categoria: 'Transporte', monto: 500, dia: 16, quincena: 'Quincena 2', pagado: false },
+  { id: 'fix-1', concepto: 'Luz (CFE)', categoria: 'Servicios Hogar', monto: 500, dia: 10, quincena: 'Quincena 2', pagado: false },
+  { id: 'fix-2', concepto: 'Agua Potable', categoria: 'Servicios Hogar', monto: 300, dia: 12, quincena: 'Quincena 2', pagado: false },
+  { id: 'fix-3', concepto: 'Internet Fibra Hogar', categoria: 'Telecomunicaciones', monto: 1000, dia: 18, quincena: 'Quincena 1', pagado: false },
+  { id: 'fix-4', concepto: 'Gas Natural / LP', categoria: 'Servicios Hogar', monto: 50, dia: 22, quincena: 'Quincena 1', pagado: false },
+  { id: 'fix-5', concepto: 'Mandado / Despensa (Q1)', categoria: 'Alimentación', monto: 1400, dia: 1, quincena: 'Quincena 2', pagado: false },
+  { id: 'fix-6', concepto: 'Mandado / Despensa (Q2)', categoria: 'Alimentación', monto: 1400, dia: 16, quincena: 'Quincena 1', pagado: false },
+  { id: 'fix-7', concepto: 'Gasolina Vehículo (Q1)', categoria: 'Transporte', monto: 500, dia: 1, quincena: 'Quincena 2', pagado: false },
+  { id: 'fix-8', concepto: 'Gasolina Vehículo (Q2)', categoria: 'Transporte', monto: 500, dia: 16, quincena: 'Quincena 1', pagado: false },
 ];
 
 const INITIAL_TRANSACTIONS = [
@@ -51,6 +51,22 @@ class Model {
     if (saved) {
       try {
         this.appState = JSON.parse(saved);
+        
+        // MIGRATION: Accountant logic to align expenses to the correct paycheck
+        // If a bill is due between the 15th and 29th, it MUST be paid with the 15th paycheck (Quincena 1)
+        // If a bill is due between the 1st and 14th, or the 30th/31st, it MUST be paid with the 30th paycheck (Quincena 2)
+        const correctQuincena = (dia) => {
+            if (dia >= 15 && dia <= 29) return 'Quincena 1';
+            return 'Quincena 2';
+        };
+
+        if (this.appState.debts) {
+          this.appState.debts.forEach(d => { d.quincena = correctQuincena(d.dia); });
+        }
+        if (this.appState.fixedExpenses) {
+          this.appState.fixedExpenses.forEach(f => { f.quincena = correctQuincena(f.dia); });
+        }
+        
       } catch (e) {
         console.error("Error al cargar estado:", e);
       }
@@ -70,6 +86,13 @@ class Model {
 
   generate52Weeks() {
     const weeks = [];
+    
+    // Copy remaining balances to project them over the 52 weeks
+    const projectedDebts = {};
+    this.appState.debts.forEach(d => {
+      projectedDebts[d.id] = d.restante;
+    });
+
     for (let i = 0; i < 52; i++) {
       const wStart = new Date(START_DATE);
       wStart.setDate(START_DATE.getDate() + (i * 7));
@@ -85,6 +108,7 @@ class Model {
 
       const scheduledItems = [];
       let scheduledSum = 0;
+      let weekBaseIncome = 0;
 
       for (let d = 0; d < 7; d++) {
         const currentDay = new Date(wStart);
@@ -92,35 +116,48 @@ class Model {
         const dayVal = currentDay.getDate();
         const yrVal = currentDay.getFullYear();
         const moVal = currentDay.getMonth();
+        
+        const lastDayOfMonth = new Date(yrVal, moVal + 1, 0).getDate();
+        const isQ1Payday = dayVal === 15;
+        // Se paga el 30, o si el mes termina antes del 30 (como febrero) en el último día
+        const isQ2Payday = (dayVal === 30) || (dayVal === lastDayOfMonth && lastDayOfMonth < 30);
 
-        if (dayVal === 10) { scheduledItems.push({ key: `luz-${i}`, name: 'Luz CFE', monto: 500, type: 'fijo' }); scheduledSum += 500; }
-        if (dayVal === 12) { scheduledItems.push({ key: `agua-${i}`, name: 'Agua Potable', monto: 300, type: 'fijo' }); scheduledSum += 300; }
-        if (dayVal === 15) { scheduledItems.push({ key: `yaris-${i}`, name: 'Carro Yaris', monto: 4000, type: 'deuda', debtId: 'deb-1' }); scheduledSum += 4000; }
-        if (dayVal === 18) { scheduledItems.push({ key: `net-${i}`, name: 'Internet Fibra', monto: 1000, type: 'fijo' }); scheduledSum += 1000; }
-        if (dayVal === 20) {
-          if (yrVal === 2026 || (yrVal === 2027 && moVal <= 2)) {
-            scheduledItems.push({ key: `padre-${i}`, name: 'Préstamo Padre', monto: 1100, type: 'deuda', debtId: 'deb-3' });
-            scheduledSum += 1100;
-          } else if (yrVal === 2027 && moVal === 3) {
-            scheduledItems.push({ key: `padre-${i}`, name: 'Préstamo Padre (Finiquito)', monto: 300, type: 'deuda', debtId: 'deb-3' });
-            scheduledSum += 300;
-          }
+        if (isQ1Payday || isQ2Payday) {
+            weekBaseIncome += this.appState.sueldoMensual / 2;
         }
-        if (dayVal === 22) { scheduledItems.push({ key: `gas-${i}`, name: 'Gas LP/Natural', monto: 50, type: 'fijo' }); scheduledSum += 50; }
-        if (dayVal === 25) {
-          if (yrVal === 2026 || (yrVal === 2027 && moVal <= 4)) {
-            scheduledItems.push({ key: `cel-${i}`, name: 'Plan Celular', monto: 700, type: 'deuda', debtId: 'deb-4' });
-            scheduledSum += 700;
-          }
+
+        if (isQ1Payday) {
+            // Gastos fijos Q1
+            this.appState.fixedExpenses.filter(f => f.quincena === 'Quincena 1').forEach(f => {
+                scheduledItems.push({ key: `${f.id}-${i}`, name: f.concepto, monto: f.monto, type: 'fijo' });
+                scheduledSum += f.monto;
+            });
+            // Deudas Q1
+            this.appState.debts.filter(d => d.quincena === 'Quincena 1').forEach(deb => {
+                if (projectedDebts[deb.id] > 0) {
+                    const montoPagar = Math.min(projectedDebts[deb.id], deb.mensual);
+                    scheduledItems.push({ key: `${deb.id}-${i}`, name: deb.nombre + (projectedDebts[deb.id] <= deb.mensual ? ' (Finiquito)' : ''), monto: montoPagar, type: 'deuda', debtId: deb.id });
+                    scheduledSum += montoPagar;
+                    projectedDebts[deb.id] -= montoPagar;
+                }
+            });
         }
-        if (dayVal === 30 || (moVal === 1 && dayVal === 28)) {
-          if (yrVal === 2026) {
-            scheduledItems.push({ key: `carranza-${i}`, name: 'Préstamo Carranza', monto: 4000, type: 'deuda', debtId: 'deb-2' });
-            scheduledSum += 4000;
-          } else if (yrVal === 2027 && moVal === 0) {
-            scheduledItems.push({ key: `carranza-${i}`, name: 'Préstamo Carranza (Finiquito)', monto: 1500, type: 'deuda', debtId: 'deb-2' });
-            scheduledSum += 1500;
-          }
+
+        if (isQ2Payday) {
+            // Gastos fijos Q2
+            this.appState.fixedExpenses.filter(f => f.quincena === 'Quincena 2').forEach(f => {
+                scheduledItems.push({ key: `${f.id}-${i}`, name: f.concepto, monto: f.monto, type: 'fijo' });
+                scheduledSum += f.monto;
+            });
+            // Deudas Q2
+            this.appState.debts.filter(d => d.quincena === 'Quincena 2').forEach(deb => {
+                if (projectedDebts[deb.id] > 0) {
+                    const montoPagar = Math.min(projectedDebts[deb.id], deb.mensual);
+                    scheduledItems.push({ key: `${deb.id}-${i}`, name: deb.nombre + (projectedDebts[deb.id] <= deb.mensual ? ' (Finiquito)' : ''), monto: montoPagar, type: 'deuda', debtId: deb.id });
+                    scheduledSum += montoPagar;
+                    projectedDebts[deb.id] -= montoPagar;
+                }
+            });
         }
       }
 
@@ -133,7 +170,7 @@ class Model {
         quincenaStr: `Quincena ${qNum} (${MONTH_NAMES[mNum].slice(0,3)})`,
         scheduledItems,
         scheduledSum,
-        baseIncome: 5000
+        baseIncome: weekBaseIncome
       });
     }
     return weeks;

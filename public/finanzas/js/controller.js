@@ -11,7 +11,7 @@ class Controller {
     const currIdx = this.model.getCurrentWeekIndex();
     const currWeek = weeks[currIdx];
 
-    this.view.updateHero(currWeek, this.model.appState);
+    this.view.updateHero(currWeek, this.model.appState, weeks, currIdx);
     this.view.renderCharts(this.model.appState);
     this.view.renderWeeks(weeks, currIdx, this.model.appState, this.handleTogglePayment.bind(this));
     this.view.renderDebts(this.model.appState, this.handleQuickPay.bind(this));
