@@ -16,31 +16,164 @@ class View {
       const itemNames = currWeek.scheduledItems.map(x => `<strong class="text-white">${x.name} ($${x.monto.toLocaleString()})</strong>`).join(', ');
       document.getElementById('heroVencimientosTexto').innerHTML = `Vencimientos programados esta semana: ${itemNames}`;
     } else {
-      document.getElementById('heroVencimientosTexto').innerHTML = `Sin vencimientos de deudas programados esta semana. Mantén tu flujo en orden.`;
+      document.getElementById('heroVencimientosTexto').innerHTML = `Sin vencimientos programados esta semana. Mantén tu flujo en orden.`;
     }
 
-    const totalDeuda = appState.debts.reduce((acc, d) => acc + (d.restante > 0 ? d.restante : 0), 0);
-    document.getElementById('kpiDeudaTotal').innerText = `$${totalDeuda.toLocaleString()}`;
+    // Calculations for KPIs
+    const sueldo = Number(appState.sueldoMensual) || 20000;
+    const totalFixedMonthly = (appState.fixedExpenses || []).reduce((a, f) => a + Number(f.monto), 0);
+    const totalDebtsMonthly = (appState.debts || []).filter(d => d.restante > 0).reduce((a, d) => a + Number(d.mensual), 0);
+    const totalCommitted = totalFixedMonthly + totalDebtsMonthly;
+    const disponible = Math.max(0, sueldo - totalCommitted);
+    const pctCommitted = sueldo > 0 ? ((totalCommitted / sueldo) * 100).toFixed(1) : '0';
 
-    const weekTx = appState.transactions.filter(t => Number(t.semanaNum) === currWeek.num && t.tipo === 'GASTO');
+    const kpiSueldo = document.getElementById('kpiSueldo');
+    if (kpiSueldo) kpiSueldo.innerText = `$${sueldo.toLocaleString()}`;
+
+    const kpiSueldoSub = document.getElementById('kpiSueldoSubtitle');
+    if (kpiSueldoSub) kpiSueldoSub.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> $${(sueldo / 2).toLocaleString()} quincenal`;
+
+    const kpiFijos = document.getElementById('kpiFijos');
+    if (kpiFijos) kpiFijos.innerText = `$${totalCommitted.toLocaleString()}`;
+
+    const kpiFijosSub = document.getElementById('kpiFijosSubtitle');
+    if (kpiFijosSub) kpiFijosSub.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> ${pctCommitted}% comprometido`;
+
+    const kpiDisp = document.getElementById('kpiDisponible');
+    if (kpiDisp) kpiDisp.innerText = `$${disponible.toLocaleString()}`;
+
+    const totalDeuda = (appState.debts || []).reduce((acc, d) => acc + (d.restante > 0 ? Number(d.restante) : 0), 0);
+    const kpiDeuda = document.getElementById('kpiDeudaTotal');
+    if (kpiDeuda) kpiDeuda.innerText = `$${totalDeuda.toLocaleString()}`;
+
+    // Calculate next debt payoff milestone
+    const activeDebts = (appState.debts || []).filter(d => d.restante > 0 && d.mensual > 0);
+    const kpiProximoHito = document.getElementById('kpiProximoHito');
+    if (kpiProximoHito) {
+      if (activeDebts.length > 0) {
+        activeDebts.sort((a, b) => (a.restante / a.mensual) - (b.restante / b.mensual));
+        const nextDebt = activeDebts[0];
+        const monthsToPay = Math.ceil(nextDebt.restante / nextDebt.mensual);
+        const targetDate = new Date(START_DATE);
+        targetDate.setMonth(targetDate.getMonth() + monthsToPay);
+        const mName = MONTH_NAMES[targetDate.getMonth()].slice(0, 3);
+        const yShort = String(targetDate.getFullYear()).slice(2);
+        kpiProximoHito.innerText = `Próx: ${nextDebt.nombre} (${mName} '${yShort})`;
+      } else {
+        kpiProximoHito.innerText = `¡Sin deudas activas! 🎉`;
+      }
+    }
+
+    const weekTx = (appState.transactions || []).filter(t => Number(t.semanaNum) === currWeek.num && t.tipo === 'GASTO');
     const realSpent = weekTx.reduce((acc, t) => acc + Number(t.monto), 0);
-    document.getElementById('heroGastoReal').innerText = `$${realSpent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+    const heroGastoReal = document.getElementById('heroGastoReal');
+    if (heroGastoReal) heroGastoReal.innerText = `$${realSpent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
     
     // Compute cumulative rolling balance up to current week
     let rollingBalance = 0;
     for (let i = 0; i <= currIdx; i++) {
         const w = weeks[i];
-        const wTxs = appState.transactions.filter(t => Number(t.semanaNum) === w.num);
+        const wTxs = (appState.transactions || []).filter(t => Number(t.semanaNum) === w.num);
         const wGastado = wTxs.filter(t => t.tipo === 'GASTO').reduce((a, b) => a + Number(b.monto), 0);
         const wIngresos = w.baseIncome + wTxs.filter(t => t.tipo === 'INGRESO').reduce((a, b) => a + Number(b.monto), 0);
         rollingBalance += (wIngresos - wGastado);
     }
 
-    document.getElementById('heroRemanente').innerText = `$${rollingBalance.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
-    document.getElementById('heroRemanente').className = `text-2xl md:text-3xl font-black tracking-tight drop-shadow-md ${rollingBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+    const heroRem = document.getElementById('heroRemanente');
+    if (heroRem) {
+      heroRem.innerText = `$${rollingBalance.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+      heroRem.className = `text-2xl md:text-3xl font-black tracking-tight drop-shadow-md ${rollingBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+    }
+
+    // Render Dynamic Milestones
+    this.renderMilestones(appState);
+  }
+
+  renderMilestones(appState) {
+    const container = document.getElementById('milestonesContainer');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const debts = (appState.debts || []).map(d => {
+      const isLiq = d.restante <= 0;
+      const months = d.mensual > 0 ? Math.ceil(d.restante / d.mensual) : 0;
+      return {
+        ...d,
+        isLiq,
+        months
+      };
+    }).sort((a, b) => a.months - b.months);
+
+    const colors = ['amber', 'teal', 'indigo', 'rose', 'sky', 'emerald'];
+    let totalLiberado = 0;
+
+    const cardsToShow = debts.slice(0, 3);
+    cardsToShow.forEach((d, idx) => {
+      totalLiberado += Number(d.mensual);
+      const color = colors[idx % colors.length];
+
+      const targetDate = new Date(START_DATE);
+      targetDate.setMonth(targetDate.getMonth() + d.months);
+      const mName = MONTH_NAMES[targetDate.getMonth()];
+      const yFull = targetDate.getFullYear();
+
+      const colorBorders = {
+        amber: 'bg-amber-500',
+        teal: 'bg-teal-500',
+        indigo: 'bg-indigo-500',
+        rose: 'bg-rose-500',
+        sky: 'bg-sky-500',
+        emerald: 'bg-emerald-500'
+      };
+
+      const card = document.createElement('div');
+      card.className = "bg-slate-900 p-4 rounded-xl border border-slate-800/80 relative overflow-hidden group";
+      card.innerHTML = `
+        <div class="absolute top-0 left-0 w-1 h-full ${colorBorders[color]}"></div>
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">${idx + 1}. ${d.nombre}</p>
+            <p class="text-sm font-black text-white mt-1">${d.isLiq ? '¡Liquidada! 🎉' : `${mName} ${yFull}`}</p>
+            <p class="text-xs text-${color}-400 font-bold mt-2">+${Number(d.mensual).toLocaleString()} / mes</p>
+          </div>
+          <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-1 rounded font-bold">${d.isLiq ? 'Completado' : `En ${d.months}m`}</span>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    // 4th Card: Total Liberado
+    const allDebtsMonthly = (appState.debts || []).reduce((acc, d) => acc + Number(d.mensual), 0);
+    const summaryCard = document.createElement('div');
+    summaryCard.className = "bg-gradient-to-br from-emerald-900/60 to-slate-900 p-4 rounded-xl border border-emerald-500/40 relative overflow-hidden shadow-[0_0_15px_rgba(16,185,129,0.1)]";
+    summaryCard.innerHTML = `
+      <div class="absolute top-0 left-0 w-1 h-full bg-emerald-400"></div>
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-[11px] text-emerald-300/80 font-bold uppercase tracking-wider">Flujo Total a Liberar</p>
+          <p class="text-sm font-medium text-slate-200 mt-1">Al liquidar tus compromisos</p>
+          <p class="text-lg font-black text-emerald-400 mt-1">+$${allDebtsMonthly.toLocaleString()} / mes</p>
+        </div>
+        <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+          <i data-lucide="check-check" class="w-4 h-4 text-emerald-400"></i>
+        </div>
+      </div>
+    `;
+    container.appendChild(summaryCard);
+
+    if (this.lucide) this.lucide.createIcons();
   }
 
   renderCharts(appState) {
+    const sueldo = Number(appState.sueldoMensual) || 20000;
+    const totalFixed = (appState.fixedExpenses || []).reduce((a, f) => a + Number(f.monto), 0);
+    const totalDebtsMonthly = (appState.debts || []).filter(d => d.restante > 0).reduce((a, d) => a + Number(d.mensual), 0);
+    const totalCommitted = totalFixed + totalDebtsMonthly;
+
+    const badge = document.getElementById('chartPresupuestoBadge');
+    if (badge) badge.innerText = `$${sueldo.toLocaleString()} Base`;
+
+    // 1. Donut Chart
     const ctx1 = document.getElementById('chartPresupuesto').getContext('2d');
     if (this.chartPresupuestoInstance) this.chartPresupuestoInstance.destroy();
 
@@ -49,7 +182,7 @@ class View {
       data: {
         labels: ['Gastos Fijos & Deudas', 'Ahorro / Metas', 'Gustos & Ocio', 'Fondo Imprevistos'],
         datasets: [{
-          data: [15450, appState.ahorroMeta, appState.gustosMeta, appState.imprevistosMeta],
+          data: [totalCommitted, appState.ahorroMeta || 2000, appState.gustosMeta || 1500, appState.imprevistosMeta || 1050],
           backgroundColor: ['#f43f5e', '#10b981', '#a855f7', '#0ea5e9'],
           borderColor: '#0f172a',
           borderWidth: 2,
@@ -66,12 +199,37 @@ class View {
       }
     });
 
+    // 2. Line Chart (Dynamic projection calculation)
     const ctx2 = document.getElementById('chartProyeccion').getContext('2d');
     if (this.chartProyeccionInstance) this.chartProyeccionInstance.destroy();
 
-    const labels = ['Ago', 'Sep', 'Oct', 'Nov', 'Dic', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-    const deudaData = [115800, 106000, 96200, 86400, 76600, 66800, 59500, 53700, 48700, 44000, 40000, 36000, 32000, 28000, 24000, 20000, 16000];
-    const ahorroData = [1000, 3000, 5000, 7000, 13000, 15000, 19500, 25500, 32300, 39400, 47200, 55000, 62800, 70600, 78400, 86200, 100200];
+    const labels = [];
+    const deudaData = [];
+    const ahorroData = [];
+
+    const simDebts = (appState.debts || []).map(d => ({ restante: Number(d.restante), mensual: Number(d.mensual) }));
+    const metaAhorro = Number(appState.ahorroMeta) || 2000;
+    let accumulatedSavings = 0;
+
+    for (let m = 0; m < 16; m++) {
+      const dObj = new Date(START_DATE);
+      dObj.setMonth(dObj.getMonth() + m);
+      labels.push(MONTH_NAMES[dObj.getMonth()].slice(0, 3));
+
+      // Calculate sum of remaining debts at month m
+      const currentDeudaSum = simDebts.reduce((sum, d) => sum + Math.max(0, d.restante), 0);
+      deudaData.push(currentDeudaSum);
+
+      accumulatedSavings += metaAhorro;
+      ahorroData.push(accumulatedSavings);
+
+      // Advance one month for simulation
+      simDebts.forEach(d => {
+        if (d.restante > 0) {
+          d.restante = Math.max(0, d.restante - d.mensual);
+        }
+      });
+    }
 
     this.chartProyeccionInstance = new Chart(ctx2, {
       type: 'line',
@@ -120,7 +278,7 @@ class View {
     weeks.forEach((w, idx) => {
       const isCurrent = idx === currentWeekIdx;
 
-      const weekTxs = appState.transactions.filter(t => Number(t.semanaNum) === w.num);
+      const weekTxs = (appState.transactions || []).filter(t => Number(t.semanaNum) === w.num);
       const totalGastado = weekTxs.filter(t => t.tipo === 'GASTO').reduce((a, b) => a + Number(b.monto), 0);
       const totalIngresos = w.baseIncome + weekTxs.filter(t => t.tipo === 'INGRESO').reduce((a, b) => a + Number(b.monto), 0);
       const balance = totalIngresos - totalGastado;
@@ -160,7 +318,7 @@ class View {
                       </div>
                       <div>
                         <p class="text-sm font-bold ${isPaid ? 'text-emerald-100' : 'text-slate-200'}">${item.name}</p>
-                        <p class="text-xs ${isPaid ? 'text-emerald-400/80' : 'text-slate-400'} font-medium">$${item.monto.toLocaleString()} MXN</p>
+                        <p class="text-xs ${isPaid ? 'text-emerald-400/80' : 'text-slate-400'} font-medium">$${Number(item.monto).toLocaleString()} MXN</p>
                       </div>
                     </div>
                     <button data-action="toggle-payment" data-key="${itemPaidKey}" data-name="${item.name}" data-monto="${item.monto}" data-sem="${w.num}" data-debt="${item.debtId || ''}" data-cat="${item.categoria || (item.debtId ? 'Deuda' : 'Servicios Hogar')}"
@@ -239,79 +397,161 @@ class View {
     if (this.lucide) this.lucide.createIcons();
   }
 
-  renderDebts(appState, quickPayCallback) {
+  renderDebts(debts, callbacks) {
     const container = document.getElementById('debtsContainer');
+    if (!container) return;
     container.innerHTML = '';
 
-    appState.debts.forEach(d => {
-      const isLiquidada = d.restante <= 0;
-      const progressPct = Math.min(100, Math.round(((d.inicial - d.restante) / d.inicial) * 100));
+    if (!debts || debts.length === 0) {
+      container.innerHTML = `
+        <div class="col-span-2 text-center p-8 bg-slate-900/40 rounded-2xl border border-slate-800">
+          <p class="text-sm font-bold text-white">No tienes deudas registradas</p>
+          <p class="text-xs text-slate-400 mt-1">Usa el botón "+ Nueva Deuda" para agregar compromisos financieros.</p>
+        </div>
+      `;
+      return;
+    }
+
+    debts.forEach(d => {
+      const isLiquidada = d.isLiquidada || d.restante <= 0;
+      const progressPct = d.progresoPct !== undefined ? d.progresoPct : (d.inicial > 0 ? Math.min(100, Math.round(((d.inicial - d.restante) / d.inicial) * 100)) : 100);
+      const pagado = d.pagado !== undefined ? d.pagado : Math.max(0, d.inicial - d.restante);
+
+      const colorStyles = {
+        rose: { iconBg: 'bg-rose-500/20', iconText: 'text-rose-400', barGrad: 'from-rose-600 to-rose-400', badge: 'bg-rose-500/20 text-rose-300 border-rose-500/30' },
+        amber: { iconBg: 'bg-amber-500/20', iconText: 'text-amber-400', barGrad: 'from-amber-600 to-amber-400', badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
+        teal: { iconBg: 'bg-teal-500/20', iconText: 'text-teal-400', barGrad: 'from-teal-600 to-teal-400', badge: 'bg-teal-500/20 text-teal-300 border-teal-500/30' },
+        indigo: { iconBg: 'bg-indigo-500/20', iconText: 'text-indigo-400', barGrad: 'from-indigo-600 to-indigo-400', badge: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' },
+        emerald: { iconBg: 'bg-emerald-500/20', iconText: 'text-emerald-400', barGrad: 'from-emerald-600 to-emerald-400', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
+        sky: { iconBg: 'bg-sky-500/20', iconText: 'text-sky-400', barGrad: 'from-sky-600 to-sky-400', badge: 'bg-sky-500/20 text-sky-300 border-sky-500/30' },
+        purple: { iconBg: 'bg-purple-500/20', iconText: 'text-purple-400', barGrad: 'from-purple-600 to-purple-400', badge: 'bg-purple-500/20 text-purple-300 border-purple-500/30' }
+      };
+
+      const style = colorStyles[d.color] || colorStyles.indigo;
 
       const card = document.createElement('div');
       card.className = `p-5 rounded-2xl border transition-all duration-300 hover:shadow-lg ${
         isLiquidada 
-          ? 'bg-emerald-950/20 border-emerald-500/30' 
-          : 'bg-slate-900/50 backdrop-blur-md border-slate-800 hover:border-slate-700'
+          ? 'bg-emerald-950/20 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.08)]' 
+          : 'bg-slate-900/60 backdrop-blur-md border-slate-800 hover:border-slate-700'
       }`;
 
       card.innerHTML = `
-        <div class="flex items-start justify-between">
-          <div>
-            <div class="flex items-center gap-2.5 mb-1">
-              <div class="w-8 h-8 rounded-full flex items-center justify-center ${isLiquidada ? 'bg-emerald-500/20' : 'bg-indigo-500/20'}">
-                <i data-lucide="${isLiquidada ? 'party-popper' : 'credit-card'}" class="w-4 h-4 ${isLiquidada ? 'text-emerald-400' : 'text-indigo-400'}"></i>
-              </div>
-              <h4 class="text-base font-bold text-white">${d.nombre}</h4>
-              <span class="text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wide uppercase ${
-                isLiquidada ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-              }">${isLiquidada ? 'Liquidada' : 'Activa'}</span>
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl flex items-center justify-center ${isLiquidada ? 'bg-emerald-500/20' : style.iconBg}">
+              <i data-lucide="${isLiquidada ? 'party-popper' : 'credit-card'}" class="w-5 h-5 ${isLiquidada ? 'text-emerald-400' : style.iconText}"></i>
             </div>
-            <p class="text-xs text-slate-400 font-medium pl-10">${d.acreedor} • Corte: ${d.quincena}</p>
+            <div>
+              <div class="flex items-center gap-2">
+                <h4 class="text-base font-black text-white">${d.nombre}</h4>
+                <span class="text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wide uppercase ${
+                  isLiquidada ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : style.badge
+                }">${isLiquidada ? 'Liquidada' : 'Activa'}</span>
+              </div>
+              <p class="text-xs text-slate-400 font-medium mt-0.5">${d.acreedor} • Corte: ${d.quincena} (Día ${d.dia})</p>
+            </div>
           </div>
-          <div class="text-right flex flex-col justify-between h-full">
-            <p class="text-sm font-black text-white">$${d.mensual.toLocaleString()} <span class="text-[10px] text-slate-400 font-normal">/ mes</span></p>
-            <p class="text-[10px] text-slate-400 mt-1">Fin: <strong class="text-slate-300">${d.fin}</strong></p>
+          
+          <div class="flex items-center gap-1.5">
+            <button data-action="edit-debt" data-id="${d.id}" title="Editar deuda" class="p-1.5 rounded-lg text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-700 transition">
+              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+            </button>
+            <button data-action="delete-debt" data-id="${d.id}" title="Eliminar deuda" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
           </div>
         </div>
 
-        <div class="mt-5 pl-10">
-          <div class="flex justify-between text-xs font-bold mb-2">
-            <span class="text-slate-400">Restante: <span class="text-white text-sm">$${d.restante.toLocaleString()}</span></span>
-            <span class="${isLiquidada ? 'text-emerald-400' : 'text-indigo-400'} bg-slate-950 px-2 py-0.5 rounded-md">${progressPct}% Pagado</span>
+        <!-- 3 Summary Metrics: Inicial, Abonado, Restante -->
+        <div class="grid grid-cols-3 gap-2 mt-4 p-3 bg-slate-950/80 rounded-xl border border-slate-800/80 text-center">
+          <div>
+            <p class="text-[9px] text-slate-500 uppercase font-bold tracking-wider">Monto Inicial</p>
+            <p class="text-xs sm:text-sm font-black text-slate-300 mt-0.5">$${Number(d.inicial).toLocaleString()}</p>
           </div>
-          <div class="w-full h-2.5 bg-slate-950/80 rounded-full overflow-hidden border border-slate-800/50 shadow-inner">
-            <div class="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 rounded-full transition-all duration-1000 ease-out" style="width: ${progressPct}%"></div>
+          <div class="border-x border-slate-800">
+            <p class="text-[9px] text-emerald-500 uppercase font-bold tracking-wider">Abonado</p>
+            <p class="text-xs sm:text-sm font-black text-emerald-400 mt-0.5">$${Number(pagado).toLocaleString()}</p>
+          </div>
+          <div>
+            <p class="text-[9px] text-rose-500 uppercase font-bold tracking-wider">Restante</p>
+            <p class="text-xs sm:text-sm font-black text-white mt-0.5">$${Number(d.restante).toLocaleString()}</p>
           </div>
         </div>
 
-        <div class="mt-5 pt-4 border-t border-slate-800/50 flex flex-col sm:flex-row items-center justify-between gap-3 pl-10">
-          <span class="text-xs font-medium text-slate-400 bg-slate-950/50 px-3 py-1.5 rounded-lg border border-slate-800/50">Monto Inicial: $${d.inicial.toLocaleString()}</span>
+        <!-- Progress Bar -->
+        <div class="mt-4">
+          <div class="flex justify-between text-xs font-bold mb-1.5">
+            <span class="text-slate-400 text-[11px]">${d.mensual > 0 ? `$${Number(d.mensual).toLocaleString()} / mes` : ''} • Fin: <span class="text-slate-200">${d.fin}</span></span>
+            <span class="${isLiquidada ? 'text-emerald-400' : 'text-indigo-400'} font-black">${progressPct}% Pagado</span>
+          </div>
+          <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800 shadow-inner">
+            <div class="h-full bg-gradient-to-r ${isLiquidada ? 'from-emerald-600 to-emerald-400' : 'from-indigo-600 to-emerald-400'} rounded-full transition-all duration-700" style="width: ${progressPct}%"></div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-4 pt-3 border-t border-slate-800/60 flex flex-wrap items-center justify-between gap-2">
           ${!isLiquidada ? `
-            <button data-action="quick-pay" data-id="${d.id}" class="w-full sm:w-auto text-xs font-bold px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white transition-all shadow-lg shadow-emerald-900/30 active:scale-95 flex items-center justify-center gap-2">
-              <i data-lucide="zap" class="w-4 h-4"></i> Abono Rápido ($${d.mensual.toLocaleString()})
+            <button data-action="quick-pay" data-id="${d.id}" class="flex-1 text-xs font-black py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-slate-950 transition-all shadow-md shadow-emerald-900/30 active:scale-95 flex items-center justify-center gap-1.5">
+              <i data-lucide="zap" class="w-3.5 h-3.5 stroke-[3]"></i> Abono Rápido ($${Number(d.mensual).toLocaleString()})
+            </button>
+            <button data-action="custom-abono" data-id="${d.id}" class="text-xs font-bold py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white transition-all border border-slate-700 active:scale-95 flex items-center justify-center gap-1.5">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Abonar
             </button>
           ` : `
-            <span class="text-xs font-bold text-emerald-400 flex items-center gap-1"><i data-lucide="check-check" class="w-4 h-4"></i> Deuda saldada</span>
+            <span class="text-xs font-black text-emerald-400 flex items-center gap-1.5 py-1">
+              <i data-lucide="check-check" class="w-4 h-4"></i> Deuda totalmente saldada
+            </span>
           `}
         </div>
       `;
       container.appendChild(card);
     });
 
-    document.querySelectorAll('[data-action="quick-pay"]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        quickPayCallback(e.currentTarget.dataset.id);
-      });
-    });
+    // Attach event handlers
+    if (callbacks) {
+      if (callbacks.onQuickPay) {
+        document.querySelectorAll('[data-action="quick-pay"]').forEach(btn => {
+          btn.addEventListener('click', (e) => callbacks.onQuickPay(e.currentTarget.dataset.id));
+        });
+      }
+      if (callbacks.onCustomAbono) {
+        document.querySelectorAll('[data-action="custom-abono"]').forEach(btn => {
+          btn.addEventListener('click', (e) => callbacks.onCustomAbono(e.currentTarget.dataset.id));
+        });
+      }
+      if (callbacks.onEditDebt) {
+        document.querySelectorAll('[data-action="edit-debt"]').forEach(btn => {
+          btn.addEventListener('click', (e) => callbacks.onEditDebt(e.currentTarget.dataset.id));
+        });
+      }
+      if (callbacks.onDeleteDebt) {
+        document.querySelectorAll('[data-action="delete-debt"]').forEach(btn => {
+          btn.addEventListener('click', (e) => callbacks.onDeleteDebt(e.currentTarget.dataset.id));
+        });
+      }
+    }
 
     if (this.lucide) this.lucide.createIcons();
   }
 
-  renderFixedExpenses(appState) {
+  renderFixedExpenses(fixedExpenses, callbacks) {
     const container = document.getElementById('fixedExpensesContainer');
+    if (!container) return;
     container.innerHTML = '';
 
-    appState.fixedExpenses.forEach(f => {
+    if (!fixedExpenses || fixedExpenses.length === 0) {
+      container.innerHTML = `
+        <div class="col-span-full text-center p-8 bg-slate-900/40 rounded-2xl border border-slate-800">
+          <p class="text-sm font-bold text-white">No tienes gastos fijos registrados</p>
+          <p class="text-xs text-slate-400 mt-1">Usa el botón "+ Nuevo Fijo" para registrar tus compromisos recurrentes.</p>
+        </div>
+      `;
+      return;
+    }
+
+    fixedExpenses.forEach(f => {
       const card = document.createElement('div');
       card.className = "bg-slate-900/60 backdrop-blur p-4 rounded-2xl border border-slate-800/80 hover:border-slate-700 transition flex items-center justify-between group";
       card.innerHTML = `
@@ -320,17 +560,41 @@ class View {
             <i data-lucide="receipt-text" class="w-5 h-5 text-slate-400 group-hover:text-emerald-400 transition-colors"></i>
           </div>
           <div>
-            <p class="text-sm font-bold text-white">${f.concepto}</p>
-            <p class="text-[11px] text-slate-400 font-medium">${f.categoria} • Día ${f.dia}</p>
+            <p class="text-sm font-bold text-white leading-tight">${f.concepto}</p>
+            <p class="text-[11px] text-slate-400 font-medium mt-0.5">${f.categoria} • Día ${f.dia}</p>
           </div>
         </div>
-        <div class="text-right">
-          <p class="text-sm font-black text-emerald-400">$${f.monto.toLocaleString()}</p>
-          <span class="text-[9px] bg-slate-950 text-slate-300 px-2 py-0.5 rounded border border-slate-800/50 uppercase tracking-wider font-bold">${f.quincena === 'Quincena 1' ? 'Q1' : 'Q2'}</span>
+        <div class="flex items-center gap-2">
+          <div class="text-right">
+            <p class="text-sm font-black text-emerald-400">$${Number(f.monto).toLocaleString()}</p>
+            <span class="text-[9px] bg-slate-950 text-slate-300 px-2 py-0.5 rounded border border-slate-800/50 uppercase tracking-wider font-bold">${f.quincena === 'Quincena 1' ? 'Q1' : 'Q2'}</span>
+          </div>
+          <div class="flex flex-col gap-1 ml-2">
+            <button data-action="edit-fixed" data-id="${f.id}" title="Editar gasto fijo" class="p-1 rounded-lg text-slate-500 hover:text-white hover:bg-slate-800 transition">
+              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+            </button>
+            <button data-action="delete-fixed" data-id="${f.id}" title="Eliminar gasto fijo" class="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
         </div>
       `;
       container.appendChild(card);
     });
+
+    if (callbacks) {
+      if (callbacks.onEditFixed) {
+        document.querySelectorAll('[data-action="edit-fixed"]').forEach(btn => {
+          btn.addEventListener('click', (e) => callbacks.onEditFixed(e.currentTarget.dataset.id));
+        });
+      }
+      if (callbacks.onDeleteFixed) {
+        document.querySelectorAll('[data-action="delete-fixed"]').forEach(btn => {
+          btn.addEventListener('click', (e) => callbacks.onDeleteFixed(e.currentTarget.dataset.id));
+        });
+      }
+    }
+
     if (this.lucide) this.lucide.createIcons();
   }
 
@@ -339,32 +603,39 @@ class View {
     const noMsg = document.getElementById('noTransactionsMsg');
     const catFilter = document.getElementById('filterCategory')?.value || 'ALL';
 
+    if (!tbody) return;
     tbody.innerHTML = '';
-    const filtered = appState.transactions.filter(t => catFilter === 'ALL' || t.categoria === catFilter);
+    const filtered = (appState.transactions || []).filter(t => catFilter === 'ALL' || t.categoria === catFilter);
 
     if (filtered.length === 0) {
-      noMsg.classList.remove('hidden');
+      if (noMsg) noMsg.classList.remove('hidden');
       return;
     } else {
-      noMsg.classList.add('hidden');
+      if (noMsg) noMsg.classList.add('hidden');
     }
 
     filtered.forEach(t => {
       const tr = document.createElement('tr');
       tr.className = "hover:bg-slate-800/40 transition-colors border-b border-slate-800/50 last:border-0";
       const isIngreso = t.tipo === 'INGRESO';
+      const isDeuda = t.categoria === 'Deuda';
+
+      let catBadge = `<span class="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 bg-slate-900 rounded-full border border-slate-800 text-slate-300"><i data-lucide="tag" class="w-3 h-3"></i> ${t.categoria}</span>`;
+      if (isDeuda) {
+        catBadge = `<span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 bg-indigo-500/20 rounded-full border border-indigo-500/30 text-indigo-300"><i data-lucide="credit-card" class="w-3 h-3 text-indigo-400"></i> ${t.categoria}</span>`;
+      }
 
       tr.innerHTML = `
-        <td class="py-3 px-4 text-xs text-slate-400 font-medium">${t.fecha}</td>
-        <td class="py-3 px-4"><span class="bg-slate-900 border border-slate-700 text-slate-300 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm">Sem ${t.semanaNum}</span></td>
+        <td class="py-3 px-4 text-xs text-slate-400 font-medium whitespace-nowrap">${t.fecha}</td>
+        <td class="py-3 px-4 whitespace-nowrap"><span class="bg-slate-900 border border-slate-700 text-slate-300 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm">Sem ${t.semanaNum}</span></td>
         <td class="py-3 px-4 font-bold text-white">${t.concepto}</td>
-        <td class="py-3 px-4"><span class="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 bg-slate-900 rounded-full border border-slate-800 text-slate-300"><i data-lucide="tag" class="w-3 h-3"></i> ${t.categoria}</span></td>
-        <td class="py-3 px-4 text-[11px] text-slate-400 font-medium">${t.metodo}</td>
-        <td class="py-3 px-4 text-right font-black ${isIngreso ? 'text-emerald-400' : 'text-rose-400'}">
+        <td class="py-3 px-4 whitespace-nowrap">${catBadge}</td>
+        <td class="py-3 px-4 text-[11px] text-slate-400 font-medium whitespace-nowrap">${t.metodo}</td>
+        <td class="py-3 px-4 text-right font-black whitespace-nowrap ${isIngreso ? 'text-emerald-400' : 'text-rose-400'}">
           ${isIngreso ? '+' : '-'}$${Number(t.monto).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
         </td>
         <td class="py-3 px-4 text-center">
-          <button data-action="delete-tx" data-id="${t.id}" class="text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 p-2 rounded-lg transition-colors flex mx-auto">
+          <button data-action="delete-tx" data-id="${t.id}" title="Eliminar movimiento de la bitácora" class="text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 p-2 rounded-lg transition-colors flex mx-auto">
             <i data-lucide="trash-2" class="w-4 h-4"></i>
           </button>
         </td>
@@ -372,48 +643,341 @@ class View {
       tbody.appendChild(tr);
     });
 
-    document.querySelectorAll('[data-action="delete-tx"]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        deleteCallback(e.currentTarget.dataset.id);
+    if (deleteCallback) {
+      document.querySelectorAll('[data-action="delete-tx"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          deleteCallback(e.currentTarget.dataset.id);
+        });
       });
+    }
+
+    if (this.lucide) this.lucide.createIcons();
+  }
+
+  updateDebtSelectOptions(debts) {
+    const selects = ['abonoDebtId', 'txDebtId'];
+    selects.forEach(selId => {
+      const el = document.getElementById(selId);
+      if (el) {
+        const currVal = el.value;
+        el.innerHTML = (debts || []).map(d => 
+          `<option value="${d.id}">${d.nombre} (Saldo: $${Number(d.restante).toLocaleString()} - Abono: $${Number(d.mensual).toLocaleString()})</option>`
+        ).join('');
+        if (currVal && debts.some(d => d.id === currVal)) {
+          el.value = currVal;
+        }
+      }
     });
+  }
+
+  renderCajitasSection(cajitas, summary, movements, callbacks) {
+    const totalEl = document.getElementById('kpiTotalCajitas');
+    if (totalEl) totalEl.innerText = `$${summary.total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+
+    const mioEl = document.getElementById('kpiMioCajitas');
+    if (mioEl) mioEl.innerText = `$${summary.mio.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+
+    const esposaEl = document.getElementById('kpiEsposaCajitas');
+    if (esposaEl) esposaEl.innerText = `$${summary.esposa.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+
+    const compEl = document.getElementById('kpiCompartidoCajitas');
+    if (compEl) compEl.innerText = `$${summary.compartido.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+
+    const countBadge = document.getElementById('badgeCajitasCount');
+    if (countBadge) countBadge.innerText = `${cajitas.length} ${cajitas.length === 1 ? 'Cajita' : 'Cajitas'}`;
+
+    this.updateCajitasSelectOptions(cajitas);
+
+    const container = document.getElementById('cajitasContainer');
+    const noMsg = document.getElementById('noCajitasMsg');
+    if (container) {
+      container.innerHTML = '';
+      if (cajitas.length === 0) {
+        if (noMsg) noMsg.classList.remove('hidden');
+      } else {
+        if (noMsg) noMsg.classList.add('hidden');
+
+        cajitas.forEach(c => {
+          const card = document.createElement('div');
+          
+          const colorStyles = {
+            indigo: { border: 'border-indigo-500/30', bgGlow: 'bg-indigo-500/10', iconBg: 'bg-indigo-500/20', iconText: 'text-indigo-400', barGrad: 'from-indigo-600 to-indigo-400', badge: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' },
+            rose: { border: 'border-rose-500/30', bgGlow: 'bg-rose-500/10', iconBg: 'bg-rose-500/20', iconText: 'text-rose-400', barGrad: 'from-rose-600 to-rose-400', badge: 'bg-rose-500/20 text-rose-300 border-rose-500/30' },
+            emerald: { border: 'border-emerald-500/30', bgGlow: 'bg-emerald-500/10', iconBg: 'bg-emerald-500/20', iconText: 'text-emerald-400', barGrad: 'from-emerald-600 to-emerald-400', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
+            amber: { border: 'border-amber-500/30', bgGlow: 'bg-amber-500/10', iconBg: 'bg-amber-500/20', iconText: 'text-amber-400', barGrad: 'from-amber-600 to-amber-400', badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
+            sky: { border: 'border-sky-500/30', bgGlow: 'bg-sky-500/10', iconBg: 'bg-sky-500/20', iconText: 'text-sky-400', barGrad: 'from-sky-600 to-sky-400', badge: 'bg-sky-500/20 text-sky-300 border-sky-500/30' },
+            purple: { border: 'border-purple-500/30', bgGlow: 'bg-purple-500/10', iconBg: 'bg-purple-500/20', iconText: 'text-purple-400', barGrad: 'from-purple-600 to-purple-400', badge: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
+            teal: { border: 'border-teal-500/30', bgGlow: 'bg-teal-500/10', iconBg: 'bg-teal-500/20', iconText: 'text-teal-400', barGrad: 'from-teal-600 to-teal-400', badge: 'bg-teal-500/20 text-teal-300 border-teal-500/30' }
+          };
+
+          const style = colorStyles[c.color] || colorStyles.indigo;
+          const hasMeta = Number(c.meta) > 0;
+          const progressPct = hasMeta ? Math.min(100, Math.round((c.saldo / c.meta) * 100)) : 0;
+          const isMetaReached = hasMeta && c.saldo >= c.meta;
+
+          let ownerIcon = 'user';
+          if (c.asignado === 'Esposa') ownerIcon = 'heart';
+          if (c.asignado === 'Compartido') ownerIcon = 'users';
+
+          card.className = `glass rounded-2xl p-5 md:p-6 relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:${style.border} flex flex-col justify-between group`;
+          
+          card.innerHTML = `
+            <div class="absolute -right-8 -top-8 w-32 h-32 ${style.bgGlow} rounded-full blur-2xl group-hover:scale-125 transition-transform pointer-events-none"></div>
+            
+            <div>
+              <div class="flex items-start justify-between gap-3 relative z-10">
+                <div class="flex items-center gap-3">
+                  <div class="w-11 h-11 rounded-2xl ${style.iconBg} flex items-center justify-center border border-white/10 shadow-inner">
+                    <i data-lucide="${c.icono || 'boxes'}" class="w-5 h-5 ${style.iconText}"></i>
+                  </div>
+                  <div>
+                    <h4 class="text-base font-black text-white leading-tight">${c.nombre}</h4>
+                    <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border mt-1 ${style.badge}">
+                      <i data-lucide="${ownerIcon}" class="w-3 h-3"></i> ${c.asignado}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                  <button data-action="cajita-edit" data-id="${c.id}" title="Cambiar nombre / Editar apartado" class="px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-xs font-semibold flex items-center gap-1.5 transition">
+                    <i data-lucide="edit-3" class="w-3.5 h-3.5 text-emerald-400"></i>
+                    <span class="hidden sm:inline">Editar</span>
+                  </button>
+                  <button data-action="cajita-delete" data-id="${c.id}" title="Eliminar cajita" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/30 transition">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="mt-5 relative z-10">
+                <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Saldo Disponible</p>
+                <div class="flex items-baseline gap-2 mt-0.5">
+                  <h3 class="text-2xl md:text-3xl font-black text-white tracking-tight">$${Number(c.saldo).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</h3>
+                  <span class="text-[10px] text-slate-400 font-medium">MXN</span>
+                </div>
+                ${c.descripcion ? `<p class="text-xs text-slate-400 mt-1 line-clamp-1 font-medium">${c.descripcion}</p>` : ''}
+              </div>
+
+              ${hasMeta ? `
+                <div class="mt-4 pt-3 border-t border-slate-800/60 relative z-10">
+                  <div class="flex justify-between items-center text-xs font-bold mb-1.5">
+                    <span class="text-slate-400 text-[11px] flex items-center gap-1">
+                      <i data-lucide="target" class="w-3.5 h-3.5 text-slate-400"></i> Meta: $${Number(c.meta).toLocaleString()}
+                    </span>
+                    <span class="text-xs font-black ${isMetaReached ? 'text-emerald-400' : style.iconText}">
+                      ${progressPct}% ${isMetaReached ? '🎉' : ''}
+                    </span>
+                  </div>
+                  <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800 shadow-inner">
+                    <div class="h-full bg-gradient-to-r ${style.barGrad} rounded-full transition-all duration-700" style="width: ${progressPct}%"></div>
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="mt-5 pt-4 border-t border-slate-800/80 grid grid-cols-2 gap-2 relative z-10">
+              <button data-action="cajita-deposit" data-id="${c.id}" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md shadow-emerald-500/10 active:scale-95">
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5 stroke-[2.5]"></i> Meter Dinero
+              </button>
+              <button data-action="cajita-withdraw" data-id="${c.id}" class="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all border border-slate-700 active:scale-95">
+                <i data-lucide="minus-circle" class="w-3.5 h-3.5 stroke-[2.5]"></i> Sacar Dinero
+              </button>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      }
+    }
+
+    this.renderCajitasMovementsTable(movements, callbacks.onDeleteMovement);
+
+    if (callbacks.onDeposit) {
+      document.querySelectorAll('[data-action="cajita-deposit"]').forEach(b => {
+        b.addEventListener('click', (e) => callbacks.onDeposit(e.currentTarget.dataset.id));
+      });
+    }
+    if (callbacks.onWithdraw) {
+      document.querySelectorAll('[data-action="cajita-withdraw"]').forEach(b => {
+        b.addEventListener('click', (e) => callbacks.onWithdraw(e.currentTarget.dataset.id));
+      });
+    }
+    if (callbacks.onEditCajita) {
+      document.querySelectorAll('[data-action="cajita-edit"]').forEach(b => {
+        b.addEventListener('click', (e) => callbacks.onEditCajita(e.currentTarget.dataset.id));
+      });
+    }
+    if (callbacks.onDeleteCajita) {
+      document.querySelectorAll('[data-action="cajita-delete"]').forEach(b => {
+        b.addEventListener('click', (e) => callbacks.onDeleteCajita(e.currentTarget.dataset.id));
+      });
+    }
+
+    if (this.lucide) this.lucide.createIcons();
+  }
+
+  updateCajitasSelectOptions(cajitas) {
+    const selects = ['cmovCajitaId', 'trFromCajitaId', 'trToCajitaId'];
+    selects.forEach(selId => {
+      const el = document.getElementById(selId);
+      if (el) {
+        const currVal = el.value;
+        el.innerHTML = (cajitas || []).map(c => 
+          `<option value="${c.id}">${c.nombre} ($${Number(c.saldo).toLocaleString('es-MX', { minimumFractionDigits: 2 })} - ${c.asignado})</option>`
+        ).join('');
+        if (currVal && (cajitas || []).some(c => c.id === currVal)) {
+          el.value = currVal;
+        }
+      }
+    });
+
+    const filterSelect = document.getElementById('filterCajitaSelect');
+    if (filterSelect) {
+      const currFilter = filterSelect.value;
+      let html = '<option value="ALL">Todas las Cajitas</option>';
+      (cajitas || []).forEach(c => {
+        html += `<option value="${c.id}">${c.nombre} (${c.asignado})</option>`;
+      });
+      filterSelect.innerHTML = html;
+      if (currFilter && (currFilter === 'ALL' || (cajitas || []).some(c => c.id === currFilter))) {
+        filterSelect.value = currFilter;
+      }
+    }
+  }
+
+  renderCajitasMovementsTable(movements, deleteCallback) {
+    const tbody = document.getElementById('cajitasMovementsTableBody');
+    const noMsg = document.getElementById('noCajitaMovementsMsg');
+    const filterCajita = document.getElementById('filterCajitaSelect')?.value || 'ALL';
+    const filterTipo = document.getElementById('filterCajitaTipo')?.value || 'ALL';
+
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    let filtered = movements || [];
+    if (filterCajita !== 'ALL') {
+      filtered = filtered.filter(m => m.cajitaId === filterCajita);
+    }
+    if (filterTipo !== 'ALL') {
+      filtered = filtered.filter(m => m.tipo === filterTipo);
+    }
+
+    if (filtered.length === 0) {
+      if (noMsg) noMsg.classList.remove('hidden');
+      return;
+    } else {
+      if (noMsg) noMsg.classList.add('hidden');
+    }
+
+    filtered.forEach(m => {
+      const tr = document.createElement('tr');
+      tr.className = "hover:bg-slate-800/40 transition-colors border-b border-slate-800/50 last:border-0";
+      const isIngreso = m.tipo === 'INGRESO';
+
+      let ownerBadgeColor = 'bg-slate-800 text-slate-300 border-slate-700';
+      if (m.cajitaAsignado === 'Mío') ownerBadgeColor = 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30';
+      if (m.cajitaAsignado === 'Esposa') ownerBadgeColor = 'bg-rose-500/20 text-rose-300 border-rose-500/30';
+      if (m.cajitaAsignado === 'Compartido') ownerBadgeColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+
+      tr.innerHTML = `
+        <td class="py-3 px-4 text-xs text-slate-400 font-medium whitespace-nowrap">${m.fecha}</td>
+        <td class="py-3 px-4 font-bold text-white whitespace-nowrap">
+          <span class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full ${isIngreso ? 'bg-emerald-400' : 'bg-rose-400'}"></span>
+            ${m.cajitaNombre}
+          </span>
+        </td>
+        <td class="py-3 px-4 whitespace-nowrap">
+          <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${ownerBadgeColor}">
+            ${m.cajitaAsignado}
+          </span>
+        </td>
+        <td class="py-3 px-4 text-xs text-slate-300 font-medium">${m.concepto}</td>
+        <td class="py-3 px-4 text-right font-black whitespace-nowrap ${isIngreso ? 'text-emerald-400' : 'text-rose-400'}">
+          ${isIngreso ? '+' : '-'}$${Number(m.monto).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+        </td>
+        <td class="py-3 px-4 text-center">
+          <button data-action="delete-cmov" data-id="${m.id}" title="Eliminar movimiento" class="text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 p-2 rounded-lg transition-colors flex mx-auto">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    if (deleteCallback) {
+      document.querySelectorAll('[data-action="delete-cmov"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          deleteCallback(e.currentTarget.dataset.id);
+        });
+      });
+    }
 
     if (this.lucide) this.lucide.createIcons();
   }
 
   switchTab(tabId) {
-    const tabs = ['tab-dashboard', 'tab-semanal', 'tab-deudas', 'tab-movimientos', 'tab-ajustes'];
+    const tabs = ['tab-dashboard', 'tab-semanal', 'tab-deudas', 'tab-movimientos', 'tab-cajitas', 'tab-ajustes'];
     tabs.forEach(t => {
       const el = document.getElementById(t);
       const btn = document.getElementById('btn-' + t);
       if (t === tabId) {
-        el.classList.remove('hidden');
-        el.classList.add('animate-fade-in');
+        if (el) {
+          el.classList.remove('hidden');
+          el.classList.add('animate-fade-in');
+        }
         if (btn) {
           btn.className = "tab-btn px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold flex items-center gap-2 bg-gradient-to-r from-emerald-600/20 to-teal-500/20 text-emerald-400 border border-emerald-500/30 shadow-inner";
         }
       } else {
-        el.classList.add('hidden');
-        el.classList.remove('animate-fade-in');
+        if (el) {
+          el.classList.add('hidden');
+          el.classList.remove('animate-fade-in');
+        }
         if (btn) {
           btn.className = "tab-btn px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800/80 transition-all border border-transparent";
         }
       }
     });
+
+    // Mobile nav active style
+    document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+      if (btn.dataset.tab === tabId) {
+        btn.classList.remove('text-slate-400');
+        btn.classList.add('text-emerald-400');
+      } else if (btn.dataset.tab) {
+        btn.classList.remove('text-emerald-400');
+        btn.classList.add('text-slate-400');
+      }
+    });
+
     if (this.lucide) this.lucide.createIcons();
   }
 
   openModal(id) {
     const modal = document.getElementById(id);
+    if (!modal) return;
     modal.classList.remove('hidden');
     modal.classList.add('flex', 'animate-fade-in-fast');
+    
+    const today = new Date().toISOString().split('T')[0];
     if (id === 'modal-transaccion') {
-      document.getElementById('txFecha').value = new Date().toISOString().split('T')[0];
+      const el = document.getElementById('txFecha');
+      if (el && !el.value) el.value = today;
+    } else if (id === 'modal-abono-deuda') {
+      const el = document.getElementById('abonoFecha');
+      if (el && !el.value) el.value = today;
+    } else if (id === 'modal-cajita-movimiento') {
+      const el = document.getElementById('cmovFecha');
+      if (el && !el.value) el.value = today;
+    } else if (id === 'modal-cajita-transferir') {
+      const el = document.getElementById('trFecha');
+      if (el && !el.value) el.value = today;
     }
   }
 
   closeModal(id) {
     const modal = document.getElementById(id);
+    if (!modal) return;
     modal.classList.remove('flex', 'animate-fade-in-fast');
     modal.classList.add('hidden');
   }
@@ -424,7 +988,7 @@ class View {
         particleCount: 80,
         spread: 70,
         origin: { y: 0.8 },
-        colors: ['#10b981', '#34d399', '#059669', '#fcd34d', '#3b82f6']
+        colors: ['#10b981', '#34d399', '#059669', '#fcd34d', '#3b82f6', '#6366f1', '#ec4899']
       });
     }
   }

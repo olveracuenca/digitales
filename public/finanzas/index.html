@@ -93,7 +93,7 @@
         </div>
         <div>
           <h1 class="text-lg md:text-xl font-black tracking-tight text-white flex items-center gap-2">
-            Finanzas 52 Semanas <span class="text-[10px] uppercase bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30 font-bold tracking-widest hidden sm:inline-block">MVC Version</span>
+            Finanzas 52 Semanas <span class="text-[10px] uppercase bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30 font-bold tracking-widest hidden sm:inline-block">Control Total</span>
           </h1>
           <div class="flex items-center gap-2 mt-0.5">
             <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-bold" id="currentWeekBadge">Semana --</span>
@@ -133,6 +133,10 @@
         <i data-lucide="list" class="w-4 h-4"></i>
         Bitácora
       </button>
+      <button id="btn-tab-cajitas" class="tab-btn px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800/80 transition-all border border-transparent">
+        <i data-lucide="boxes" class="w-4 h-4"></i>
+        Cajitas
+      </button>
       <button id="btn-tab-ajustes" class="tab-btn px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800/80 transition-all border border-transparent">
         <i data-lucide="settings" class="w-4 h-4"></i>
         Config
@@ -150,7 +154,7 @@
             <i data-lucide="coins" class="w-4 h-4 text-emerald-400"></i>
           </div>
           <div class="text-2xl md:text-3xl font-black text-white tracking-tight" id="kpiSueldo">$20,000</div>
-          <p class="text-[11px] text-emerald-400 mt-2 flex items-center gap-1.5 font-medium">
+          <p class="text-[11px] text-emerald-400 mt-2 flex items-center gap-1.5 font-medium" id="kpiSueldoSubtitle">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> $10k quincenal
           </p>
         </div>
@@ -162,7 +166,7 @@
             <i data-lucide="alert-circle" class="w-4 h-4 text-rose-400"></i>
           </div>
           <div class="text-2xl md:text-3xl font-black text-white tracking-tight" id="kpiFijos">$15,450</div>
-          <p class="text-[11px] text-rose-400 mt-2 flex items-center gap-1.5 font-bold">
+          <p class="text-[11px] text-rose-400 mt-2 flex items-center gap-1.5 font-bold" id="kpiFijosSubtitle">
             <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> 77.2% comprometido
           </p>
         </div>
@@ -183,8 +187,8 @@
             <span>Deuda Total Activa</span>
             <i data-lucide="trending-down" class="w-4 h-4 text-indigo-400"></i>
           </div>
-          <div class="text-2xl md:text-3xl font-black text-white tracking-tight" id="kpiDeudaTotal">$110,700</div>
-          <p class="text-[11px] text-indigo-400 mt-2 font-bold" id="kpiProximoHito">Próx: Carranza (Feb '27)</p>
+          <div class="text-2xl md:text-3xl font-black text-white tracking-tight" id="kpiDeudaTotal">$119,800</div>
+          <p class="text-[11px] text-indigo-400 mt-2 font-bold" id="kpiProximoHito">Calculando próximo hito...</p>
         </div>
       </div>
 
@@ -232,7 +236,7 @@
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
               <i data-lucide="pie-chart" class="w-4 h-4 text-emerald-400"></i> Distribución Mensual
             </h3>
-            <span class="text-[11px] bg-slate-800 text-slate-300 px-2 py-1 rounded-md font-bold uppercase tracking-wider">$20,000 Base</span>
+            <span class="text-[11px] bg-slate-800 text-slate-300 px-2 py-1 rounded-md font-bold uppercase tracking-wider" id="chartPresupuestoBadge">$20,000 Base</span>
           </div>
           <div class="h-64 relative flex-1">
             <canvas id="chartPresupuesto"></canvas>
@@ -259,56 +263,8 @@
           <i data-lucide="unlock-keyhole" class="w-5 h-5 text-teal-400"></i>
           Calendario de Liberación de Flujo Mensual
         </h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800/80 relative overflow-hidden group">
-            <div class="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
-            <div class="flex justify-between items-start">
-              <div>
-                <p class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">1. Préstamo Carranza</p>
-                <p class="text-sm font-black text-white mt-1">Feb 2027</p>
-                <p class="text-xs text-amber-400 font-bold mt-2">+$4,000 / mes</p>
-              </div>
-              <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-1 rounded font-bold">En 5m</span>
-            </div>
-          </div>
-
-          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800/80 relative overflow-hidden group">
-            <div class="absolute top-0 left-0 w-1 h-full bg-teal-500"></div>
-            <div class="flex justify-between items-start">
-              <div>
-                <p class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">2. Préstamo Padre</p>
-                <p class="text-sm font-black text-white mt-1">Abr 2027</p>
-                <p class="text-xs text-teal-400 font-bold mt-2">+$1,100 / mes</p>
-              </div>
-              <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-1 rounded font-bold">En 7m</span>
-            </div>
-          </div>
-
-          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800/80 relative overflow-hidden group">
-            <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
-            <div class="flex justify-between items-start">
-              <div>
-                <p class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">3. Plan Celular</p>
-                <p class="text-sm font-black text-white mt-1">May 2027</p>
-                <p class="text-xs text-indigo-400 font-bold mt-2">+$700 / mes</p>
-              </div>
-              <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-1 rounded font-bold">En 9m</span>
-            </div>
-          </div>
-
-          <div class="bg-gradient-to-br from-emerald-900/60 to-slate-900 p-4 rounded-xl border border-emerald-500/40 relative overflow-hidden shadow-[0_0_15px_rgba(16,185,129,0.1)]">
-            <div class="absolute top-0 left-0 w-1 h-full bg-emerald-400"></div>
-            <div class="flex justify-between items-start">
-              <div>
-                <p class="text-[11px] text-emerald-300/80 font-bold uppercase tracking-wider">4. Flujo Total Liberado</p>
-                <p class="text-sm font-medium text-slate-200 mt-1">A partir de Junio 2027</p>
-                <p class="text-lg font-black text-emerald-400 mt-1">+$5,800 / mes</p>
-              </div>
-              <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <i data-lucide="check-check" class="w-4 h-4 text-emerald-400"></i>
-              </div>
-            </div>
-          </div>
+        <div id="milestonesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Rendered dynamically via JS -->
         </div>
       </div>
     </div>
@@ -341,11 +297,16 @@
             <h2 class="text-lg font-black text-white font-display flex items-center gap-2">
               <i data-lucide="credit-card" class="w-5 h-5 text-indigo-400"></i> Control de Deudas Activas
             </h2>
-            <p class="text-xs text-slate-400 mt-1">Monitoreo de capital y abonos programados.</p>
+            <p class="text-xs text-slate-400 mt-1">Monitoreo de capital, abonos programados y avance real.</p>
           </div>
-          <button class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition-colors border border-slate-700 hover:border-slate-600">
-            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar Deuda
-          </button>
+          <div class="flex items-center gap-2">
+            <button data-open-modal="modal-abono-deuda" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-emerald-500/20 active:scale-95">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Registrar Abono
+            </button>
+            <button data-open-modal="modal-deuda" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition-colors border border-slate-700 hover:border-slate-600">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Nueva Deuda
+            </button>
+          </div>
         </div>
         <div id="debtsContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <!-- Rendered via JS -->
@@ -361,7 +322,7 @@
             </h2>
             <p class="text-xs text-slate-400 mt-1">Compromisos recurrentes por quincena.</p>
           </div>
-          <button class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition-colors border border-slate-700 hover:border-slate-600">
+          <button data-open-modal="modal-fijo" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition-colors border border-slate-700 hover:border-slate-600">
             <i data-lucide="plus" class="w-3.5 h-3.5"></i> Nuevo Fijo
           </button>
         </div>
@@ -376,18 +337,18 @@
       <div class="glass rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 class="text-lg font-black text-white font-display">Bitácora de Movimientos</h2>
-          <p class="text-xs text-slate-400 mt-1">Registro de gastos e ingresos diarios.</p>
+          <p class="text-xs text-slate-400 mt-1">Registro de gastos, abonos a deuda e ingresos diarios.</p>
         </div>
         <div class="flex flex-col sm:flex-row items-center gap-3">
           <select id="filterCategory" class="w-full sm:w-auto bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 font-medium">
             <option value="ALL">Todas las Categorías</option>
+            <option value="Deuda">Abono a Deuda</option>
+            <option value="Servicios Hogar">Servicios (Luz, Agua, Gas)</option>
+            <option value="Telecomunicaciones">Telecomunicaciones (Internet)</option>
             <option value="Alimentación">Alimentación / Despensa</option>
             <option value="Transporte">Transporte / Gasolina</option>
             <option value="Gustos">Gustos / Ocio</option>
             <option value="Imprevistos">Gastos No Planeados</option>
-            <option value="Deuda">Abono a Deuda</option>
-            <option value="Servicios Hogar">Servicios (Luz, Agua)</option>
-            <option value="Telecomunicaciones">Telecomunicaciones (Internet)</option>
             <option value="Ingreso Extra">Ingreso Extra</option>
           </select>
           <button data-open-modal="modal-transaccion" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
@@ -421,6 +382,155 @@
           </div>
           <p class="text-sm font-bold text-white">No hay movimientos</p>
           <p class="text-xs text-slate-400 mt-1">No se encontraron registros para esta categoría.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: CAJITAS (CUENTAS SEPARADAS / APARTADOS) -->
+    <div id="tab-cajitas" class="hidden space-y-6 animate-fade-in">
+      <!-- HERO BANNER & TOTAL ACUMULADO -->
+      <div class="bg-gradient-to-br from-emerald-950/40 via-slate-900 to-slate-950 border border-emerald-500/30 rounded-3xl p-5 md:p-8 shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-20 -top-20 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-20 -bottom-20 w-72 h-72 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-60"></div>
+        
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+          <div>
+            <div class="flex items-center gap-3">
+              <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                <i data-lucide="boxes" class="w-3.5 h-3.5"></i> APARTADOS Y CUENTAS SEPARADAS
+              </span>
+              <span class="text-xs text-slate-400 font-medium bg-slate-900/60 px-2.5 py-0.5 rounded-md border border-slate-800" id="badgeCajitasCount">3 Cajitas</span>
+            </div>
+            <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-4">Total Acumulado en Cajitas</p>
+            <div class="flex items-baseline gap-3 mt-1">
+              <h2 class="text-3xl md:text-5xl font-black text-white tracking-tight drop-shadow-md" id="kpiTotalCajitas">$0.00</h2>
+              <span class="text-xs text-emerald-400 font-bold flex items-center gap-1 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Fondos Separados
+              </span>
+            </div>
+            <p class="text-xs text-slate-300 mt-2 max-w-xl">
+              Organiza todo tu dinero en cajitas separadas para saber con total claridad qué monto es tuyo, de tu esposa o para ahorros. Puedes crear nuevas cajitas, cambiarles el nombre o eliminarlas cuando quieras.
+            </p>
+          </div>
+
+          <!-- Actions & Breakdown -->
+          <div class="flex flex-col sm:flex-row lg:flex-col gap-3">
+            <div class="grid grid-cols-3 gap-2 bg-slate-950/80 backdrop-blur-md p-3.5 rounded-2xl border border-slate-800/80 shadow-xl">
+              <div class="text-center px-2">
+                <p class="text-[10px] text-teal-400 uppercase tracking-wider font-bold mb-0.5 flex items-center justify-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-teal-400"></span> Mío
+                </p>
+                <p class="text-sm md:text-base font-black text-white" id="kpiMioCajitas">$0.00</p>
+              </div>
+              <div class="text-center px-2 border-x border-slate-800">
+                <p class="text-[10px] text-rose-400 uppercase tracking-wider font-bold mb-0.5 flex items-center justify-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Esposa
+                </p>
+                <p class="text-sm md:text-base font-black text-white" id="kpiEsposaCajitas">$0.00</p>
+              </div>
+              <div class="text-center px-2">
+                <p class="text-[10px] text-emerald-400 uppercase tracking-wider font-bold mb-0.5 flex items-center justify-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Ahorro
+                </p>
+                <p class="text-sm md:text-base font-black text-white" id="kpiCompartidoCajitas">$0.00</p>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <button data-open-modal="modal-cajita" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black px-3.5 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
+                <i data-lucide="plus" class="w-3.5 h-3.5 stroke-[3]"></i> Nueva Cajita
+              </button>
+              <button data-open-modal="modal-cajita-movimiento" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold px-3.5 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all border border-slate-700 active:scale-95">
+                <i data-lucide="arrow-down-up" class="w-3.5 h-3.5 stroke-[3]"></i> Meter / Sacar
+              </button>
+              <button data-open-modal="modal-cajita-transferir" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold px-3.5 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all border border-slate-700 active:scale-95">
+                <i data-lucide="repeat" class="w-3.5 h-3.5"></i> Transferir
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CAJITAS GRID -->
+      <div class="space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-lg font-black text-white font-display flex items-center gap-2">
+              <i data-lucide="wallet-cards" class="w-5 h-5 text-emerald-400"></i> Tus Cajitas de Dinero
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">Crea, edita nombres, administra saldos o elimina apartados según lo necesites.</p>
+          </div>
+          <button data-open-modal="modal-cajita" class="bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-2 transition border border-slate-800 self-start sm:self-auto">
+            <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-400"></i> + Crear Nueva Cajita
+          </button>
+        </div>
+
+        <div id="cajitasContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <!-- Rendered via JS -->
+        </div>
+
+        <div id="noCajitasMsg" class="p-10 text-center flex flex-col items-center justify-center glass rounded-2xl hidden">
+          <div class="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mb-3 border border-slate-800">
+            <i data-lucide="boxes" class="w-7 h-7 text-slate-500"></i>
+          </div>
+          <p class="text-base font-bold text-white">No tienes cajitas creadas</p>
+          <p class="text-xs text-slate-400 mt-1 max-w-sm">Crea tu primera cajita para comenzar a separar el dinero de tu hogar.</p>
+          <button data-open-modal="modal-cajita" class="mt-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i> Crear Cajita
+          </button>
+        </div>
+      </div>
+
+      <!-- HISTORIAL DE MOVIMIENTOS EN CAJITAS -->
+      <div class="space-y-4 pt-4">
+        <div class="glass rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h3 class="text-base md:text-lg font-black text-white font-display flex items-center gap-2">
+              <i data-lucide="history" class="w-5 h-5 text-emerald-400"></i> Historial de Movimientos en Cajitas
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">Registro cronológico de ingresos (depósitos) y egresos (retiros) con notas y fechas.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <select id="filterCajitaSelect" class="bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs font-medium text-white focus:outline-none focus:border-emerald-500">
+              <option value="ALL">Todas las Cajitas</option>
+            </select>
+            <select id="filterCajitaTipo" class="bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs font-medium text-white focus:outline-none focus:border-emerald-500">
+              <option value="ALL">Todos los Movimientos</option>
+              <option value="INGRESO">Solo Ingresos (Meter +)</option>
+              <option value="EGRESO">Solo Egresos (Sacar -)</option>
+            </select>
+            <button data-open-modal="modal-cajita-movimiento" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black px-4 py-2 rounded-xl flex items-center gap-1.5 transition active:scale-95">
+              <i data-lucide="plus" class="w-3.5 h-3.5 stroke-[3]"></i> Registrar
+            </button>
+          </div>
+        </div>
+
+        <div class="glass rounded-2xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead class="bg-slate-900/80 border-b border-slate-800/80">
+                <tr>
+                  <th class="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Fecha</th>
+                  <th class="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cajita</th>
+                  <th class="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Asignado</th>
+                  <th class="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Concepto / Nota</th>
+                  <th class="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">Monto</th>
+                  <th class="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="cajitasMovementsTableBody">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+          <div id="noCajitaMovementsMsg" class="p-8 text-center flex flex-col items-center justify-center hidden">
+            <div class="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center mb-2 border border-slate-800">
+              <i data-lucide="receipt" class="w-5 h-5 text-slate-500"></i>
+            </div>
+            <p class="text-sm font-bold text-white">Sin movimientos en cajitas</p>
+            <p class="text-xs text-slate-400 mt-0.5">Agrega dinero o retiros usando los botones superiores.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -486,10 +596,9 @@
 
   </main>
 
-  <!-- MODAL: TRANSACCION -->
+  <!-- MODAL: TRANSACCION GENERAL -->
   <div id="modal-transaccion" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="glass border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl relative overflow-hidden">
-      <!-- Decorator -->
       <div class="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none"></div>
 
       <div class="flex items-center justify-between border-b border-slate-800/80 pb-4 mb-5 relative z-10">
@@ -521,7 +630,7 @@
 
         <div>
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Concepto</label>
-          <input type="text" id="txConcepto" required placeholder="Ej. Despensa mensual..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600" />
+          <input type="text" id="txConcepto" required placeholder="Ej. Despensa mensual, Pago de servicio..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600" />
         </div>
 
         <div class="grid grid-cols-2 gap-4">
@@ -545,7 +654,7 @@
               <option value="Imprevistos">Imprevistos</option>
               <option value="Servicios Hogar">Servicios</option>
               <option value="Telecomunicaciones">Telecom.</option>
-              <option value="Deuda">Deuda</option>
+              <option value="Deuda">Deuda / Abono</option>
               <option value="Ingreso Extra">Ingreso Extra</option>
             </select>
           </div>
@@ -553,16 +662,456 @@
             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Método</label>
             <select id="txMetodo" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-medium text-white focus:outline-none focus:border-emerald-500 transition-colors">
               <option value="Tarjeta Débito">Tarjeta Débito</option>
-              <option value="Transferencia SPEI">Transferencia</option>
+              <option value="Transferencia SPEI">Transferencia SPEI</option>
               <option value="Efectivo">Efectivo</option>
               <option value="Tarjeta Crédito">Tarjeta Crédito</option>
             </select>
           </div>
         </div>
 
+        <!-- Dynamic Debt Selector (Shown only when category is 'Deuda') -->
+        <div id="txDebtSelectionContainer" class="hidden p-3 rounded-xl bg-slate-900/80 border border-indigo-500/30">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-indigo-300 mb-1.5 flex items-center gap-1.5">
+            <i data-lucide="credit-card" class="w-3.5 h-3.5"></i> Seleccionar Deuda a Abonar
+          </label>
+          <select id="txDebtId" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-indigo-400">
+            <!-- Populated via JS -->
+          </select>
+        </div>
+
         <div class="pt-4 mt-2 border-t border-slate-800/80">
           <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black tracking-wide py-3.5 rounded-xl text-sm transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
             Guardar Transacción
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CREAR / EDITAR DEUDA -->
+  <div id="modal-deuda" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="glass border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl relative overflow-hidden">
+      <div class="absolute -top-10 -right-10 w-32 h-32 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+      <div class="flex items-center justify-between border-b border-slate-800/80 pb-4 mb-5 relative z-10">
+        <h3 class="text-lg font-black text-white font-display flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center">
+            <i data-lucide="credit-card" class="w-4 h-4 text-indigo-400"></i>
+          </div>
+          <span id="modalDebtTitle">Nueva Deuda</span>
+        </h3>
+        <button data-close-modal="modal-deuda" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="formDeuda" class="space-y-4 relative z-10">
+        <input type="hidden" id="debtEditId" value="" />
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Nombre de la Deuda</label>
+          <input type="text" id="debtNombre" required placeholder="Ej. Carro Yaris, Préstamo Personal..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-slate-600" />
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Acreedor / Entidad</label>
+          <input type="text" id="debtAcreedor" required placeholder="Ej. Crédito Automotriz, Banco, Familiar..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs font-semibold text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-slate-600" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Monto Inicial Total ($)</label>
+            <input type="number" step="0.01" id="debtInicial" required placeholder="Ej. 84000" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm font-black text-white focus:outline-none focus:border-indigo-500 transition-colors" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Abono Mensual ($)</label>
+            <input type="number" step="0.01" id="debtMensual" required placeholder="Ej. 4000" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm font-black text-white focus:outline-none focus:border-indigo-500 transition-colors" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Día de Pago (1 a 31)</label>
+            <input type="number" min="1" max="31" id="debtDia" value="15" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition-colors" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Fin Estimado</label>
+            <input type="text" id="debtFin" placeholder="Ej. Mayo 2028" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-semibold text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-slate-600" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Color Temático</label>
+          <select id="debtColor" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-semibold text-white focus:outline-none focus:border-indigo-500 transition-colors">
+            <option value="rose">🌸 Rosa / Rose</option>
+            <option value="amber">🟡 Ámbar / Dorado</option>
+            <option value="teal">🌊 Teal / Verdeazulado</option>
+            <option value="indigo">🟣 Índigo / Violeta</option>
+            <option value="emerald">🟢 Esmeralda</option>
+            <option value="sky">🔵 Azul Cielo</option>
+            <option value="purple">💜 Púrpura</option>
+          </select>
+        </div>
+
+        <div class="pt-4 mt-2 border-t border-slate-800/80 flex items-center justify-between gap-3">
+          <button type="button" id="btnDeleteDebtFromModal" class="hidden px-4 py-2.5 rounded-xl text-xs font-bold text-rose-400 hover:bg-rose-500/10 border border-rose-500/30 transition flex items-center gap-1.5">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Eliminar
+          </button>
+          <div class="flex items-center gap-2 ml-auto">
+            <button type="button" data-close-modal="modal-deuda" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 transition">
+              Cancelar
+            </button>
+            <button type="submit" id="btnSubmitDebt" class="bg-indigo-500 hover:bg-indigo-400 text-white font-black tracking-wide px-5 py-2.5 rounded-xl text-xs transition-all shadow-lg shadow-indigo-500/20 active:scale-95">
+              Guardar Deuda
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CREAR / EDITAR GASTO FIJO -->
+  <div id="modal-fijo" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="glass border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl relative overflow-hidden">
+      <div class="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+      <div class="flex items-center justify-between border-b border-slate-800/80 pb-4 mb-5 relative z-10">
+        <h3 class="text-lg font-black text-white font-display flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+            <i data-lucide="receipt" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <span id="modalFixedTitle">Nuevo Gasto Fijo / Servicio</span>
+        </h3>
+        <button data-close-modal="modal-fijo" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="formFijo" class="space-y-4 relative z-10">
+        <input type="hidden" id="fixEditId" value="" />
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Concepto</label>
+          <input type="text" id="fixConcepto" required placeholder="Ej. Luz CFE, Renta, Mandado..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Categoría</label>
+            <select id="fixCategoria" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-semibold text-white focus:outline-none focus:border-emerald-500 transition-colors">
+              <option value="Servicios Hogar">Servicios Hogar</option>
+              <option value="Alimentación">Alimentación</option>
+              <option value="Transporte">Transporte</option>
+              <option value="Telecomunicaciones">Telecomunicaciones</option>
+              <option value="Educación">Educación</option>
+              <option value="Salud">Salud</option>
+              <option value="Vivienda">Vivienda</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Monto ($)</label>
+            <input type="number" step="0.01" id="fixMonto" required placeholder="Ej. 500" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm font-black text-white focus:outline-none focus:border-emerald-500 transition-colors" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Día de Pago del Mes (1 a 31)</label>
+          <input type="number" min="1" max="31" id="fixDia" value="1" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-colors" />
+          <p class="text-[10px] text-slate-400 mt-1">Días 1-14 y 30-31 corresponden a Quincena 2 (Fin de mes). Días 15-29 a Quincena 1 (Mitad de mes).</p>
+        </div>
+
+        <div class="pt-4 mt-2 border-t border-slate-800/80 flex items-center justify-between gap-3">
+          <button type="button" id="btnDeleteFixedFromModal" class="hidden px-4 py-2.5 rounded-xl text-xs font-bold text-rose-400 hover:bg-rose-500/10 border border-rose-500/30 transition flex items-center gap-1.5">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Eliminar
+          </button>
+          <div class="flex items-center gap-2 ml-auto">
+            <button type="button" data-close-modal="modal-fijo" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 transition">
+              Cancelar
+            </button>
+            <button type="submit" id="btnSubmitFixed" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black tracking-wide px-5 py-2.5 rounded-xl text-xs transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
+              Guardar Fijo
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: REGISTRAR ABONO A DEUDA -->
+  <div id="modal-abono-deuda" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="glass border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl relative overflow-hidden">
+      <div class="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+      <div class="flex items-center justify-between border-b border-slate-800/80 pb-4 mb-5 relative z-10">
+        <h3 class="text-lg font-black text-white font-display flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+            <i data-lucide="zap" class="w-4 h-4 text-emerald-400 stroke-[2.5]"></i>
+          </div>
+          Registrar Abono a Deuda
+        </h3>
+        <button data-close-modal="modal-abono-deuda" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="formAbonoDeuda" class="space-y-4 relative z-10">
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Deuda Destino</label>
+          <select id="abonoDebtId" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-colors">
+            <!-- Populated dynamically via JS -->
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Monto a Abonar ($)</label>
+            <input type="number" step="0.01" id="abonoMonto" required placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-black text-white focus:outline-none focus:border-emerald-500 transition-colors" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Fecha del Abono</label>
+            <input type="date" id="abonoFecha" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:border-emerald-500 transition-colors" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Método de Pago</label>
+          <select id="abonoMetodo" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-semibold text-white focus:outline-none focus:border-emerald-500 transition-colors">
+            <option value="Transferencia SPEI">Transferencia SPEI</option>
+            <option value="Efectivo">Efectivo</option>
+            <option value="Tarjeta Débito">Tarjeta Débito</option>
+            <option value="Tarjeta Crédito">Tarjeta Crédito</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Nota / Motivo (Opcional)</label>
+          <input type="text" id="abonoNota" placeholder="Ej. Cuota mensual, Abono extraordinario a capital..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600" />
+        </div>
+
+        <div class="pt-4 mt-2 border-t border-slate-800/80">
+          <button type="submit" id="btnSubmitAbono" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black tracking-wide py-3.5 rounded-xl text-sm transition-all shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center justify-center gap-2">
+            <i data-lucide="check" class="w-4 h-4 stroke-[3]"></i> Confirmar y Registrar Abono
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CAJITA (CREAR / EDITAR / CAMBIAR NOMBRE) -->
+  <div id="modal-cajita" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="glass border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl relative overflow-hidden">
+      <div class="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+      <div class="flex items-center justify-between border-b border-slate-800/80 pb-4 mb-5 relative z-10">
+        <h3 class="text-lg font-black text-white font-display flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+            <i data-lucide="boxes" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <span id="modalCajitaTitle">Nueva Cajita / Apartado</span>
+        </h3>
+        <button data-close-modal="modal-cajita" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="formCajita" class="space-y-4 relative z-10">
+        <input type="hidden" id="cajitaEditId" value="" />
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Nombre de la Cajita</label>
+          <input type="text" id="cajitaNombre" required placeholder="Ej. Dinero Mío, Dinero Esposa, Ahorro, Caja 1..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Asignado a</label>
+            <select id="cajitaAsignado" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-semibold text-white focus:outline-none focus:border-emerald-500 transition-colors">
+              <option value="Mío">👤 Dinero Mío</option>
+              <option value="Esposa">👩 Dinero Esposa</option>
+              <option value="Compartido">🤝 Compartido / Ahorro</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Color Temático</label>
+            <select id="cajitaColor" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-semibold text-white focus:outline-none focus:border-emerald-500 transition-colors">
+              <option value="emerald">🟢 Esmeralda / Verde</option>
+              <option value="teal">🌊 Teal / Verdeazulado</option>
+              <option value="sky">🔵 Azul Cielo</option>
+              <option value="indigo">🟣 Índigo / Violeta</option>
+              <option value="rose">🌸 Rosa / Fucsia</option>
+              <option value="amber">🟡 Ámbar / Dorado</option>
+              <option value="purple">💜 Púrpura</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Icono</label>
+            <select id="cajitaIcono" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-semibold text-white focus:outline-none focus:border-emerald-500 transition-colors">
+              <option value="wallet">👛 Billetera</option>
+              <option value="briefcase">💼 Maletín</option>
+              <option value="heart">💖 Corazón</option>
+              <option value="shield-check">🛡️ Escudo / Reserva</option>
+              <option value="piggy-bank">🐷 Alcancía</option>
+              <option value="sparkles">✨ Meta Especial</option>
+              <option value="home">🏠 Hogar</option>
+              <option value="car">🚗 Auto</option>
+              <option value="shopping-bag">🛍️ Compras</option>
+            </select>
+          </div>
+          <div id="cajitaSaldoInicialContainer">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Saldo Inicial ($)</label>
+            <input type="number" step="0.01" id="cajitaSaldoInicial" placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-black text-white focus:outline-none focus:border-emerald-500 transition-colors" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Meta de Ahorro Opcional ($)</label>
+          <input type="number" step="0.01" id="cajitaMeta" placeholder="Ej. 10000 (Deja en 0 si es libre)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs font-semibold text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600" />
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Descripción / Propósito</label>
+          <input type="text" id="cajitaDescripcion" placeholder="Ej. Apartado para gustos personales..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs font-medium text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600" />
+        </div>
+
+        <div class="pt-4 mt-2 border-t border-slate-800/80 flex items-center justify-between gap-3">
+          <button type="button" id="btnDeleteCajitaFromModal" class="hidden px-4 py-2.5 rounded-xl text-xs font-bold text-rose-400 hover:bg-rose-500/10 border border-rose-500/30 transition flex items-center gap-1.5">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Eliminar Cajita
+          </button>
+          <div class="flex items-center gap-2 ml-auto">
+            <button type="button" data-close-modal="modal-cajita" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 transition">
+              Cancelar
+            </button>
+            <button type="submit" id="btnSubmitCajita" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black tracking-wide px-5 py-2.5 rounded-xl text-xs transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
+              Guardar Cajita
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: MOVIMIENTO EN CAJITA (METER / SACAR) -->
+  <div id="modal-cajita-movimiento" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="glass border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl relative overflow-hidden">
+      <div class="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+      <div class="flex items-center justify-between border-b border-slate-800/80 pb-4 mb-5 relative z-10">
+        <h3 class="text-lg font-black text-white font-display flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+            <i data-lucide="arrow-down-up" class="w-4 h-4 text-emerald-400 stroke-[3]"></i>
+          </div>
+          Movimiento en Cajita
+        </h3>
+        <button data-close-modal="modal-cajita-movimiento" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="formCajitaMovimiento" class="space-y-4 relative z-10">
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Acción a realizar</label>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="group relative flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-700 bg-slate-900/50 cursor-pointer text-xs font-black text-slate-300 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-500/10 has-[:checked]:text-emerald-400 transition-all">
+              <input type="radio" name="cmovTipo" value="INGRESO" checked class="hidden" />
+              <i data-lucide="arrow-down-left" class="w-4 h-4 stroke-[3]"></i> + Meter Dinero
+            </label>
+            <label class="group relative flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-700 bg-slate-900/50 cursor-pointer text-xs font-black text-slate-300 has-[:checked]:border-rose-500 has-[:checked]:bg-rose-500/10 has-[:checked]:text-rose-400 transition-all">
+              <input type="radio" name="cmovTipo" value="EGRESO" class="hidden" />
+              <i data-lucide="arrow-up-right" class="w-4 h-4 stroke-[3]"></i> - Sacar Dinero
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Cajita / Apartado Destino</label>
+          <select id="cmovCajitaId" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-colors">
+            <!-- Rendered dynamically -->
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Monto ($)</label>
+            <input type="number" step="0.01" id="cmovMonto" required placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-black text-white focus:outline-none focus:border-emerald-500 transition-colors" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Fecha</label>
+            <input type="date" id="cmovFecha" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:border-emerald-500 transition-colors" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Concepto / Motivo / Nota</label>
+          <input type="text" id="cmovConcepto" required placeholder="Ej. Aporte de quincena, Pago de mandado, Gusto..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600" />
+        </div>
+
+        <div class="pt-4 mt-2 border-t border-slate-800/80">
+          <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black tracking-wide py-3.5 rounded-xl text-sm transition-all shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center justify-center gap-2">
+            <i data-lucide="check" class="w-4 h-4 stroke-[3]"></i> Confirmar Movimiento
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: TRANSFERIR ENTRE CAJITAS -->
+  <div id="modal-cajita-transferir" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="glass border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl relative overflow-hidden">
+      <div class="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+      <div class="flex items-center justify-between border-b border-slate-800/80 pb-4 mb-5 relative z-10">
+        <h3 class="text-lg font-black text-white font-display flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+            <i data-lucide="repeat" class="w-4 h-4 text-emerald-400 stroke-[3]"></i>
+          </div>
+          Transferir entre Cajitas
+        </h3>
+        <button data-close-modal="modal-cajita-transferir" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="formCajitaTransferir" class="space-y-4 relative z-10">
+        <div class="grid grid-cols-1 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">De la Cajita (Origen)</label>
+            <select id="trFromCajitaId" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs font-bold text-white focus:outline-none focus:border-emerald-500 transition-colors">
+              <!-- Rendered dynamically -->
+            </select>
+          </div>
+          <div class="flex items-center justify-center -my-1 text-slate-500">
+            <i data-lucide="arrow-down" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">A la Cajita (Destino)</label>
+            <select id="trToCajitaId" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs font-bold text-white focus:outline-none focus:border-emerald-500 transition-colors">
+              <!-- Rendered dynamically -->
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Monto ($)</label>
+            <input type="number" step="0.01" id="trMonto" required placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-black text-white focus:outline-none focus:border-emerald-500 transition-colors" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Fecha</label>
+            <input type="date" id="trFecha" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:border-emerald-500 transition-colors" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Concepto / Motivo (Opcional)</label>
+          <input type="text" id="trConcepto" placeholder="Ej. Aporte para despensa, Préstamo..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600" />
+        </div>
+
+        <div class="pt-4 mt-2 border-t border-slate-800/80">
+          <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black tracking-wide py-3.5 rounded-xl text-sm transition-all shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center justify-center gap-2">
+            <i data-lucide="repeat" class="w-4 h-4 stroke-[3]"></i> Transferir Fondos
           </button>
         </div>
       </form>
@@ -582,9 +1131,9 @@
     <button data-open-modal="modal-transaccion" class="bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 p-3.5 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.4)] -mt-8 active:scale-95 transition-transform border-4 border-slate-950">
       <i data-lucide="plus" class="w-6 h-6 stroke-[3]"></i>
     </button>
-    <button data-tab="tab-deudas" class="mobile-nav-btn flex flex-col items-center gap-1.5 text-slate-400 p-1">
-      <i data-lucide="shield-alert" class="w-5 h-5"></i>
-      <span class="text-[9px] font-bold uppercase tracking-wider">Deuda</span>
+    <button data-tab="tab-cajitas" class="mobile-nav-btn flex flex-col items-center gap-1.5 text-slate-400 p-1">
+      <i data-lucide="boxes" class="w-5 h-5"></i>
+      <span class="text-[9px] font-bold uppercase tracking-wider">Cajitas</span>
     </button>
     <button data-tab="tab-movimientos" class="mobile-nav-btn flex flex-col items-center gap-1.5 text-slate-400 p-1">
       <i data-lucide="list" class="w-5 h-5"></i>
