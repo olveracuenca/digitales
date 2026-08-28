@@ -94,8 +94,8 @@ class Controller {
     if (btnReset) btnReset.addEventListener('click', () => this.handleReset());
   }
 
-  handleTogglePayment(paidKey, itemName, monto, semanaNum, debtId) {
-    const isNew = this.model.togglePayment(paidKey, itemName, monto, semanaNum, debtId);
+  handleTogglePayment(paidKey, itemName, monto, semanaNum, debtId, categoria) {
+    const isNew = this.model.togglePayment(paidKey, itemName, monto, semanaNum, debtId, categoria);
     if (isNew) {
       this.view.launchConfetti();
     }

@@ -8,7 +8,7 @@ const INITIAL_DEBTS = [
 const INITIAL_FIXED = [
   { id: 'fix-1', concepto: 'Luz (CFE)', categoria: 'Servicios Hogar', monto: 500, dia: 10, quincena: 'Quincena 2', pagado: false },
   { id: 'fix-2', concepto: 'Agua Potable', categoria: 'Servicios Hogar', monto: 300, dia: 12, quincena: 'Quincena 2', pagado: false },
-  { id: 'fix-3', concepto: 'Internet Fibra Hogar', categoria: 'Telecomunicaciones', monto: 1000, dia: 18, quincena: 'Quincena 1', pagado: false },
+  { id: 'fix-3', concepto: 'Internet Fibra Hogar', categoria: 'Telecomunicaciones', monto: 1000, dia: 30, quincena: 'Quincena 2', pagado: false },
   { id: 'fix-4', concepto: 'Gas Natural / LP', categoria: 'Servicios Hogar', monto: 50, dia: 22, quincena: 'Quincena 1', pagado: false },
   { id: 'fix-5', concepto: 'Mandado / Despensa (Q1)', categoria: 'Alimentación', monto: 1400, dia: 1, quincena: 'Quincena 2', pagado: false },
   { id: 'fix-6', concepto: 'Mandado / Despensa (Q2)', categoria: 'Alimentación', monto: 1400, dia: 16, quincena: 'Quincena 1', pagado: false },
@@ -17,6 +17,7 @@ const INITIAL_FIXED = [
 ];
 
 const INITIAL_TRANSACTIONS = [
+  { id: 'tx-0', fecha: '2026-08-30', semanaNum: 1, concepto: 'Pago Internet (Adelantado)', categoria: 'Telecomunicaciones', metodo: 'Transferencia SPEI', monto: 1000, tipo: 'GASTO' },
   { id: 'tx-1', fecha: '2026-09-01', semanaNum: 1, concepto: 'Mandado Semanal Soriana', categoria: 'Alimentación', metodo: 'Tarjeta Débito', monto: 680, tipo: 'GASTO' },
   { id: 'tx-2', fecha: '2026-09-03', semanaNum: 1, concepto: 'Carga Gasolina Mobil', categoria: 'Transporte', metodo: 'Efectivo', monto: 250, tipo: 'GASTO' },
   { id: 'tx-3', fecha: '2026-09-04', semanaNum: 1, concepto: 'Cena Tacos / Restaurante', categoria: 'Gustos', metodo: 'Tarjeta Débito', monto: 250, tipo: 'GASTO' },
@@ -42,7 +43,7 @@ class Model {
       debts: JSON.parse(JSON.stringify(INITIAL_DEBTS)),
       fixedExpenses: JSON.parse(JSON.stringify(INITIAL_FIXED)),
       transactions: JSON.parse(JSON.stringify(INITIAL_TRANSACTIONS)),
-      paidItemsByWeek: {}
+      paidItemsByWeek: { 'paid-1-fix-3-0': true, 'fix-3-0': true } // Internet 30 de agosto ya pagado
     };
   }
 
@@ -52,9 +53,38 @@ class Model {
       try {
         this.appState = JSON.parse(saved);
         
+        if (!this.appState.paidItemsByWeek) {
+          this.appState.paidItemsByWeek = {};
+        }
+
+        // MIGRATION: Update Internet payment day to 30
+        if (this.appState.fixedExpenses) {
+          const internet = this.appState.fixedExpenses.find(f => f.id === 'fix-3');
+          if (internet && internet.dia !== 30) {
+            internet.dia = 30;
+            internet.quincena = 'Quincena 2';
+          }
+        }
+
+        // Mark August 30th as paid since the user already covered it
+        if (!this.appState.paidItemsByWeek['paid-1-fix-3-0']) {
+          this.appState.paidItemsByWeek['paid-1-fix-3-0'] = true;
+          this.appState.paidItemsByWeek['fix-3-0'] = true;
+          if (this.appState.transactions && !this.appState.transactions.some(t => t.id === 'tx-0' || t.concepto.includes('Pago Internet (Adelantado)'))) {
+            this.appState.transactions.unshift({
+              id: 'tx-0',
+              fecha: '2026-08-30',
+              semanaNum: 1,
+              concepto: 'Pago Internet (Adelantado)',
+              categoria: 'Telecomunicaciones',
+              metodo: 'Transferencia SPEI',
+              monto: 1000,
+              tipo: 'GASTO'
+            });
+          }
+        }
+
         // MIGRATION: Accountant logic to align expenses to the correct paycheck
-        // If a bill is due between the 15th and 29th, it MUST be paid with the 15th paycheck (Quincena 1)
-        // If a bill is due between the 1st and 14th, or the 30th/31st, it MUST be paid with the 30th paycheck (Quincena 2)
         const correctQuincena = (dia) => {
             if (dia >= 15 && dia <= 29) return 'Quincena 1';
             return 'Quincena 2';
@@ -65,6 +95,12 @@ class Model {
         }
         if (this.appState.fixedExpenses) {
           this.appState.fixedExpenses.forEach(f => { f.quincena = correctQuincena(f.dia); });
+        }
+        if (this.appState.transactions) {
+          this.appState.transactions.forEach(t => {
+            t.semanaNum = Number(t.semanaNum);
+            t.monto = Number(t.monto);
+          });
         }
         
       } catch (e) {
@@ -129,14 +165,28 @@ class Model {
         if (isQ1Payday) {
             // Gastos fijos Q1
             this.appState.fixedExpenses.filter(f => f.quincena === 'Quincena 1').forEach(f => {
-                scheduledItems.push({ key: `${f.id}-${i}`, name: f.concepto, monto: f.monto, type: 'fijo' });
+                scheduledItems.push({ 
+                  key: `${f.id}-${i}`, 
+                  name: f.concepto, 
+                  monto: f.monto, 
+                  type: 'fijo', 
+                  categoria: f.categoria || 'Servicios Hogar',
+                  fixedId: f.id 
+                });
                 scheduledSum += f.monto;
             });
             // Deudas Q1
             this.appState.debts.filter(d => d.quincena === 'Quincena 1').forEach(deb => {
                 if (projectedDebts[deb.id] > 0) {
                     const montoPagar = Math.min(projectedDebts[deb.id], deb.mensual);
-                    scheduledItems.push({ key: `${deb.id}-${i}`, name: deb.nombre + (projectedDebts[deb.id] <= deb.mensual ? ' (Finiquito)' : ''), monto: montoPagar, type: 'deuda', debtId: deb.id });
+                    scheduledItems.push({ 
+                      key: `${deb.id}-${i}`, 
+                      name: deb.nombre + (projectedDebts[deb.id] <= deb.mensual ? ' (Finiquito)' : ''), 
+                      monto: montoPagar, 
+                      type: 'deuda', 
+                      debtId: deb.id,
+                      categoria: 'Deuda' 
+                    });
                     scheduledSum += montoPagar;
                     projectedDebts[deb.id] -= montoPagar;
                 }
@@ -146,14 +196,28 @@ class Model {
         if (isQ2Payday) {
             // Gastos fijos Q2
             this.appState.fixedExpenses.filter(f => f.quincena === 'Quincena 2').forEach(f => {
-                scheduledItems.push({ key: `${f.id}-${i}`, name: f.concepto, monto: f.monto, type: 'fijo' });
+                scheduledItems.push({ 
+                  key: `${f.id}-${i}`, 
+                  name: f.concepto, 
+                  monto: f.monto, 
+                  type: 'fijo', 
+                  categoria: f.categoria || 'Servicios Hogar',
+                  fixedId: f.id 
+                });
                 scheduledSum += f.monto;
             });
             // Deudas Q2
             this.appState.debts.filter(d => d.quincena === 'Quincena 2').forEach(deb => {
                 if (projectedDebts[deb.id] > 0) {
                     const montoPagar = Math.min(projectedDebts[deb.id], deb.mensual);
-                    scheduledItems.push({ key: `${deb.id}-${i}`, name: deb.nombre + (projectedDebts[deb.id] <= deb.mensual ? ' (Finiquito)' : ''), monto: montoPagar, type: 'deuda', debtId: deb.id });
+                    scheduledItems.push({ 
+                      key: `${deb.id}-${i}`, 
+                      name: deb.nombre + (projectedDebts[deb.id] <= deb.mensual ? ' (Finiquito)' : ''), 
+                      monto: montoPagar, 
+                      type: 'deuda', 
+                      debtId: deb.id,
+                      categoria: 'Deuda' 
+                    });
                     scheduledSum += montoPagar;
                     projectedDebts[deb.id] -= montoPagar;
                 }
@@ -185,16 +249,32 @@ class Model {
   }
 
   addTransaction(tx) {
+    tx.semanaNum = Number(tx.semanaNum);
+    tx.monto = Number(tx.monto);
     this.appState.transactions.unshift(tx);
     this.saveState();
   }
 
   deleteTransaction(id) {
+    const tx = this.appState.transactions.find(t => t.id === id);
+    if (tx) {
+      if (tx.paidKey && this.appState.paidItemsByWeek[tx.paidKey]) {
+        this.appState.paidItemsByWeek[tx.paidKey] = false;
+      }
+      if (tx.debtId) {
+        const debtObj = this.appState.debts.find(d => d.id === tx.debtId);
+        if (debtObj) {
+          debtObj.restante = Math.min(debtObj.inicial, debtObj.restante + Number(tx.monto));
+        }
+      }
+    }
     this.appState.transactions = this.appState.transactions.filter(t => t.id !== id);
     this.saveState();
   }
 
-  togglePayment(paidKey, itemName, monto, semanaNum, debtId) {
+  togglePayment(paidKey, itemName, monto, semanaNum, debtId, categoria) {
+    const numSemana = Number(semanaNum);
+    const numMonto = Number(monto);
     const currentVal = !!this.appState.paidItemsByWeek[paidKey];
     this.appState.paidItemsByWeek[paidKey] = !currentVal;
     
@@ -203,21 +283,53 @@ class Model {
     if (!currentVal) {
       isNewPayment = true;
       
+      const weeks = this.generate52Weeks();
+      const targetWeek = weeks[numSemana - 1];
+      let txDate = new Date().toISOString().split('T')[0];
+      if (targetWeek) {
+        const today = new Date();
+        if (today < targetWeek.start || today > targetWeek.end) {
+          const y = targetWeek.start.getFullYear();
+          const m = String(targetWeek.start.getMonth() + 1).padStart(2, '0');
+          const d = String(targetWeek.start.getDate()).padStart(2, '0');
+          txDate = `${y}-${m}-${d}`;
+        }
+      }
+
       this.appState.transactions.unshift({
-        id: 'tx-' + Date.now(),
-        fecha: new Date().toISOString().split('T')[0],
-        semanaNum: semanaNum,
-        concepto: `Pago Realizado: ${itemName}`,
-        categoria: debtId ? 'Deuda' : 'Servicios Hogar',
+        id: 'tx-paid-' + paidKey,
+        paidKey: paidKey,
+        fecha: txDate,
+        semanaNum: numSemana,
+        concepto: debtId ? `Abono: ${itemName}` : `Pago: ${itemName}`,
+        categoria: categoria || (debtId ? 'Deuda' : 'Servicios Hogar'),
         metodo: 'Transferencia SPEI',
-        monto: Number(monto),
-        tipo: 'GASTO'
+        monto: numMonto,
+        tipo: 'GASTO',
+        debtId: debtId || null
       });
 
       if (debtId) {
         const debtObj = this.appState.debts.find(d => d.id === debtId);
         if (debtObj && debtObj.restante > 0) {
-          debtObj.restante = Math.max(0, debtObj.restante - monto);
+          debtObj.restante = Math.max(0, debtObj.restante - numMonto);
+        }
+      }
+    } else {
+      // Revertir transacción si se desmarca
+      const txIndex = this.appState.transactions.findIndex(t => t.paidKey === paidKey || t.id === 'tx-paid-' + paidKey);
+      if (txIndex !== -1) {
+        const removedTx = this.appState.transactions.splice(txIndex, 1)[0];
+        if (removedTx && removedTx.debtId) {
+          const debtObj = this.appState.debts.find(d => d.id === removedTx.debtId);
+          if (debtObj) {
+            debtObj.restante = Math.min(debtObj.inicial, debtObj.restante + Number(removedTx.monto));
+          }
+        }
+      } else if (debtId) {
+        const debtObj = this.appState.debts.find(d => d.id === debtId);
+        if (debtObj) {
+          debtObj.restante = Math.min(debtObj.inicial, debtObj.restante + numMonto);
         }
       }
     }
@@ -228,19 +340,26 @@ class Model {
 
   quickPayDebt(debtId, currIdx) {
     const debt = this.appState.debts.find(d => d.id === debtId);
-    if (!debt) return false;
+    if (!debt || debt.restante <= 0) return false;
     
-    debt.restante = Math.max(0, debt.restante - debt.mensual);
+    const montoAbono = Math.min(debt.restante, debt.mensual);
+    debt.restante = Math.max(0, debt.restante - montoAbono);
     
+    const semNum = Number(currIdx) + 1;
+    const paidKey = `paid-${semNum}-${debtId}-${currIdx}`;
+    this.appState.paidItemsByWeek[paidKey] = true;
+
     this.appState.transactions.unshift({
-      id: 'tx-' + Date.now(),
+      id: 'tx-quick-' + Date.now(),
+      paidKey: paidKey,
       fecha: new Date().toISOString().split('T')[0],
-      semanaNum: currIdx + 1,
+      semanaNum: semNum,
       concepto: `Abono Mensual: ${debt.nombre}`,
       categoria: 'Deuda',
       metodo: 'Transferencia SPEI',
-      monto: Number(debt.mensual),
-      tipo: 'GASTO'
+      monto: Number(montoAbono),
+      tipo: 'GASTO',
+      debtId: debtId
     });
 
     this.saveState();

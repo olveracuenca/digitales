@@ -22,7 +22,7 @@ class View {
     const totalDeuda = appState.debts.reduce((acc, d) => acc + (d.restante > 0 ? d.restante : 0), 0);
     document.getElementById('kpiDeudaTotal').innerText = `$${totalDeuda.toLocaleString()}`;
 
-    const weekTx = appState.transactions.filter(t => t.semanaNum === currWeek.num && t.tipo === 'GASTO');
+    const weekTx = appState.transactions.filter(t => Number(t.semanaNum) === currWeek.num && t.tipo === 'GASTO');
     const realSpent = weekTx.reduce((acc, t) => acc + Number(t.monto), 0);
     document.getElementById('heroGastoReal').innerText = `$${realSpent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
     
@@ -30,7 +30,7 @@ class View {
     let rollingBalance = 0;
     for (let i = 0; i <= currIdx; i++) {
         const w = weeks[i];
-        const wTxs = appState.transactions.filter(t => t.semanaNum === w.num);
+        const wTxs = appState.transactions.filter(t => Number(t.semanaNum) === w.num);
         const wGastado = wTxs.filter(t => t.tipo === 'GASTO').reduce((a, b) => a + Number(b.monto), 0);
         const wIngresos = w.baseIncome + wTxs.filter(t => t.tipo === 'INGRESO').reduce((a, b) => a + Number(b.monto), 0);
         rollingBalance += (wIngresos - wGastado);
@@ -120,7 +120,7 @@ class View {
     weeks.forEach((w, idx) => {
       const isCurrent = idx === currentWeekIdx;
 
-      const weekTxs = appState.transactions.filter(t => t.semanaNum === w.num);
+      const weekTxs = appState.transactions.filter(t => Number(t.semanaNum) === w.num);
       const totalGastado = weekTxs.filter(t => t.tipo === 'GASTO').reduce((a, b) => a + Number(b.monto), 0);
       const totalIngresos = w.baseIncome + weekTxs.filter(t => t.tipo === 'INGRESO').reduce((a, b) => a + Number(b.monto), 0);
       const balance = totalIngresos - totalGastado;
@@ -163,7 +163,7 @@ class View {
                         <p class="text-xs ${isPaid ? 'text-emerald-400/80' : 'text-slate-400'} font-medium">$${item.monto.toLocaleString()} MXN</p>
                       </div>
                     </div>
-                    <button data-action="toggle-payment" data-key="${itemPaidKey}" data-name="${item.name}" data-monto="${item.monto}" data-sem="${w.num}" data-debt="${item.debtId || ''}" 
+                    <button data-action="toggle-payment" data-key="${itemPaidKey}" data-name="${item.name}" data-monto="${item.monto}" data-sem="${w.num}" data-debt="${item.debtId || ''}" data-cat="${item.categoria || (item.debtId ? 'Deuda' : 'Servicios Hogar')}"
                       class="w-full sm:w-auto px-4 py-2 rounded-lg text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-2 ${
                         isPaid 
                           ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-lg shadow-emerald-900/40' 
@@ -230,7 +230,8 @@ class View {
           t.dataset.name, 
           t.dataset.monto, 
           t.dataset.sem, 
-          t.dataset.debt
+          t.dataset.debt,
+          t.dataset.cat
         );
       });
     });
