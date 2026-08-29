@@ -80,3 +80,83 @@ model Rsvp {
 
   @@index([invitationId])
 }
+
+// ================= FINANZAS APP MODELS =================
+
+model FinanzasState {
+  id              String   @id @default("default")
+  sueldoMensual   Float    @default(20000)
+  ahorroMeta      Float    @default(2000)
+  gustosMeta      Float    @default(1500)
+  imprevistosMeta Float    @default(1050)
+  updatedAt       DateTime @updatedAt
+}
+
+model FinanzasDebt {
+  id        String  @id
+  nombre    String
+  acreedor  String
+  inicial   Float
+  mensual   Float
+  dia       Int
+  quincena  String
+  restante  Float
+  fin       String
+  color     String
+}
+
+model FinanzasFixedExpense {
+  id        String  @id
+  concepto  String
+  categoria String
+  monto     Float
+  dia       Int
+  quincena  String
+  pagado    Boolean @default(false)
+}
+
+model FinanzasTransaction {
+  id        String  @id
+  fecha     String
+  semanaNum Int
+  concepto  String
+  categoria String
+  metodo    String
+  monto     Float
+  tipo      String
+  paidKey   String?
+  debtId    String?
+  cmovId    String?
+  cajitaId  String?
+}
+
+model FinanzasCajita {
+  id            String  @id
+  nombre        String
+  tipoCajita    String
+  asignado      String
+  color         String
+  icono         String
+  meta          Float   @default(0)
+  limiteCredito Float   @default(0)
+  diaCorte      Int     @default(1)
+  diaPago       Int     @default(15)
+  descripcion   String?
+  creadaEn      String
+}
+
+model FinanzasCajitaMovement {
+  id        String  @id
+  cajitaId  String
+  txId      String?
+  tipo      String
+  monto     Float
+  concepto  String
+  fecha     String
+  creadoEn  String
+}
+
+model FinanzasPaidItem {
+  key       String  @id
+  value     Boolean @default(true)
+}

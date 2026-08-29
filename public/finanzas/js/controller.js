@@ -3,6 +3,10 @@ class Controller {
     this.model = new Model();
     this.view = new View();
     this.bindEvents();
+  }
+
+  async init() {
+    await this.model.loadState();
     this.updateAllUI();
   }
 

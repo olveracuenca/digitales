@@ -101,7 +101,7 @@ const MONTH_NAMES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Jul
 class Model {
   constructor() {
     this.appState = this.getDefaultState();
-    this.loadState();
+    // loadState is now async and must be called by the controller
   }
 
   getDefaultState() {
@@ -134,11 +134,37 @@ class Model {
     });
   }
 
-  loadState() {
-    const saved = localStorage.getItem('finanzas_pro_state_mvc');
-    if (saved) {
+  async loadState() {
+    let savedObj = null;
+    let loadedFromDB = false;
+    
+    try {
+      const res = await fetch('/api/finanzas/state');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.state) {
+          savedObj = data.state;
+          loadedFromDB = true;
+        }
+      }
+    } catch(e) {
+      console.error("Error al obtener estado desde BD:", e);
+    }
+
+    if (!savedObj) {
+      const savedStr = localStorage.getItem('finanzas_pro_state_mvc');
+      if (savedStr) {
+        try {
+          savedObj = JSON.parse(savedStr);
+        } catch(e) {
+          console.error("Error al parsear estado local:", e);
+        }
+      }
+    }
+
+    if (savedObj) {
       try {
-        this.appState = JSON.parse(saved);
+        this.appState = savedObj;
         
         if (!this.appState.paidItemsByWeek) {
           this.appState.paidItemsByWeek = {};
@@ -229,14 +255,27 @@ class Model {
           });
         }
         
+        // Si lo cargamos desde localStorage y no de la BD, lo guardamos para sincronizar
+        if (!loadedFromDB) {
+          this.saveState();
+        }
+        
       } catch (e) {
-        console.error("Error al cargar estado:", e);
+        console.error("Error al procesar estado:", e);
       }
     }
   }
 
   saveState() {
     localStorage.setItem('finanzas_pro_state_mvc', JSON.stringify(this.appState));
+    
+    fetch('/api/finanzas/state', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ state: this.appState })
+    }).catch(e => console.error("Error al sincronizar con BD:", e));
   }
 
   // ================= DEBTS METHODS ================= //
