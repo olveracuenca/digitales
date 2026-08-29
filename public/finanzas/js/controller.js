@@ -33,7 +33,7 @@ class Controller {
     this.view.renderTransactions(this.model.appState, this.handleDeleteTransaction.bind(this));
     this.view.updateDebtSelectOptions(debts);
 
-    // Cajitas (Cuentas Separadas)
+    // Cajitas & Tarjetas de Crédito
     const cajitas = this.model.getCajitas();
     const cajitasSummary = this.model.getCajitasSummaryByOwner();
     const cajitasMovements = this.model.getCajitaMovements();
@@ -41,6 +41,8 @@ class Controller {
     this.view.renderCajitasSection(cajitas, cajitasSummary, cajitasMovements, {
       onDeposit: this.handleCajitaDeposit.bind(this),
       onWithdraw: this.handleCajitaWithdraw.bind(this),
+      onCargo: this.handleCajitaCargo.bind(this),
+      onPago: this.handleCajitaPago.bind(this),
       onEditCajita: this.handleEditCajita.bind(this),
       onDeleteCajita: this.handleDeleteCajita.bind(this),
       onDeleteMovement: this.handleDeleteCajitaMovement.bind(this)
@@ -100,7 +102,7 @@ class Controller {
           const editIdInput = document.getElementById('cajitaEditId');
           if (editIdInput) editIdInput.value = '';
           const title = document.getElementById('modalCajitaTitle');
-          if (title) title.innerText = 'Nueva Cajita / Apartado';
+          if (title) title.innerText = 'Nueva Cajita / Tarjeta';
           const submitBtn = document.getElementById('btnSubmitCajita');
           if (submitBtn) submitBtn.innerText = 'Crear Cajita';
           const delBtn = document.getElementById('btnDeleteCajitaFromModal');
@@ -109,6 +111,13 @@ class Controller {
           if (saldoCont) saldoCont.classList.remove('hidden');
           const form = document.getElementById('formCajita');
           if (form) form.reset();
+
+          // Reset to AHORRO
+          const radioAhorro = document.querySelector('input[name="cajitaTipo"][value="AHORRO"]');
+          if (radioAhorro) radioAhorro.checked = true;
+          this.toggleCajitaTipoFields('AHORRO');
+        } else if (modalId === 'modal-cajita-movimiento') {
+          this.updateCmovModalForSelectedCajita();
         }
 
         this.view.openModal(modalId);
@@ -121,6 +130,21 @@ class Controller {
         this.view.closeModal(e.currentTarget.dataset.closeModal);
       });
     });
+
+    // Cajita Type toggle in #modal-cajita
+    document.querySelectorAll('input[name="cajitaTipo"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        this.toggleCajitaTipoFields(e.target.value);
+      });
+    });
+
+    // Cajita selection change in #modal-cajita-movimiento
+    const cmovCajitaSelect = document.getElementById('cmovCajitaId');
+    if (cmovCajitaSelect) {
+      cmovCajitaSelect.addEventListener('change', () => {
+        this.updateCmovModalForSelectedCajita();
+      });
+    }
 
     // Dynamic Debt Selector inside General Transaction Modal
     const txCatSelect = document.getElementById('txCategoria');
@@ -243,6 +267,54 @@ class Controller {
 
     const btnReset = document.getElementById('btnReset');
     if (btnReset) btnReset.addEventListener('click', () => this.handleReset());
+  }
+
+  toggleCajitaTipoFields(tipo) {
+    const isCredito = tipo === 'CREDITO';
+    const creditoCampos = document.getElementById('cajitaCreditoCampos');
+    const metaCont = document.getElementById('cajitaMetaContainer');
+    const saldoLabel = document.getElementById('cajitaSaldoInicialLabel');
+    const iconoSelect = document.getElementById('cajitaIcono');
+    const colorSelect = document.getElementById('cajitaColor');
+
+    if (isCredito) {
+      if (creditoCampos) creditoCampos.classList.remove('hidden');
+      if (metaCont) metaCont.classList.add('hidden');
+      if (saldoLabel) saldoLabel.innerText = 'Saldo Deudor Inicial ($)';
+      if (iconoSelect && !document.getElementById('cajitaEditId')?.value) iconoSelect.value = 'credit-card';
+      if (colorSelect && !document.getElementById('cajitaEditId')?.value) colorSelect.value = 'purple';
+    } else {
+      if (creditoCampos) creditoCampos.classList.add('hidden');
+      if (metaCont) metaCont.classList.remove('hidden');
+      if (saldoLabel) saldoLabel.innerText = 'Saldo Inicial ($)';
+      if (iconoSelect && !document.getElementById('cajitaEditId')?.value) iconoSelect.value = 'wallet';
+      if (colorSelect && !document.getElementById('cajitaEditId')?.value) colorSelect.value = 'emerald';
+    }
+  }
+
+  updateCmovModalForSelectedCajita() {
+    const cajitaId = document.getElementById('cmovCajitaId')?.value;
+    const cajita = this.model.getCajitaById(cajitaId);
+    const isCredito = cajita && (cajita.isCredito || cajita.tipoCajita === 'CREDITO');
+
+    const title = document.getElementById('modalCmovTitle');
+    const ingresoLabel = document.getElementById('cmovIngresoLabel');
+    const egresoLabel = document.getElementById('cmovEgresoLabel');
+    const catContainer = document.getElementById('cmovCategoriaContainer');
+
+    if (isCredito) {
+      if (title) title.innerText = `Movimiento en Tarjeta: ${cajita.nombre}`;
+      if (ingresoLabel) ingresoLabel.innerHTML = `<i data-lucide="shopping-cart" class="w-4 h-4 stroke-[3]"></i> + Cargo / Compra Tarjeta`;
+      if (egresoLabel) egresoLabel.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4 stroke-[3]"></i> 💳 Pago / Abono a Tarjeta`;
+      if (catContainer) catContainer.classList.remove('hidden');
+    } else {
+      if (title) title.innerText = `Movimiento en Cajita: ${cajita ? cajita.nombre : 'Apartado'}`;
+      if (ingresoLabel) ingresoLabel.innerHTML = `<i data-lucide="arrow-down-left" class="w-4 h-4 stroke-[3]"></i> + Meter Dinero`;
+      if (egresoLabel) egresoLabel.innerHTML = `<i data-lucide="arrow-up-right" class="w-4 h-4 stroke-[3]"></i> - Sacar Dinero`;
+      if (catContainer) catContainer.classList.remove('hidden');
+    }
+
+    if (window.lucide) window.lucide.createIcons();
   }
 
   // ================= DEBT & FIXED EXPENSE HANDLERS ================= //
@@ -430,6 +502,7 @@ class Controller {
     const fecha = document.getElementById('txFecha').value;
     const categoria = document.getElementById('txCategoria').value;
     const metodo = document.getElementById('txMetodo').value;
+    const cajitaId = document.getElementById('txCajitaId')?.value || null;
 
     const txDate = new Date(fecha);
     const diffWeeks = Math.floor((txDate - START_DATE) / (7 * 24 * 60 * 60 * 1000)) + 1;
@@ -449,7 +522,8 @@ class Controller {
       metodo,
       monto,
       tipo,
-      debtId
+      debtId,
+      cajitaId
     });
 
     this.view.closeModal('modal-transaccion');
@@ -463,6 +537,7 @@ class Controller {
   handleCajitaDeposit(cajitaId) {
     const cajitaSelect = document.getElementById('cmovCajitaId');
     if (cajitaSelect) cajitaSelect.value = cajitaId;
+    this.updateCmovModalForSelectedCajita();
     
     const ingresoRadio = document.querySelector('input[name="cmovTipo"][value="INGRESO"]');
     if (ingresoRadio) ingresoRadio.checked = true;
@@ -482,6 +557,7 @@ class Controller {
   handleCajitaWithdraw(cajitaId) {
     const cajitaSelect = document.getElementById('cmovCajitaId');
     if (cajitaSelect) cajitaSelect.value = cajitaId;
+    this.updateCmovModalForSelectedCajita();
     
     const egresoRadio = document.querySelector('input[name="cmovTipo"][value="EGRESO"]');
     if (egresoRadio) egresoRadio.checked = true;
@@ -491,6 +567,46 @@ class Controller {
     
     const conceptoInput = document.getElementById('cmovConcepto');
     if (conceptoInput) conceptoInput.value = '';
+
+    const fechaInput = document.getElementById('cmovFecha');
+    if (fechaInput) fechaInput.value = new Date().toISOString().split('T')[0];
+
+    this.view.openModal('modal-cajita-movimiento');
+  }
+
+  handleCajitaCargo(cajitaId) {
+    const cajitaSelect = document.getElementById('cmovCajitaId');
+    if (cajitaSelect) cajitaSelect.value = cajitaId;
+    this.updateCmovModalForSelectedCajita();
+    
+    const cargoRadio = document.querySelector('input[name="cmovTipo"][value="INGRESO"]');
+    if (cargoRadio) cargoRadio.checked = true;
+
+    const montoInput = document.getElementById('cmovMonto');
+    if (montoInput) montoInput.value = '';
+    
+    const conceptoInput = document.getElementById('cmovConcepto');
+    if (conceptoInput) conceptoInput.value = '';
+
+    const fechaInput = document.getElementById('cmovFecha');
+    if (fechaInput) fechaInput.value = new Date().toISOString().split('T')[0];
+
+    this.view.openModal('modal-cajita-movimiento');
+  }
+
+  handleCajitaPago(cajitaId) {
+    const cajitaSelect = document.getElementById('cmovCajitaId');
+    if (cajitaSelect) cajitaSelect.value = cajitaId;
+    this.updateCmovModalForSelectedCajita();
+    
+    const pagoRadio = document.querySelector('input[name="cmovTipo"][value="EGRESO"]');
+    if (pagoRadio) pagoRadio.checked = true;
+
+    const montoInput = document.getElementById('cmovMonto');
+    if (montoInput) montoInput.value = '';
+    
+    const conceptoInput = document.getElementById('cmovConcepto');
+    if (conceptoInput) conceptoInput.value = 'Pago mensual de tarjeta';
 
     const fechaInput = document.getElementById('cmovFecha');
     if (fechaInput) fechaInput.value = new Date().toISOString().split('T')[0];
@@ -514,10 +630,18 @@ class Controller {
     const nameInput = document.getElementById('cajitaNombre');
     if (nameInput) nameInput.value = cajita.nombre;
 
+    const tipo = cajita.tipoCajita || 'AHORRO';
+    const radioTipo = document.querySelector(`input[name="cajitaTipo"][value="${tipo}"]`);
+    if (radioTipo) radioTipo.checked = true;
+    this.toggleCajitaTipoFields(tipo);
+
     document.getElementById('cajitaAsignado').value = cajita.asignado;
-    document.getElementById('cajitaColor').value = cajita.color || 'emerald';
-    document.getElementById('cajitaIcono').value = cajita.icono || 'wallet';
+    document.getElementById('cajitaColor').value = cajita.color || (tipo === 'CREDITO' ? 'purple' : 'emerald');
+    document.getElementById('cajitaIcono').value = cajita.icono || (tipo === 'CREDITO' ? 'credit-card' : 'wallet');
     document.getElementById('cajitaMeta').value = cajita.meta || '';
+    document.getElementById('cajitaLimiteCredito').value = cajita.limiteCredito || '';
+    document.getElementById('cajitaDiaCorte').value = cajita.diaCorte || 12;
+    document.getElementById('cajitaDiaPago').value = cajita.diaPago || 2;
     document.getElementById('cajitaDescripcion').value = cajita.descripcion || '';
     
     const saldoCont = document.getElementById('cajitaSaldoInicialContainer');
@@ -536,14 +660,15 @@ class Controller {
     const cajita = this.model.getCajitaById(cajitaId);
     if (!cajita) return;
 
-    if (confirm(`¿Estás seguro de eliminar la cajita "${cajita.nombre}" ($${Number(cajita.saldo).toLocaleString()} saldo actual) y todos sus movimientos?`)) {
+    const tipoStr = cajita.tipoCajita === 'CREDITO' ? 'la tarjeta de crédito' : 'la cajita';
+    if (confirm(`¿Estás seguro de eliminar ${tipoStr} "${cajita.nombre}" ($${Number(cajita.saldo).toLocaleString()} saldo) y sus movimientos vinculados?`)) {
       this.model.deleteCajita(cajitaId);
       this.updateAllUI();
     }
   }
 
   handleDeleteCajitaMovement(movId) {
-    if (confirm('¿Eliminar este movimiento de la cajita? El saldo se recalculará automáticamente.')) {
+    if (confirm('¿Eliminar este movimiento? El saldo y la bitácora se actualizarán automáticamente.')) {
       this.model.deleteCajitaMovement(movId);
       this.updateAllUI();
     }
@@ -552,26 +677,45 @@ class Controller {
   handleSaveCajita(e) {
     e.preventDefault();
     const editId = document.getElementById('cajitaEditId').value;
+    const tipoCajita = document.querySelector('input[name="cajitaTipo"]:checked')?.value || 'AHORRO';
     const nombre = document.getElementById('cajitaNombre').value;
     const asignado = document.getElementById('cajitaAsignado').value;
     const color = document.getElementById('cajitaColor').value;
     const icono = document.getElementById('cajitaIcono').value;
     const meta = Number(document.getElementById('cajitaMeta').value) || 0;
+    const limiteCredito = Number(document.getElementById('cajitaLimiteCredito').value) || 0;
+    const diaCorte = Number(document.getElementById('cajitaDiaCorte').value) || 1;
+    const diaPago = Number(document.getElementById('cajitaDiaPago').value) || 15;
     const descripcion = document.getElementById('cajitaDescripcion').value;
 
     if (editId) {
-      this.model.updateCajita(editId, { nombre, asignado, color, icono, meta, descripcion });
-    } else {
-      const saldoInicial = Number(document.getElementById('cajitaSaldoInicial').value) || 0;
-      this.model.addCajita({
+      this.model.updateCajita(editId, {
         nombre,
+        tipoCajita,
         asignado,
         color,
         icono,
         meta,
+        limiteCredito,
+        diaCorte,
+        diaPago,
+        descripcion
+      });
+    } else {
+      const saldoInicial = Number(document.getElementById('cajitaSaldoInicial').value) || 0;
+      this.model.addCajita({
+        nombre,
+        tipoCajita,
+        asignado,
+        color,
+        icono,
+        meta,
+        limiteCredito,
+        diaCorte,
+        diaPago,
         descripcion,
         saldoInicial,
-        conceptoInicial: 'Saldo inicial / aportación de apertura',
+        conceptoInicial: tipoCajita === 'CREDITO' ? 'Saldo deudor inicial' : 'Saldo inicial / aportación',
         fechaInicial: new Date().toISOString().split('T')[0]
       });
       this.view.launchConfetti();
@@ -590,13 +734,16 @@ class Controller {
     const monto = Number(document.getElementById('cmovMonto').value);
     const fecha = document.getElementById('cmovFecha').value;
     const concepto = document.getElementById('cmovConcepto').value;
+    const categoria = document.getElementById('cmovCategoria')?.value || 'Gustos';
 
     const result = this.model.addCajitaMovement({
       cajitaId,
       tipo,
       monto,
       concepto,
-      fecha
+      fecha,
+      categoria,
+      syncBitacora: true
     });
 
     if (!result.success) {
@@ -604,10 +751,7 @@ class Controller {
       return;
     }
 
-    if (tipo === 'INGRESO') {
-      this.view.launchConfetti();
-    }
-
+    this.view.launchConfetti();
     this.view.closeModal('modal-cajita-movimiento');
     document.getElementById('formCajitaMovimiento').reset();
     this.updateAllUI();

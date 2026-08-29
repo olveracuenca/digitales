@@ -619,10 +619,16 @@ class View {
       tr.className = "hover:bg-slate-800/40 transition-colors border-b border-slate-800/50 last:border-0";
       const isIngreso = t.tipo === 'INGRESO';
       const isDeuda = t.categoria === 'Deuda';
+      const isCard = t.metodo && t.metodo.toLowerCase().includes('crédito');
 
       let catBadge = `<span class="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 bg-slate-900 rounded-full border border-slate-800 text-slate-300"><i data-lucide="tag" class="w-3 h-3"></i> ${t.categoria}</span>`;
       if (isDeuda) {
         catBadge = `<span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 bg-indigo-500/20 rounded-full border border-indigo-500/30 text-indigo-300"><i data-lucide="credit-card" class="w-3 h-3 text-indigo-400"></i> ${t.categoria}</span>`;
+      }
+
+      let metodoBadge = `<span class="text-[11px] text-slate-400 font-medium whitespace-nowrap">${t.metodo}</span>`;
+      if (isCard) {
+        metodoBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 bg-purple-500/20 rounded-md border border-purple-500/30 text-purple-300"><i data-lucide="credit-card" class="w-3 h-3"></i> ${t.metodo}</span>`;
       }
 
       tr.innerHTML = `
@@ -630,7 +636,7 @@ class View {
         <td class="py-3 px-4 whitespace-nowrap"><span class="bg-slate-900 border border-slate-700 text-slate-300 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm">Sem ${t.semanaNum}</span></td>
         <td class="py-3 px-4 font-bold text-white">${t.concepto}</td>
         <td class="py-3 px-4 whitespace-nowrap">${catBadge}</td>
-        <td class="py-3 px-4 text-[11px] text-slate-400 font-medium whitespace-nowrap">${t.metodo}</td>
+        <td class="py-3 px-4 whitespace-nowrap">${metodoBadge}</td>
         <td class="py-3 px-4 text-right font-black whitespace-nowrap ${isIngreso ? 'text-emerald-400' : 'text-rose-400'}">
           ${isIngreso ? '+' : '-'}$${Number(t.monto).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
         </td>
@@ -672,19 +678,29 @@ class View {
 
   renderCajitasSection(cajitas, summary, movements, callbacks) {
     const totalEl = document.getElementById('kpiTotalCajitas');
-    if (totalEl) totalEl.innerText = `$${summary.total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+    if (totalEl) totalEl.innerText = `$${(summary.totalAhorro || summary.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+
+    const deudaTarjetasEl = document.getElementById('kpiDeudaTarjetasCajitas');
+    if (deudaTarjetasEl) deudaTarjetasEl.innerText = `$${(summary.totalDeudaTarjetas || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+
+    const netoEl = document.getElementById('kpiNetoCajitas');
+    if (netoEl) {
+      const neto = summary.saldoNeto !== undefined ? summary.saldoNeto : (summary.totalAhorro || 0) - (summary.totalDeudaTarjetas || 0);
+      netoEl.innerText = `$${neto.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+      netoEl.className = `text-2xl md:text-3xl font-black tracking-tight drop-shadow-md ${neto >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+    }
 
     const mioEl = document.getElementById('kpiMioCajitas');
-    if (mioEl) mioEl.innerText = `$${summary.mio.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+    if (mioEl) mioEl.innerText = `$${(summary.mio || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
 
     const esposaEl = document.getElementById('kpiEsposaCajitas');
-    if (esposaEl) esposaEl.innerText = `$${summary.esposa.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+    if (esposaEl) esposaEl.innerText = `$${(summary.esposa || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
 
     const compEl = document.getElementById('kpiCompartidoCajitas');
-    if (compEl) compEl.innerText = `$${summary.compartido.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+    if (compEl) compEl.innerText = `$${(summary.compartido || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
 
     const countBadge = document.getElementById('badgeCajitasCount');
-    if (countBadge) countBadge.innerText = `${cajitas.length} ${cajitas.length === 1 ? 'Cajita' : 'Cajitas'}`;
+    if (countBadge) countBadge.innerText = `${cajitas.length} ${cajitas.length === 1 ? 'Cajita/Tarjeta' : 'Cajitas/Tarjetas'}`;
 
     this.updateCajitasSelectOptions(cajitas);
 
@@ -699,19 +715,20 @@ class View {
 
         cajitas.forEach(c => {
           const card = document.createElement('div');
+          const isCredito = c.isCredito || c.tipoCajita === 'CREDITO';
           
           const colorStyles = {
+            purple: { border: 'border-purple-500/30', bgGlow: 'bg-purple-500/10', iconBg: 'bg-purple-500/20', iconText: 'text-purple-400', barGrad: 'from-purple-600 to-purple-400', badge: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
             indigo: { border: 'border-indigo-500/30', bgGlow: 'bg-indigo-500/10', iconBg: 'bg-indigo-500/20', iconText: 'text-indigo-400', barGrad: 'from-indigo-600 to-indigo-400', badge: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' },
             rose: { border: 'border-rose-500/30', bgGlow: 'bg-rose-500/10', iconBg: 'bg-rose-500/20', iconText: 'text-rose-400', barGrad: 'from-rose-600 to-rose-400', badge: 'bg-rose-500/20 text-rose-300 border-rose-500/30' },
             emerald: { border: 'border-emerald-500/30', bgGlow: 'bg-emerald-500/10', iconBg: 'bg-emerald-500/20', iconText: 'text-emerald-400', barGrad: 'from-emerald-600 to-emerald-400', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
             amber: { border: 'border-amber-500/30', bgGlow: 'bg-amber-500/10', iconBg: 'bg-amber-500/20', iconText: 'text-amber-400', barGrad: 'from-amber-600 to-amber-400', badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
             sky: { border: 'border-sky-500/30', bgGlow: 'bg-sky-500/10', iconBg: 'bg-sky-500/20', iconText: 'text-sky-400', barGrad: 'from-sky-600 to-sky-400', badge: 'bg-sky-500/20 text-sky-300 border-sky-500/30' },
-            purple: { border: 'border-purple-500/30', bgGlow: 'bg-purple-500/10', iconBg: 'bg-purple-500/20', iconText: 'text-purple-400', barGrad: 'from-purple-600 to-purple-400', badge: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
             teal: { border: 'border-teal-500/30', bgGlow: 'bg-teal-500/10', iconBg: 'bg-teal-500/20', iconText: 'text-teal-400', barGrad: 'from-teal-600 to-teal-400', badge: 'bg-teal-500/20 text-teal-300 border-teal-500/30' }
           };
 
-          const style = colorStyles[c.color] || colorStyles.indigo;
-          const hasMeta = Number(c.meta) > 0;
+          const style = colorStyles[c.color] || (isCredito ? colorStyles.purple : colorStyles.indigo);
+          const hasMeta = !isCredito && Number(c.meta) > 0;
           const progressPct = hasMeta ? Math.min(100, Math.round((c.saldo / c.meta) * 100)) : 0;
           const isMetaReached = hasMeta && c.saldo >= c.meta;
 
@@ -719,7 +736,7 @@ class View {
           if (c.asignado === 'Esposa') ownerIcon = 'heart';
           if (c.asignado === 'Compartido') ownerIcon = 'users';
 
-          card.className = `glass rounded-2xl p-5 md:p-6 relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:${style.border} flex flex-col justify-between group`;
+          card.className = `glass rounded-2xl p-5 md:p-6 relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:${style.border} flex flex-col justify-between group ${isCredito ? 'border-purple-500/30 bg-gradient-to-br from-purple-950/20 to-slate-900/90' : ''}`;
           
           card.innerHTML = `
             <div class="absolute -right-8 -top-8 w-32 h-32 ${style.bgGlow} rounded-full blur-2xl group-hover:scale-125 transition-transform pointer-events-none"></div>
@@ -728,10 +745,15 @@ class View {
               <div class="flex items-start justify-between gap-3 relative z-10">
                 <div class="flex items-center gap-3">
                   <div class="w-11 h-11 rounded-2xl ${style.iconBg} flex items-center justify-center border border-white/10 shadow-inner">
-                    <i data-lucide="${c.icono || 'boxes'}" class="w-5 h-5 ${style.iconText}"></i>
+                    <i data-lucide="${isCredito ? 'credit-card' : (c.icono || 'boxes')}" class="w-5 h-5 ${style.iconText}"></i>
                   </div>
                   <div>
-                    <h4 class="text-base font-black text-white leading-tight">${c.nombre}</h4>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <h4 class="text-base font-black text-white leading-tight">${c.nombre}</h4>
+                      <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full border ${isCredito ? 'bg-purple-500/20 text-purple-300 border-purple-500/40' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'}">
+                        ${isCredito ? 'Tarjeta Crédito' : 'Ahorro'}
+                      </span>
+                    </div>
                     <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border mt-1 ${style.badge}">
                       <i data-lucide="${ownerIcon}" class="w-3 h-3"></i> ${c.asignado}
                     </span>
@@ -739,25 +761,52 @@ class View {
                 </div>
 
                 <div class="flex items-center gap-1.5">
-                  <button data-action="cajita-edit" data-id="${c.id}" title="Cambiar nombre / Editar apartado" class="px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-xs font-semibold flex items-center gap-1.5 transition">
+                  <button data-action="cajita-edit" data-id="${c.id}" title="Editar cajita / tarjeta" class="px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-xs font-semibold flex items-center gap-1.5 transition">
                     <i data-lucide="edit-3" class="w-3.5 h-3.5 text-emerald-400"></i>
                     <span class="hidden sm:inline">Editar</span>
                   </button>
-                  <button data-action="cajita-delete" data-id="${c.id}" title="Eliminar cajita" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/30 transition">
+                  <button data-action="cajita-delete" data-id="${c.id}" title="Eliminar" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/30 transition">
                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                   </button>
                 </div>
               </div>
 
+              <!-- Saldo / Deuda Section -->
               <div class="mt-5 relative z-10">
-                <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Saldo Disponible</p>
+                <p class="text-[10px] uppercase font-bold tracking-wider ${isCredito ? 'text-purple-400' : 'text-slate-400'}">
+                  ${isCredito ? 'Deuda / Saldo Por Pagar' : 'Saldo Disponible'}
+                </p>
                 <div class="flex items-baseline gap-2 mt-0.5">
-                  <h3 class="text-2xl md:text-3xl font-black text-white tracking-tight">$${Number(c.saldo).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</h3>
+                  <h3 class="text-2xl md:text-3xl font-black tracking-tight ${isCredito ? (c.saldo > 0 ? 'text-purple-300' : 'text-emerald-400') : 'text-white'}">
+                    $${Number(c.saldo).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                  </h3>
                   <span class="text-[10px] text-slate-400 font-medium">MXN</span>
                 </div>
                 ${c.descripcion ? `<p class="text-xs text-slate-400 mt-1 line-clamp-1 font-medium">${c.descripcion}</p>` : ''}
               </div>
 
+              <!-- Credit Card specific metrics -->
+              ${isCredito ? `
+                <div class="mt-4 pt-3 border-t border-slate-800/60 relative z-10 text-xs font-medium space-y-1.5">
+                  ${c.limiteCredito > 0 ? `
+                    <div class="flex justify-between items-center text-[11px] font-bold">
+                      <span class="text-slate-400">Límite: <strong class="text-white">$${Number(c.limiteCredito).toLocaleString()}</strong></span>
+                      <span class="text-emerald-400 font-black">Disp: $${Number(c.disponible).toLocaleString()}</span>
+                    </div>
+                    <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800 shadow-inner">
+                      <div class="h-full bg-gradient-to-r from-purple-500 to-rose-500 rounded-full transition-all duration-700" style="width: ${c.usoPct}%"></div>
+                    </div>
+                  ` : ''}
+                  ${(c.diaCorte || c.diaPago) ? `
+                    <div class="flex justify-between items-center text-[10px] text-slate-400 font-semibold pt-1">
+                      <span>Corte: Día ${c.diaCorte || 1}</span>
+                      <span>Límite Pago: Día ${c.diaPago || 15}</span>
+                    </div>
+                  ` : ''}
+                </div>
+              ` : ''}
+
+              <!-- Savings Meta Progress Bar -->
               ${hasMeta ? `
                 <div class="mt-4 pt-3 border-t border-slate-800/60 relative z-10">
                   <div class="flex justify-between items-center text-xs font-bold mb-1.5">
@@ -775,13 +824,23 @@ class View {
               ` : ''}
             </div>
 
+            <!-- Action Buttons based on type -->
             <div class="mt-5 pt-4 border-t border-slate-800/80 grid grid-cols-2 gap-2 relative z-10">
-              <button data-action="cajita-deposit" data-id="${c.id}" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md shadow-emerald-500/10 active:scale-95">
-                <i data-lucide="plus-circle" class="w-3.5 h-3.5 stroke-[2.5]"></i> Meter Dinero
-              </button>
-              <button data-action="cajita-withdraw" data-id="${c.id}" class="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all border border-slate-700 active:scale-95">
-                <i data-lucide="minus-circle" class="w-3.5 h-3.5 stroke-[2.5]"></i> Sacar Dinero
-              </button>
+              ${isCredito ? `
+                <button data-action="cajita-cargo" data-id="${c.id}" class="bg-purple-600 hover:bg-purple-500 text-white text-xs font-black py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md shadow-purple-900/30 active:scale-95">
+                  <i data-lucide="shopping-cart" class="w-3.5 h-3.5 stroke-[2.5]"></i> + Cargo / Compra
+                </button>
+                <button data-action="cajita-pago" data-id="${c.id}" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-emerald-300 text-xs font-black py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all border border-slate-700 active:scale-95">
+                  <i data-lucide="check-circle" class="w-3.5 h-3.5 stroke-[2.5]"></i> Pagar Tarjeta
+                </button>
+              ` : `
+                <button data-action="cajita-deposit" data-id="${c.id}" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md shadow-emerald-500/10 active:scale-95">
+                  <i data-lucide="plus-circle" class="w-3.5 h-3.5 stroke-[2.5]"></i> Meter Dinero
+                </button>
+                <button data-action="cajita-withdraw" data-id="${c.id}" class="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all border border-slate-700 active:scale-95">
+                  <i data-lucide="minus-circle" class="w-3.5 h-3.5 stroke-[2.5]"></i> Sacar Dinero
+                </button>
+              `}
             </div>
           `;
           container.appendChild(card);
@@ -791,6 +850,7 @@ class View {
 
     this.renderCajitasMovementsTable(movements, callbacks.onDeleteMovement);
 
+    // Event listeners
     if (callbacks.onDeposit) {
       document.querySelectorAll('[data-action="cajita-deposit"]').forEach(b => {
         b.addEventListener('click', (e) => callbacks.onDeposit(e.currentTarget.dataset.id));
@@ -799,6 +859,16 @@ class View {
     if (callbacks.onWithdraw) {
       document.querySelectorAll('[data-action="cajita-withdraw"]').forEach(b => {
         b.addEventListener('click', (e) => callbacks.onWithdraw(e.currentTarget.dataset.id));
+      });
+    }
+    if (callbacks.onCargo) {
+      document.querySelectorAll('[data-action="cajita-cargo"]').forEach(b => {
+        b.addEventListener('click', (e) => callbacks.onCargo(e.currentTarget.dataset.id));
+      });
+    }
+    if (callbacks.onPago) {
+      document.querySelectorAll('[data-action="cajita-pago"]').forEach(b => {
+        b.addEventListener('click', (e) => callbacks.onPago(e.currentTarget.dataset.id));
       });
     }
     if (callbacks.onEditCajita) {
@@ -821,21 +891,43 @@ class View {
       const el = document.getElementById(selId);
       if (el) {
         const currVal = el.value;
-        el.innerHTML = (cajitas || []).map(c => 
-          `<option value="${c.id}">${c.nombre} ($${Number(c.saldo).toLocaleString('es-MX', { minimumFractionDigits: 2 })} - ${c.asignado})</option>`
-        ).join('');
+        el.innerHTML = (cajitas || []).map(c => {
+          const isCred = c.isCredito || c.tipoCajita === 'CREDITO';
+          const icon = isCred ? '💳' : '👛';
+          const lbl = isCred ? `Deuda: $${Number(c.saldo).toLocaleString()}` : `Saldo: $${Number(c.saldo).toLocaleString()}`;
+          return `<option value="${c.id}">${icon} ${c.nombre} (${lbl} - ${c.asignado})</option>`;
+        }).join('');
         if (currVal && (cajitas || []).some(c => c.id === currVal)) {
           el.value = currVal;
         }
       }
     });
 
+    // Populate #txCajitaId in General Transactions Modal
+    const txCajitaSelect = document.getElementById('txCajitaId');
+    if (txCajitaSelect) {
+      const currVal = txCajitaSelect.value;
+      let html = '<option value="">-- Ninguna (Gasto General) --</option>';
+      (cajitas || []).forEach(c => {
+        const isCred = c.isCredito || c.tipoCajita === 'CREDITO';
+        const icon = isCred ? '💳' : '👛';
+        const lbl = isCred ? `Deuda actual: $${Number(c.saldo).toLocaleString()}` : `Saldo: $${Number(c.saldo).toLocaleString()}`;
+        html += `<option value="${c.id}">${icon} ${c.nombre} (${lbl} - ${c.asignado})</option>`;
+      });
+      txCajitaSelect.innerHTML = html;
+      if (currVal && (cajitas || []).some(c => c.id === currVal)) {
+        txCajitaSelect.value = currVal;
+      }
+    }
+
     const filterSelect = document.getElementById('filterCajitaSelect');
     if (filterSelect) {
       const currFilter = filterSelect.value;
       let html = '<option value="ALL">Todas las Cajitas</option>';
       (cajitas || []).forEach(c => {
-        html += `<option value="${c.id}">${c.nombre} (${c.asignado})</option>`;
+        const isCred = c.isCredito || c.tipoCajita === 'CREDITO';
+        const icon = isCred ? '💳' : '👛';
+        html += `<option value="${c.id}">${icon} ${c.nombre} (${c.asignado})</option>`;
       });
       filterSelect.innerHTML = html;
       if (currFilter && (currFilter === 'ALL' || (cajitas || []).some(c => c.id === currFilter))) {
@@ -871,28 +963,36 @@ class View {
     filtered.forEach(m => {
       const tr = document.createElement('tr');
       tr.className = "hover:bg-slate-800/40 transition-colors border-b border-slate-800/50 last:border-0";
-      const isIngreso = m.tipo === 'INGRESO';
+      
+      const isIngreso = m.tipo === 'INGRESO' || m.tipo === 'CARGO';
+      const isCargoTarjeta = m.tipo === 'CARGO';
+      const isPagoTarjeta = m.tipo === 'PAGO';
+      const isRetiro = m.tipo === 'EGRESO';
 
-      let ownerBadgeColor = 'bg-slate-800 text-slate-300 border-slate-700';
-      if (m.cajitaAsignado === 'Mío') ownerBadgeColor = 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30';
-      if (m.cajitaAsignado === 'Esposa') ownerBadgeColor = 'bg-rose-500/20 text-rose-300 border-rose-500/30';
-      if (m.cajitaAsignado === 'Compartido') ownerBadgeColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+      let tipoBadge = '';
+      if (isCargoTarjeta) {
+        tipoBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border bg-purple-500/20 text-purple-300 border-purple-500/30"><i data-lucide="credit-card" class="w-3 h-3"></i> Compra Tarjeta (+)</span>`;
+      } else if (isPagoTarjeta) {
+        tipoBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border bg-emerald-500/20 text-emerald-300 border-emerald-500/30"><i data-lucide="check-circle" class="w-3 h-3"></i> Pago Tarjeta (-)</span>`;
+      } else if (isRetiro) {
+        tipoBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border bg-rose-500/20 text-rose-300 border-rose-500/30"><i data-lucide="arrow-up-right" class="w-3 h-3"></i> Retiro (-)</span>`;
+      } else {
+        tipoBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border bg-emerald-500/20 text-emerald-300 border-emerald-500/30"><i data-lucide="arrow-down-left" class="w-3 h-3"></i> Depósito (+)</span>`;
+      }
 
       tr.innerHTML = `
         <td class="py-3 px-4 text-xs text-slate-400 font-medium whitespace-nowrap">${m.fecha}</td>
         <td class="py-3 px-4 font-bold text-white whitespace-nowrap">
           <span class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full ${isIngreso ? 'bg-emerald-400' : 'bg-rose-400'}"></span>
+            <span class="w-2 h-2 rounded-full ${isCargoTarjeta ? 'bg-purple-400' : (isIngreso ? 'bg-emerald-400' : 'bg-rose-400')}"></span>
             ${m.cajitaNombre}
           </span>
         </td>
         <td class="py-3 px-4 whitespace-nowrap">
-          <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${ownerBadgeColor}">
-            ${m.cajitaAsignado}
-          </span>
+          ${tipoBadge}
         </td>
         <td class="py-3 px-4 text-xs text-slate-300 font-medium">${m.concepto}</td>
-        <td class="py-3 px-4 text-right font-black whitespace-nowrap ${isIngreso ? 'text-emerald-400' : 'text-rose-400'}">
+        <td class="py-3 px-4 text-right font-black whitespace-nowrap ${isCargoTarjeta ? 'text-purple-300' : (isIngreso ? 'text-emerald-400' : 'text-rose-400')}">
           ${isIngreso ? '+' : '-'}$${Number(m.monto).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
         </td>
         <td class="py-3 px-4 text-center">
@@ -988,7 +1088,7 @@ class View {
         particleCount: 80,
         spread: 70,
         origin: { y: 0.8 },
-        colors: ['#10b981', '#34d399', '#059669', '#fcd34d', '#3b82f6', '#6366f1', '#ec4899']
+        colors: ['#10b981', '#34d399', '#059669', '#fcd34d', '#3b82f6', '#6366f1', '#a855f7', '#ec4899']
       });
     }
   }

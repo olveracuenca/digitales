@@ -29,6 +29,7 @@ const INITIAL_CAJITAS = [
   {
     id: 'caj-1',
     nombre: 'Dinero Mío',
+    tipoCajita: 'AHORRO',
     asignado: 'Mío',
     color: 'indigo',
     icono: 'briefcase',
@@ -39,6 +40,7 @@ const INITIAL_CAJITAS = [
   {
     id: 'caj-2',
     nombre: 'Dinero Esposa',
+    tipoCajita: 'AHORRO',
     asignado: 'Esposa',
     color: 'rose',
     icono: 'heart',
@@ -49,11 +51,25 @@ const INITIAL_CAJITAS = [
   {
     id: 'caj-3',
     nombre: 'Fondo de Emergencia',
+    tipoCajita: 'AHORRO',
     asignado: 'Compartido',
     color: 'emerald',
     icono: 'shield-check',
     meta: 10000,
     descripcion: 'Fondo de seguridad y reserva familiar',
+    creadaEn: '2026-08-30'
+  },
+  {
+    id: 'caj-4',
+    nombre: 'Tarjeta Nu',
+    tipoCajita: 'CREDITO',
+    asignado: 'Mío',
+    color: 'purple',
+    icono: 'credit-card',
+    limiteCredito: 15000,
+    diaCorte: 12,
+    diaPago: 2,
+    descripcion: 'Control de gastos y compras con tarjeta de crédito Nu',
     creadaEn: '2026-08-30'
   }
 ];
@@ -189,7 +205,20 @@ class Model {
         // MIGRATION: Cajitas (Cuentas separadas)
         if (!this.appState.cajitas || !Array.isArray(this.appState.cajitas) || this.appState.cajitas.length === 0) {
           this.appState.cajitas = JSON.parse(JSON.stringify(INITIAL_CAJITAS));
+        } else {
+          // Ensure all cajitas have tipoCajita
+          this.appState.cajitas.forEach(c => {
+            if (!c.tipoCajita) {
+              const nameLower = (c.nombre || '').toLowerCase();
+              if (nameLower.includes('nu') || nameLower.includes('klar') || nameLower.includes('tarjeta') || nameLower.includes('credito') || nameLower.includes('crédito')) {
+                c.tipoCajita = 'CREDITO';
+              } else {
+                c.tipoCajita = 'AHORRO';
+              }
+            }
+          });
         }
+
         if (!this.appState.cajitasMovimientos || !Array.isArray(this.appState.cajitasMovimientos)) {
           this.appState.cajitasMovimientos = JSON.parse(JSON.stringify(INITIAL_CAJITAS_MOVIMIENTOS));
         }
@@ -384,61 +413,92 @@ class Model {
     return true;
   }
 
-  // ================= CAJITAS (CUENTAS SEPARADAS) METHODS ================= //
+  // ================= CAJITAS (APARTADOS & TARJETAS DE CRÉDITO) ================= //
 
   getCajitaSaldo(cajitaId) {
     if (!this.appState.cajitasMovimientos) return 0;
+    const cajita = (this.appState.cajitas || []).find(c => c.id === cajitaId);
+    const isCredito = cajita && cajita.tipoCajita === 'CREDITO';
+    
     const movs = this.appState.cajitasMovimientos.filter(m => m.cajitaId === cajitaId);
-    const ingresos = movs.filter(m => m.tipo === 'INGRESO').reduce((acc, m) => acc + Number(m.monto), 0);
-    const egresos = movs.filter(m => m.tipo === 'EGRESO').reduce((acc, m) => acc + Number(m.monto), 0);
-    return Math.max(0, ingresos - egresos);
+    
+    if (isCredito) {
+      // Para tarjetas de crédito: CARGO suma a la deuda; PAGO resta de la deuda
+      const cargos = movs.filter(m => m.tipo === 'CARGO' || m.tipo === 'INGRESO').reduce((acc, m) => acc + Number(m.monto), 0);
+      const pagos = movs.filter(m => m.tipo === 'PAGO' || m.tipo === 'EGRESO').reduce((acc, m) => acc + Number(m.monto), 0);
+      return Math.max(0, cargos - pagos);
+    } else {
+      // Para apartados de ahorro: INGRESO mete dinero (+); EGRESO saca dinero (-)
+      const ingresos = movs.filter(m => m.tipo === 'INGRESO' || m.tipo === 'PAGO').reduce((acc, m) => acc + Number(m.monto), 0);
+      const egresos = movs.filter(m => m.tipo === 'EGRESO' || m.tipo === 'CARGO').reduce((acc, m) => acc + Number(m.monto), 0);
+      return Math.max(0, ingresos - egresos);
+    }
   }
 
   getCajitas() {
     if (!this.appState.cajitas) return [];
-    return this.appState.cajitas.map(c => ({
-      ...c,
-      saldo: this.getCajitaSaldo(c.id)
-    }));
+    return this.appState.cajitas.map(c => {
+      const isCredito = c.tipoCajita === 'CREDITO';
+      const saldo = this.getCajitaSaldo(c.id);
+      const limite = Number(c.limiteCredito) || 0;
+      const disponible = isCredito && limite > 0 ? Math.max(0, limite - saldo) : 0;
+      const usoPct = isCredito && limite > 0 ? Math.min(100, Math.round((saldo / limite) * 100)) : 0;
+
+      return {
+        ...c,
+        tipoCajita: c.tipoCajita || 'AHORRO',
+        saldo,
+        disponible,
+        usoPct,
+        isCredito
+      };
+    });
   }
 
   getCajitaById(id) {
-    const cajita = (this.appState.cajitas || []).find(c => c.id === id);
-    if (!cajita) return null;
-    return {
-      ...cajita,
-      saldo: this.getCajitaSaldo(cajita.id)
-    };
+    const cajitas = this.getCajitas();
+    return cajitas.find(c => c.id === id) || null;
   }
 
   getTotalCajitas() {
     const cajitas = this.getCajitas();
-    return cajitas.reduce((acc, c) => acc + Number(c.saldo), 0);
+    return cajitas.filter(c => c.tipoCajita !== 'CREDITO').reduce((acc, c) => acc + Number(c.saldo), 0);
   }
 
   getCajitasSummaryByOwner() {
     const cajitas = this.getCajitas();
+    let totalAhorro = 0;
+    let totalDeudaTarjetas = 0;
     let mio = 0;
     let esposa = 0;
     let compartido = 0;
 
     cajitas.forEach(c => {
-      const owner = (c.asignado || '').toLowerCase();
-      if (owner.includes('mío') || owner.includes('mio') || owner.includes('personal') || owner.includes('yo')) {
-        mio += c.saldo;
-      } else if (owner.includes('esposa') || owner.includes('pareja') || owner.includes('ella')) {
-        esposa += c.saldo;
+      if (c.tipoCajita === 'CREDITO') {
+        totalDeudaTarjetas += Number(c.saldo);
       } else {
-        compartido += c.saldo;
+        totalAhorro += Number(c.saldo);
+        const owner = (c.asignado || '').toLowerCase();
+        if (owner.includes('mío') || owner.includes('mio') || owner.includes('personal') || owner.includes('yo')) {
+          mio += Number(c.saldo);
+        } else if (owner.includes('esposa') || owner.includes('pareja') || owner.includes('ella')) {
+          esposa += Number(c.saldo);
+        } else {
+          compartido += Number(c.saldo);
+        }
       }
     });
 
-    const total = mio + esposa + compartido;
+    const saldoNeto = totalAhorro - totalDeudaTarjetas;
+
     return {
+      totalAhorro,
+      totalDeudaTarjetas,
+      saldoNeto,
       mio,
       esposa,
       compartido,
-      total,
+      total: totalAhorro,
       count: cajitas.length
     };
   }
@@ -454,20 +514,27 @@ class Model {
         ...m,
         cajitaNombre: cajita ? cajita.nombre : 'Cajita eliminada',
         cajitaColor: cajita ? cajita.color : 'slate',
-        cajitaAsignado: cajita ? cajita.asignado : 'General'
+        cajitaAsignado: cajita ? cajita.asignado : 'General',
+        cajitaTipo: cajita ? (cajita.tipoCajita || 'AHORRO') : 'AHORRO'
       };
     }).sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || new Date(b.creadoEn || 0) - new Date(a.creadoEn || 0));
   }
 
-  addCajita({ nombre, asignado, color, icono, meta, descripcion, saldoInicial, conceptoInicial, fechaInicial }) {
+  addCajita({ nombre, tipoCajita, asignado, color, icono, meta, limiteCredito, diaCorte, diaPago, descripcion, saldoInicial, conceptoInicial, fechaInicial }) {
     const id = 'caj-' + Date.now();
+    const isCredito = tipoCajita === 'CREDITO';
+
     const newCajita = {
       id,
       nombre: nombre.trim(),
+      tipoCajita: isCredito ? 'CREDITO' : 'AHORRO',
       asignado: asignado || 'Mío',
-      color: color || 'indigo',
-      icono: icono || 'wallet',
-      meta: Number(meta) || 0,
+      color: color || (isCredito ? 'purple' : 'indigo'),
+      icono: icono || (isCredito ? 'credit-card' : 'wallet'),
+      meta: !isCredito ? (Number(meta) || 0) : 0,
+      limiteCredito: isCredito ? (Number(limiteCredito) || 0) : 0,
+      diaCorte: isCredito ? (Number(diaCorte) || 1) : 0,
+      diaPago: isCredito ? (Number(diaPago) || 15) : 0,
       descripcion: descripcion ? descripcion.trim() : '',
       creadaEn: new Date().toISOString().split('T')[0]
     };
@@ -478,12 +545,13 @@ class Model {
     const initialAmount = Number(saldoInicial) || 0;
     if (initialAmount > 0) {
       if (!this.appState.cajitasMovimientos) this.appState.cajitasMovimientos = [];
+      const movTipo = isCredito ? 'CARGO' : 'INGRESO';
       this.appState.cajitasMovimientos.unshift({
         id: 'cmov-' + Date.now(),
         cajitaId: id,
-        tipo: 'INGRESO',
+        tipo: movTipo,
         monto: initialAmount,
-        concepto: conceptoInicial ? conceptoInicial.trim() : 'Saldo inicial',
+        concepto: conceptoInicial ? conceptoInicial.trim() : (isCredito ? 'Saldo deudor inicial' : 'Saldo inicial'),
         fecha: fechaInicial || new Date().toISOString().split('T')[0],
         creadoEn: new Date().toISOString()
       });
@@ -497,13 +565,19 @@ class Model {
     const idx = (this.appState.cajitas || []).findIndex(c => c.id === id);
     if (idx === -1) return false;
 
+    const isCredito = data.tipoCajita !== undefined ? (data.tipoCajita === 'CREDITO') : (this.appState.cajitas[idx].tipoCajita === 'CREDITO');
+
     this.appState.cajitas[idx] = {
       ...this.appState.cajitas[idx],
       nombre: data.nombre ? data.nombre.trim() : this.appState.cajitas[idx].nombre,
+      tipoCajita: isCredito ? 'CREDITO' : 'AHORRO',
       asignado: data.asignado !== undefined ? data.asignado : this.appState.cajitas[idx].asignado,
       color: data.color || this.appState.cajitas[idx].color,
       icono: data.icono || this.appState.cajitas[idx].icono,
-      meta: data.meta !== undefined ? Number(data.meta) : this.appState.cajitas[idx].meta,
+      meta: !isCredito ? (data.meta !== undefined ? Number(data.meta) : this.appState.cajitas[idx].meta) : 0,
+      limiteCredito: isCredito ? (data.limiteCredito !== undefined ? Number(data.limiteCredito) : (this.appState.cajitas[idx].limiteCredito || 0)) : 0,
+      diaCorte: isCredito ? (data.diaCorte !== undefined ? Number(data.diaCorte) : (this.appState.cajitas[idx].diaCorte || 1)) : 0,
+      diaPago: isCredito ? (data.diaPago !== undefined ? Number(data.diaPago) : (this.appState.cajitas[idx].diaPago || 15)) : 0,
       descripcion: data.descripcion !== undefined ? data.descripcion.trim() : this.appState.cajitas[idx].descripcion
     };
 
@@ -517,35 +591,92 @@ class Model {
     if (this.appState.cajitasMovimientos) {
       this.appState.cajitasMovimientos = this.appState.cajitasMovimientos.filter(m => m.cajitaId !== id);
     }
+    if (this.appState.transactions) {
+      this.appState.transactions = this.appState.transactions.filter(t => t.cajitaId !== id);
+    }
     this.saveState();
     return true;
   }
 
-  addCajitaMovement({ cajitaId, tipo, monto, concepto, fecha }) {
+  addCajitaMovement({ cajitaId, tipo, monto, concepto, fecha, categoria, syncBitacora = true }) {
     const numMonto = Number(monto);
     if (isNaN(numMonto) || numMonto <= 0) return { success: false, error: 'Monto inválido' };
 
     const cajita = (this.appState.cajitas || []).find(c => c.id === cajitaId);
     if (!cajita) return { success: false, error: 'Cajita no encontrada' };
 
+    const isCredito = cajita.tipoCajita === 'CREDITO';
     const currentSaldo = this.getCajitaSaldo(cajitaId);
-    if (tipo === 'EGRESO' && numMonto > currentSaldo) {
+
+    // Validation for withdrawals on savings cajitas
+    if (!isCredito && tipo === 'EGRESO' && numMonto > currentSaldo) {
       return { success: false, error: `Saldo insuficiente en ${cajita.nombre} ($${currentSaldo.toLocaleString()} disponibles)` };
     }
 
     if (!this.appState.cajitasMovimientos) this.appState.cajitasMovimientos = [];
 
+    const movId = 'cmov-' + Date.now();
+    const movDate = fecha || new Date().toISOString().split('T')[0];
+
+    // Determine normalized movement type
+    let normalizedTipo = tipo;
+    if (isCredito) {
+      normalizedTipo = (tipo === 'CARGO' || tipo === 'INGRESO') ? 'CARGO' : 'PAGO';
+    } else {
+      normalizedTipo = (tipo === 'EGRESO' || tipo === 'CARGO') ? 'EGRESO' : 'INGRESO';
+    }
+
     const newMov = {
-      id: 'cmov-' + Date.now(),
+      id: movId,
       cajitaId,
-      tipo: tipo === 'EGRESO' ? 'EGRESO' : 'INGRESO',
+      tipo: normalizedTipo,
       monto: numMonto,
-      concepto: concepto ? concepto.trim() : (tipo === 'EGRESO' ? 'Retiro' : 'Depósito'),
-      fecha: fecha || new Date().toISOString().split('T')[0],
+      concepto: concepto ? concepto.trim() : (isCredito ? (normalizedTipo === 'CARGO' ? 'Compra con tarjeta' : 'Pago a tarjeta') : (normalizedTipo === 'EGRESO' ? 'Retiro' : 'Depósito')),
+      fecha: movDate,
       creadoEn: new Date().toISOString()
     };
 
     this.appState.cajitasMovimientos.unshift(newMov);
+
+    // Synchronize with Bitácora (Transactions)
+    if (syncBitacora) {
+      const dObj = new Date(movDate);
+      const diffWeeks = Math.floor((dObj - START_DATE) / (7 * 24 * 60 * 60 * 1000)) + 1;
+      const semNum = Math.min(Math.max(diffWeeks, 1), 52);
+
+      if (isCredito) {
+        if (normalizedTipo === 'CARGO') {
+          // A credit card purchase is an expense in Bitácora
+          this.appState.transactions.unshift({
+            id: 'tx-cmov-' + movId,
+            cmovId: movId,
+            cajitaId: cajita.id,
+            fecha: movDate,
+            semanaNum: semNum,
+            concepto: `${cajita.nombre}: ${newMov.concepto}`,
+            categoria: categoria || 'Gustos',
+            metodo: `Tarjeta Crédito (${cajita.nombre})`,
+            monto: numMonto,
+            tipo: 'GASTO'
+          });
+        } else {
+          // A payment to the card is an expense in Bitácora under category 'Deuda'
+          this.appState.transactions.unshift({
+            id: 'tx-cmov-' + movId,
+            cmovId: movId,
+            cajitaId: cajita.id,
+            fecha: movDate,
+            semanaNum: semNum,
+            concepto: `Pago Tarjeta ${cajita.nombre}: ${newMov.concepto}`,
+            categoria: 'Deuda',
+            metodo: 'Transferencia SPEI',
+            monto: numMonto,
+            tipo: 'GASTO'
+          });
+        }
+      }
+    }
+
     this.saveState();
     return { success: true, movement: newMov };
   }
@@ -553,6 +684,13 @@ class Model {
   deleteCajitaMovement(id) {
     if (!this.appState.cajitasMovimientos) return false;
     this.appState.cajitasMovimientos = this.appState.cajitasMovimientos.filter(m => m.id !== id);
+    
+    // Also remove mirrored transaction from bitácora if exists
+    if (this.appState.transactions) {
+      this.appState.transactions = this.appState.transactions.filter(t => t.cmovId !== id && t.id !== 'tx-cmov-' + id);
+    }
+    
+    this.recalculateDebtBalances();
     this.saveState();
     return true;
   }
@@ -566,9 +704,14 @@ class Model {
     const toCaj = (this.appState.cajitas || []).find(c => c.id === toId);
     if (!fromCaj || !toCaj) return { success: false, error: 'Cajita origen o destino no encontrada' };
 
-    const fromSaldo = this.getCajitaSaldo(fromId);
-    if (numMonto > fromSaldo) {
-      return { success: false, error: `Saldo insuficiente en ${fromCaj.nombre} ($${fromSaldo.toLocaleString()} disponibles)` };
+    const fromIsCredito = fromCaj.tipoCajita === 'CREDITO';
+    const toIsCredito = toCaj.tipoCajita === 'CREDITO';
+
+    if (!fromIsCredito) {
+      const fromSaldo = this.getCajitaSaldo(fromId);
+      if (numMonto > fromSaldo) {
+        return { success: false, error: `Saldo insuficiente en ${fromCaj.nombre} ($${fromSaldo.toLocaleString()} disponibles)` };
+      }
     }
 
     const txFecha = fecha || new Date().toISOString().split('T')[0];
@@ -577,22 +720,24 @@ class Model {
 
     if (!this.appState.cajitasMovimientos) this.appState.cajitasMovimientos = [];
 
-    // Egreso origen
+    // Egreso / Pago origen
+    const outTipo = fromIsCredito ? 'CARGO' : 'EGRESO';
     this.appState.cajitasMovimientos.unshift({
       id: 'cmov-tr-out-' + Date.now(),
       cajitaId: fromId,
-      tipo: 'EGRESO',
+      tipo: outTipo,
       monto: numMonto,
       concepto: `Transferencia a ${toCaj.nombre}${userConcepto}`,
       fecha: txFecha,
       creadoEn: nowIso
     });
 
-    // Ingreso destino
+    // Ingreso / Pago destino
+    const inTipo = toIsCredito ? 'PAGO' : 'INGRESO';
     this.appState.cajitasMovimientos.unshift({
       id: 'cmov-tr-in-' + (Date.now() + 1),
       cajitaId: toId,
-      tipo: 'INGRESO',
+      tipo: inTipo,
       monto: numMonto,
       concepto: `Transferencia desde ${fromCaj.nombre}${userConcepto}`,
       fecha: txFecha,
@@ -750,18 +895,58 @@ class Model {
     tx.semanaNum = Number(tx.semanaNum);
     tx.monto = Number(tx.monto);
     this.appState.transactions.unshift(tx);
+
+    // If linked to a cajita, reflect into cajitasMovimientos
+    if (tx.cajitaId) {
+      const cajita = (this.appState.cajitas || []).find(c => c.id === tx.cajitaId);
+      if (cajita) {
+        if (!this.appState.cajitasMovimientos) this.appState.cajitasMovimientos = [];
+        const isCredito = cajita.tipoCajita === 'CREDITO';
+        
+        if (isCredito) {
+          this.appState.cajitasMovimientos.unshift({
+            id: 'cmov-tx-' + tx.id,
+            txId: tx.id,
+            cajitaId: cajita.id,
+            tipo: tx.tipo === 'GASTO' ? 'CARGO' : 'PAGO',
+            monto: tx.monto,
+            concepto: tx.concepto,
+            fecha: tx.fecha,
+            creadoEn: new Date().toISOString()
+          });
+        } else {
+          this.appState.cajitasMovimientos.unshift({
+            id: 'cmov-tx-' + tx.id,
+            txId: tx.id,
+            cajitaId: cajita.id,
+            tipo: tx.tipo === 'GASTO' ? 'EGRESO' : 'INGRESO',
+            monto: tx.monto,
+            concepto: tx.concepto,
+            fecha: tx.fecha,
+            creadoEn: new Date().toISOString()
+          });
+        }
+      }
+    }
+
     this.recalculateDebtBalances();
     this.saveState();
   }
 
   deleteTransaction(id) {
-    const tx = this.appState.transactions.find(t => t.id === id);
+    const tx = (this.appState.transactions || []).find(t => t.id === id);
     if (tx) {
       if (tx.paidKey && this.appState.paidItemsByWeek[tx.paidKey]) {
         this.appState.paidItemsByWeek[tx.paidKey] = false;
       }
+      if (tx.cmovId && this.appState.cajitasMovimientos) {
+        this.appState.cajitasMovimientos = this.appState.cajitasMovimientos.filter(m => m.id !== tx.cmovId);
+      }
     }
-    this.appState.transactions = this.appState.transactions.filter(t => t.id !== id);
+    if (this.appState.cajitasMovimientos) {
+      this.appState.cajitasMovimientos = this.appState.cajitasMovimientos.filter(m => m.txId !== id && m.id !== 'cmov-tx-' + id);
+    }
+    this.appState.transactions = (this.appState.transactions || []).filter(t => t.id !== id);
     this.recalculateDebtBalances();
     this.saveState();
   }
@@ -804,7 +989,7 @@ class Model {
       });
     } else {
       // Revertir transacción si se desmarca
-      const txIndex = this.appState.transactions.findIndex(t => t.paidKey === paidKey || t.id === 'tx-paid-' + paidKey);
+      const txIndex = (this.appState.transactions || []).findIndex(t => t.paidKey === paidKey || t.id === 'tx-paid-' + paidKey);
       if (txIndex !== -1) {
         this.appState.transactions.splice(txIndex, 1);
       }

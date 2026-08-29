@@ -386,63 +386,79 @@
       </div>
     </div>
 
-    <!-- TAB: CAJITAS (CUENTAS SEPARADAS / APARTADOS) -->
+    <!-- TAB: CAJITAS (CUENTAS SEPARADAS / APARTADOS & TARJETAS DE CRÉDITO) -->
     <div id="tab-cajitas" class="hidden space-y-6 animate-fade-in">
       <!-- HERO BANNER & TOTAL ACUMULADO -->
       <div class="bg-gradient-to-br from-emerald-950/40 via-slate-900 to-slate-950 border border-emerald-500/30 rounded-3xl p-5 md:p-8 shadow-2xl relative overflow-hidden">
         <div class="absolute -right-20 -top-20 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute -left-20 -bottom-20 w-72 h-72 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-20 -bottom-20 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-60"></div>
         
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
           <div>
             <div class="flex items-center gap-3">
               <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-                <i data-lucide="boxes" class="w-3.5 h-3.5"></i> APARTADOS Y CUENTAS SEPARADAS
+                <i data-lucide="boxes" class="w-3.5 h-3.5"></i> APARTADOS Y TARJETAS SEPARADAS
               </span>
-              <span class="text-xs text-slate-400 font-medium bg-slate-900/60 px-2.5 py-0.5 rounded-md border border-slate-800" id="badgeCajitasCount">3 Cajitas</span>
+              <span class="text-xs text-slate-400 font-medium bg-slate-900/60 px-2.5 py-0.5 rounded-md border border-slate-800" id="badgeCajitasCount">4 Cajitas</span>
             </div>
-            <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-4">Total Acumulado en Cajitas</p>
-            <div class="flex items-baseline gap-3 mt-1">
-              <h2 class="text-3xl md:text-5xl font-black text-white tracking-tight drop-shadow-md" id="kpiTotalCajitas">$0.00</h2>
-              <span class="text-xs text-emerald-400 font-bold flex items-center gap-1 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
-                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Fondos Separados
-              </span>
+            
+            <!-- Dual KPIs: Total Ahorro vs Deuda Tarjetas -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+              <div class="bg-slate-950/60 p-3.5 rounded-2xl border border-emerald-500/20">
+                <p class="text-[10px] text-emerald-400 uppercase tracking-wider font-bold mb-0.5 flex items-center gap-1.5">
+                  <i data-lucide="wallet" class="w-3.5 h-3.5"></i> Total en Ahorros
+                </p>
+                <h2 class="text-2xl md:text-3xl font-black text-white tracking-tight drop-shadow-md" id="kpiTotalCajitas">$0.00</h2>
+              </div>
+              <div class="bg-slate-950/60 p-3.5 rounded-2xl border border-purple-500/20">
+                <p class="text-[10px] text-purple-400 uppercase tracking-wider font-bold mb-0.5 flex items-center gap-1.5">
+                  <i data-lucide="credit-card" class="w-3.5 h-3.5"></i> Deuda en Tarjetas (Nu/Klar)
+                </p>
+                <h2 class="text-2xl md:text-3xl font-black text-purple-300 tracking-tight drop-shadow-md" id="kpiDeudaTarjetasCajitas">$0.00</h2>
+              </div>
+              <div class="bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800">
+                <p class="text-[10px] text-slate-400 uppercase tracking-wider font-bold mb-0.5 flex items-center gap-1.5">
+                  <i data-lucide="scale" class="w-3.5 h-3.5"></i> Saldo Neto en Cajitas
+                </p>
+                <h2 class="text-2xl md:text-3xl font-black text-emerald-400 tracking-tight drop-shadow-md" id="kpiNetoCajitas">$0.00</h2>
+              </div>
             </div>
-            <p class="text-xs text-slate-300 mt-2 max-w-xl">
-              Organiza todo tu dinero en cajitas separadas para saber con total claridad qué monto es tuyo, de tu esposa o para ahorros. Puedes crear nuevas cajitas, cambiarles el nombre o eliminarlas cuando quieras.
+
+            <p class="text-xs text-slate-300 mt-3 max-w-xl">
+              Organiza todo tu dinero en cajitas de ahorro (Mío, Esposa, Emergencias) y cajitas de crédito (Tarjeta Nu, Klar) para controlar tus compras y tenerlas sincronizadas con la bitácora de movimientos.
             </p>
           </div>
 
           <!-- Actions & Breakdown -->
           <div class="flex flex-col sm:flex-row lg:flex-col gap-3">
-            <div class="grid grid-cols-3 gap-2 bg-slate-950/80 backdrop-blur-md p-3.5 rounded-2xl border border-slate-800/80 shadow-xl">
-              <div class="text-center px-2">
-                <p class="text-[10px] text-teal-400 uppercase tracking-wider font-bold mb-0.5 flex items-center justify-center gap-1">
+            <div class="grid grid-cols-3 gap-2 bg-slate-950/80 backdrop-blur-md p-3 rounded-2xl border border-slate-800/80 shadow-xl">
+              <div class="text-center px-1.5">
+                <p class="text-[9px] text-teal-400 uppercase tracking-wider font-bold mb-0.5 flex items-center justify-center gap-1">
                   <span class="w-1.5 h-1.5 rounded-full bg-teal-400"></span> Mío
                 </p>
-                <p class="text-sm md:text-base font-black text-white" id="kpiMioCajitas">$0.00</p>
+                <p class="text-xs md:text-sm font-black text-white" id="kpiMioCajitas">$0.00</p>
               </div>
-              <div class="text-center px-2 border-x border-slate-800">
-                <p class="text-[10px] text-rose-400 uppercase tracking-wider font-bold mb-0.5 flex items-center justify-center gap-1">
+              <div class="text-center px-1.5 border-x border-slate-800">
+                <p class="text-[9px] text-rose-400 uppercase tracking-wider font-bold mb-0.5 flex items-center justify-center gap-1">
                   <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Esposa
                 </p>
-                <p class="text-sm md:text-base font-black text-white" id="kpiEsposaCajitas">$0.00</p>
+                <p class="text-xs md:text-sm font-black text-white" id="kpiEsposaCajitas">$0.00</p>
               </div>
-              <div class="text-center px-2">
-                <p class="text-[10px] text-emerald-400 uppercase tracking-wider font-bold mb-0.5 flex items-center justify-center gap-1">
+              <div class="text-center px-1.5">
+                <p class="text-[9px] text-emerald-400 uppercase tracking-wider font-bold mb-0.5 flex items-center justify-center gap-1">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Ahorro
                 </p>
-                <p class="text-sm md:text-base font-black text-white" id="kpiCompartidoCajitas">$0.00</p>
+                <p class="text-xs md:text-sm font-black text-white" id="kpiCompartidoCajitas">$0.00</p>
               </div>
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
               <button data-open-modal="modal-cajita" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black px-3.5 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
-                <i data-lucide="plus" class="w-3.5 h-3.5 stroke-[3]"></i> Nueva Cajita
+                <i data-lucide="plus" class="w-3.5 h-3.5 stroke-[3]"></i> Nueva Cajita / Tarjeta
               </button>
               <button data-open-modal="modal-cajita-movimiento" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold px-3.5 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all border border-slate-700 active:scale-95">
-                <i data-lucide="arrow-down-up" class="w-3.5 h-3.5 stroke-[3]"></i> Meter / Sacar
+                <i data-lucide="arrow-down-up" class="w-3.5 h-3.5 stroke-[3]"></i> Meter / Sacar / Cargo
               </button>
               <button data-open-modal="modal-cajita-transferir" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold px-3.5 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all border border-slate-700 active:scale-95">
                 <i data-lucide="repeat" class="w-3.5 h-3.5"></i> Transferir
@@ -457,12 +473,12 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 class="text-lg font-black text-white font-display flex items-center gap-2">
-              <i data-lucide="wallet-cards" class="w-5 h-5 text-emerald-400"></i> Tus Cajitas de Dinero
+              <i data-lucide="wallet-cards" class="w-5 h-5 text-emerald-400"></i> Tus Cajitas y Tarjetas
             </h3>
-            <p class="text-xs text-slate-400 mt-0.5">Crea, edita nombres, administra saldos o elimina apartados según lo necesites.</p>
+            <p class="text-xs text-slate-400 mt-0.5">Controla apartados de ahorro y gastos de tarjetas de crédito con sincronización directa a la bitácora.</p>
           </div>
           <button data-open-modal="modal-cajita" class="bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-2 transition border border-slate-800 self-start sm:self-auto">
-            <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-400"></i> + Crear Nueva Cajita
+            <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-400"></i> + Nueva Cajita / Tarjeta
           </button>
         </div>
 
@@ -475,7 +491,7 @@
             <i data-lucide="boxes" class="w-7 h-7 text-slate-500"></i>
           </div>
           <p class="text-base font-bold text-white">No tienes cajitas creadas</p>
-          <p class="text-xs text-slate-400 mt-1 max-w-sm">Crea tu primera cajita para comenzar a separar el dinero de tu hogar.</p>
+          <p class="text-xs text-slate-400 mt-1 max-w-sm">Crea tu primera cajita de ahorro o tarjeta de crédito para comenzar a controlar tus gastos.</p>
           <button data-open-modal="modal-cajita" class="mt-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2">
             <i data-lucide="plus" class="w-4 h-4"></i> Crear Cajita
           </button>
@@ -487,9 +503,9 @@
         <div class="glass rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h3 class="text-base md:text-lg font-black text-white font-display flex items-center gap-2">
-              <i data-lucide="history" class="w-5 h-5 text-emerald-400"></i> Historial de Movimientos en Cajitas
+              <i data-lucide="history" class="w-5 h-5 text-emerald-400"></i> Historial de Movimientos en Cajitas y Tarjetas
             </h3>
-            <p class="text-xs text-slate-400 mt-0.5">Registro cronológico de ingresos (depósitos) y egresos (retiros) con notas y fechas.</p>
+            <p class="text-xs text-slate-400 mt-0.5">Registro cronológico de depósitos, retiros, compras con tarjeta y abonos.</p>
           </div>
           <div class="flex flex-wrap items-center gap-3">
             <select id="filterCajitaSelect" class="bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs font-medium text-white focus:outline-none focus:border-emerald-500">
@@ -497,8 +513,10 @@
             </select>
             <select id="filterCajitaTipo" class="bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs font-medium text-white focus:outline-none focus:border-emerald-500">
               <option value="ALL">Todos los Movimientos</option>
-              <option value="INGRESO">Solo Ingresos (Meter +)</option>
-              <option value="EGRESO">Solo Egresos (Sacar -)</option>
+              <option value="INGRESO">Solo Ingresos (Aportes +)</option>
+              <option value="EGRESO">Solo Egresos (Retiros -)</option>
+              <option value="CARGO">Solo Cargos / Compras Tarjeta (+)</option>
+              <option value="PAGO">Solo Pagos Tarjeta (-)</option>
             </select>
             <button data-open-modal="modal-cajita-movimiento" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black px-4 py-2 rounded-xl flex items-center gap-1.5 transition active:scale-95">
               <i data-lucide="plus" class="w-3.5 h-3.5 stroke-[3]"></i> Registrar
@@ -512,8 +530,8 @@
               <thead class="bg-slate-900/80 border-b border-slate-800/80">
                 <tr>
                   <th class="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Fecha</th>
-                  <th class="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cajita</th>
-                  <th class="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Asignado</th>
+                  <th class="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cajita / Tarjeta</th>
+                  <th class="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tipo</th>
                   <th class="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Concepto / Nota</th>
                   <th class="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">Monto</th>
                   <th class="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">Acción</th>
@@ -529,7 +547,7 @@
               <i data-lucide="receipt" class="w-5 h-5 text-slate-500"></i>
             </div>
             <p class="text-sm font-bold text-white">Sin movimientos en cajitas</p>
-            <p class="text-xs text-slate-400 mt-0.5">Agrega dinero o retiros usando los botones superiores.</p>
+            <p class="text-xs text-slate-400 mt-0.5">Agrega movimientos usando los botones superiores.</p>
           </div>
         </div>
       </div>
@@ -630,7 +648,7 @@
 
         <div>
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Concepto</label>
-          <input type="text" id="txConcepto" required placeholder="Ej. Despensa mensual, Pago de servicio..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600" />
+          <input type="text" id="txConcepto" required placeholder="Ej. Despensa mensual, Pago de servicio, Uber..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600" />
         </div>
 
         <div class="grid grid-cols-2 gap-4">
@@ -667,6 +685,18 @@
               <option value="Tarjeta Crédito">Tarjeta Crédito</option>
             </select>
           </div>
+        </div>
+
+        <!-- Linked Cajita / Credit Card Selector -->
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
+            <span>Vincular a Cajita o Tarjeta (Opcional)</span>
+            <span class="text-[9px] text-purple-400 font-normal">Impacta saldo de la cajita</span>
+          </label>
+          <select id="txCajitaId" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-semibold text-white focus:outline-none focus:border-emerald-500 transition-colors">
+            <option value="">-- Ninguna (Gasto General) --</option>
+            <!-- Populated dynamically via JS -->
+          </select>
         </div>
 
         <!-- Dynamic Debt Selector (Shown only when category is 'Deuda') -->
@@ -800,24 +830,23 @@
             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Categoría</label>
             <select id="fixCategoria" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-semibold text-white focus:outline-none focus:border-emerald-500 transition-colors">
               <option value="Servicios Hogar">Servicios Hogar</option>
+              <option value="Telecomunicaciones">Telecomunicaciones</option>
               <option value="Alimentación">Alimentación</option>
               <option value="Transporte">Transporte</option>
-              <option value="Telecomunicaciones">Telecomunicaciones</option>
-              <option value="Educación">Educación</option>
               <option value="Salud">Salud</option>
+              <option value="Educación">Educación</option>
               <option value="Vivienda">Vivienda</option>
             </select>
           </div>
           <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Monto ($)</label>
-            <input type="number" step="0.01" id="fixMonto" required placeholder="Ej. 500" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm font-black text-white focus:outline-none focus:border-emerald-500 transition-colors" />
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Monto Estimado ($)</label>
+            <input type="number" step="0.01" id="fixMonto" required placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm font-black text-white focus:outline-none focus:border-emerald-500 transition-colors" />
           </div>
         </div>
 
         <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Día de Pago del Mes (1 a 31)</label>
-          <input type="number" min="1" max="31" id="fixDia" value="1" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-colors" />
-          <p class="text-[10px] text-slate-400 mt-1">Días 1-14 y 30-31 corresponden a Quincena 2 (Fin de mes). Días 15-29 a Quincena 1 (Mitad de mes).</p>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Día de Corte / Vencimiento (1 a 31)</label>
+          <input type="number" min="1" max="31" id="fixDia" value="10" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-colors" />
         </div>
 
         <div class="pt-4 mt-2 border-t border-slate-800/80 flex items-center justify-between gap-3">
@@ -897,7 +926,7 @@
     </div>
   </div>
 
-  <!-- MODAL: CAJITA (CREAR / EDITAR / CAMBIAR NOMBRE) -->
+  <!-- MODAL: CAJITA (CREAR / EDITAR APARTADO O TARJETA DE CRÉDITO) -->
   <div id="modal-cajita" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="glass border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl relative overflow-hidden">
       <div class="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none"></div>
@@ -907,7 +936,7 @@
           <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
             <i data-lucide="boxes" class="w-4 h-4 text-emerald-400"></i>
           </div>
-          <span id="modalCajitaTitle">Nueva Cajita / Apartado</span>
+          <span id="modalCajitaTitle">Nueva Cajita / Tarjeta</span>
         </h3>
         <button data-close-modal="modal-cajita" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition">
           <i data-lucide="x" class="w-4 h-4"></i>
@@ -917,9 +946,24 @@
       <form id="formCajita" class="space-y-4 relative z-10">
         <input type="hidden" id="cajitaEditId" value="" />
 
+        <!-- Tipo de Cajita: Ahorro vs Tarjeta de Crédito Nu/Klar -->
         <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Nombre de la Cajita</label>
-          <input type="text" id="cajitaNombre" required placeholder="Ej. Dinero Mío, Dinero Esposa, Ahorro, Caja 1..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600" />
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Tipo de Cajita / Cuenta</label>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="group relative flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-700 bg-slate-900/50 cursor-pointer text-xs font-bold text-slate-300 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-500/10 has-[:checked]:text-emerald-400 transition-all">
+              <input type="radio" name="cajitaTipo" value="AHORRO" checked class="hidden" />
+              <i data-lucide="wallet" class="w-4 h-4"></i> Apartado Ahorro
+            </label>
+            <label class="group relative flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-700 bg-slate-900/50 cursor-pointer text-xs font-bold text-slate-300 has-[:checked]:border-purple-500 has-[:checked]:bg-purple-500/10 has-[:checked]:text-purple-400 transition-all">
+              <input type="radio" name="cajitaTipo" value="CREDITO" class="hidden" />
+              <i data-lucide="credit-card" class="w-4 h-4"></i> Tarjeta Crédito (Nu)
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Nombre de la Cajita / Tarjeta</label>
+          <input type="text" id="cajitaNombre" required placeholder="Ej. Tarjeta Nu, Klar, Dinero Mío, Fondo..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600" />
         </div>
 
         <div class="grid grid-cols-2 gap-4">
@@ -934,13 +978,13 @@
           <div>
             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Color Temático</label>
             <select id="cajitaColor" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-semibold text-white focus:outline-none focus:border-emerald-500 transition-colors">
-              <option value="emerald">🟢 Esmeralda / Verde</option>
-              <option value="teal">🌊 Teal / Verdeazulado</option>
-              <option value="sky">🔵 Azul Cielo</option>
+              <option value="purple">💜 Púrpura (Estilo Nu)</option>
+              <option value="emerald">🟢 Esmeralda / Verde (Estilo Klar)</option>
               <option value="indigo">🟣 Índigo / Violeta</option>
               <option value="rose">🌸 Rosa / Fucsia</option>
               <option value="amber">🟡 Ámbar / Dorado</option>
-              <option value="purple">💜 Púrpura</option>
+              <option value="teal">🌊 Teal / Verdeazulado</option>
+              <option value="sky">🔵 Azul Cielo</option>
             </select>
           </div>
         </div>
@@ -949,31 +993,49 @@
           <div>
             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Icono</label>
             <select id="cajitaIcono" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-semibold text-white focus:outline-none focus:border-emerald-500 transition-colors">
+              <option value="credit-card">💳 Tarjeta de Crédito</option>
               <option value="wallet">👛 Billetera</option>
               <option value="briefcase">💼 Maletín</option>
               <option value="heart">💖 Corazón</option>
               <option value="shield-check">🛡️ Escudo / Reserva</option>
               <option value="piggy-bank">🐷 Alcancía</option>
               <option value="sparkles">✨ Meta Especial</option>
-              <option value="home">🏠 Hogar</option>
-              <option value="car">🚗 Auto</option>
               <option value="shopping-bag">🛍️ Compras</option>
             </select>
           </div>
           <div id="cajitaSaldoInicialContainer">
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Saldo Inicial ($)</label>
+            <label id="cajitaSaldoInicialLabel" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Saldo Inicial ($)</label>
             <input type="number" step="0.01" id="cajitaSaldoInicial" placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-black text-white focus:outline-none focus:border-emerald-500 transition-colors" />
           </div>
         </div>
 
-        <div>
+        <!-- Campos para Tarjetas de Crédito -->
+        <div id="cajitaCreditoCampos" class="hidden p-3.5 bg-slate-950/80 rounded-2xl border border-purple-500/30 space-y-3">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-purple-300 mb-1.5">Límite de Crédito Opcional ($)</label>
+            <input type="number" step="0.01" id="cajitaLimiteCredito" placeholder="Ej. 15000 (0 si no aplica)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-purple-400" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-purple-300 mb-1">Día de Corte</label>
+              <input type="number" min="1" max="31" id="cajitaDiaCorte" value="12" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-purple-400" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-purple-300 mb-1">Día Límite de Pago</label>
+              <input type="number" min="1" max="31" id="cajitaDiaPago" value="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-purple-400" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Meta para Ahorro -->
+        <div id="cajitaMetaContainer">
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Meta de Ahorro Opcional ($)</label>
           <input type="number" step="0.01" id="cajitaMeta" placeholder="Ej. 10000 (Deja en 0 si es libre)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs font-semibold text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600" />
         </div>
 
         <div>
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Descripción / Propósito</label>
-          <input type="text" id="cajitaDescripcion" placeholder="Ej. Apartado para gustos personales..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs font-medium text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600" />
+          <input type="text" id="cajitaDescripcion" placeholder="Ej. Tarjeta para compras mensuales y super..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs font-medium text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600" />
         </div>
 
         <div class="pt-4 mt-2 border-t border-slate-800/80 flex items-center justify-between gap-3">
@@ -993,7 +1055,7 @@
     </div>
   </div>
 
-  <!-- MODAL: MOVIMIENTO EN CAJITA (METER / SACAR) -->
+  <!-- MODAL: MOVIMIENTO EN CAJITA (METER / SACAR / CARGO TARJETA) -->
   <div id="modal-cajita-movimiento" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="glass border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl relative overflow-hidden">
       <div class="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none"></div>
@@ -1003,7 +1065,7 @@
           <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
             <i data-lucide="arrow-down-up" class="w-4 h-4 text-emerald-400 stroke-[3]"></i>
           </div>
-          Movimiento en Cajita
+          <span id="modalCmovTitle">Movimiento en Cajita / Tarjeta</span>
         </h3>
         <button data-close-modal="modal-cajita-movimiento" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition">
           <i data-lucide="x" class="w-4 h-4"></i>
@@ -1012,24 +1074,24 @@
 
       <form id="formCajitaMovimiento" class="space-y-4 relative z-10">
         <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Acción a realizar</label>
-          <div class="grid grid-cols-2 gap-3">
-            <label class="group relative flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-700 bg-slate-900/50 cursor-pointer text-xs font-black text-slate-300 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-500/10 has-[:checked]:text-emerald-400 transition-all">
-              <input type="radio" name="cmovTipo" value="INGRESO" checked class="hidden" />
-              <i data-lucide="arrow-down-left" class="w-4 h-4 stroke-[3]"></i> + Meter Dinero
-            </label>
-            <label class="group relative flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-700 bg-slate-900/50 cursor-pointer text-xs font-black text-slate-300 has-[:checked]:border-rose-500 has-[:checked]:bg-rose-500/10 has-[:checked]:text-rose-400 transition-all">
-              <input type="radio" name="cmovTipo" value="EGRESO" class="hidden" />
-              <i data-lucide="arrow-up-right" class="w-4 h-4 stroke-[3]"></i> - Sacar Dinero
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Cajita / Apartado Destino</label>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Cajita / Tarjeta Destino</label>
           <select id="cmovCajitaId" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 transition-colors">
             <!-- Rendered dynamically -->
           </select>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Acción a realizar</label>
+          <div id="cmovActionButtonsContainer" class="grid grid-cols-2 gap-3">
+            <label class="group relative flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-700 bg-slate-900/50 cursor-pointer text-xs font-black text-slate-300 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-500/10 has-[:checked]:text-emerald-400 transition-all">
+              <input type="radio" name="cmovTipo" value="INGRESO" checked class="hidden" />
+              <span id="cmovIngresoLabel" class="flex items-center gap-1.5"><i data-lucide="arrow-down-left" class="w-4 h-4 stroke-[3]"></i> + Meter Dinero</span>
+            </label>
+            <label class="group relative flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-700 bg-slate-900/50 cursor-pointer text-xs font-black text-slate-300 has-[:checked]:border-rose-500 has-[:checked]:bg-rose-500/10 has-[:checked]:text-rose-400 transition-all">
+              <input type="radio" name="cmovTipo" value="EGRESO" class="hidden" />
+              <span id="cmovEgresoLabel" class="flex items-center gap-1.5"><i data-lucide="arrow-up-right" class="w-4 h-4 stroke-[3]"></i> - Sacar Dinero</span>
+            </label>
+          </div>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
@@ -1045,7 +1107,25 @@
 
         <div>
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Concepto / Motivo / Nota</label>
-          <input type="text" id="cmovConcepto" required placeholder="Ej. Aporte de quincena, Pago de mandado, Gusto..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600" />
+          <input type="text" id="cmovConcepto" required placeholder="Ej. Compra despensa Soriana, Uber, Pago de tarjeta..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600" />
+        </div>
+
+        <!-- Categoría para Bitácora -->
+        <div id="cmovCategoriaContainer">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
+            <span>Categoría (para Bitácora)</span>
+            <span class="text-[9px] text-emerald-400">Se registrará en gastos semanales</span>
+          </label>
+          <select id="cmovCategoria" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-semibold text-white focus:outline-none focus:border-emerald-500 transition-colors">
+            <option value="Gustos">Gustos / Ocio</option>
+            <option value="Alimentación">Alimentación</option>
+            <option value="Transporte">Transporte</option>
+            <option value="Servicios Hogar">Servicios Hogar</option>
+            <option value="Telecomunicaciones">Telecomunicaciones</option>
+            <option value="Salud">Salud</option>
+            <option value="Imprevistos">Imprevistos</option>
+            <option value="Deuda">Deuda</option>
+          </select>
         </div>
 
         <div class="pt-4 mt-2 border-t border-slate-800/80">
