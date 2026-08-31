@@ -150,6 +150,38 @@ class Controller {
       });
     }
 
+    // Movement type change in #modal-cajita-movimiento (Cargo vs Pago)
+    document.querySelectorAll('input[name="cmovTipo"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        this.updateCmovModalForSelectedCajita();
+      });
+    });
+
+    // Dynamic Credit Card Note in General Transaction Modal
+    const txMetodoSelect = document.getElementById('txMetodo');
+    const txCajitaModalSelect = document.getElementById('txCajitaId');
+    const updateTxCreditNote = () => {
+      const note = document.getElementById('txCreditCardNote');
+      if (!note) return;
+      const metodo = txMetodoSelect?.value || '';
+      const cajitaId = txCajitaModalSelect?.value || '';
+      const cajita = cajitaId ? this.model.getCajitaById(cajitaId) : null;
+      const isCard = metodo.toLowerCase().includes('crédito') || (cajita && (cajita.tipoCajita === 'CREDITO' || cajita.isCredito));
+      const txType = document.querySelector('input[name="txType"]:checked')?.value || 'GASTO';
+
+      if (isCard && txType === 'GASTO') {
+        note.classList.remove('hidden');
+      } else {
+        note.classList.add('hidden');
+      }
+    };
+
+    if (txMetodoSelect) txMetodoSelect.addEventListener('change', updateTxCreditNote);
+    if (txCajitaModalSelect) txCajitaModalSelect.addEventListener('change', updateTxCreditNote);
+    document.querySelectorAll('input[name="txType"]').forEach(radio => {
+      radio.addEventListener('change', updateTxCreditNote);
+    });
+
     // Dynamic Debt Selector inside General Transaction Modal
     const txCatSelect = document.getElementById('txCategoria');
     const txDebtContainer = document.getElementById('txDebtSelectionContainer');
@@ -305,17 +337,43 @@ class Controller {
     const ingresoLabel = document.getElementById('cmovIngresoLabel');
     const egresoLabel = document.getElementById('cmovEgresoLabel');
     const catContainer = document.getElementById('cmovCategoriaContainer');
+    const catSelect = document.getElementById('cmovCategoria');
+    const helpNote = document.getElementById('cmovCreditHelpNote');
+    const pagarDesdeCuentaCont = document.getElementById('cmovPagarDesdeCuentaContainer');
+
+    const isEgreso = document.querySelector('input[name="cmovTipo"]:checked')?.value === 'EGRESO';
 
     if (isCredito) {
       if (title) title.innerText = `Movimiento en Tarjeta: ${cajita.nombre}`;
       if (ingresoLabel) ingresoLabel.innerHTML = `<i data-lucide="shopping-cart" class="w-4 h-4 stroke-[3]"></i> + Cargo / Compra Tarjeta`;
       if (egresoLabel) egresoLabel.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4 stroke-[3]"></i> 💳 Pago / Abono a Tarjeta`;
       if (catContainer) catContainer.classList.remove('hidden');
+
+      if (isEgreso) {
+        // Es un pago a la tarjeta
+        if (helpNote) helpNote.classList.add('hidden');
+        if (pagarDesdeCuentaCont) pagarDesdeCuentaCont.classList.remove('hidden');
+        if (catSelect && (!catSelect.value || catSelect.value === 'Tarjeta de Crédito')) {
+          catSelect.value = 'Deuda';
+        }
+      } else {
+        // Es una compra / cargo con la tarjeta
+        if (helpNote) helpNote.classList.remove('hidden');
+        if (pagarDesdeCuentaCont) pagarDesdeCuentaCont.classList.add('hidden');
+        if (catSelect && (!catSelect.value || catSelect.value === 'Deuda')) {
+          catSelect.value = 'Tarjeta de Crédito';
+        }
+      }
     } else {
       if (title) title.innerText = `Movimiento en Cajita: ${cajita ? cajita.nombre : 'Apartado'}`;
       if (ingresoLabel) ingresoLabel.innerHTML = `<i data-lucide="arrow-down-left" class="w-4 h-4 stroke-[3]"></i> + Meter Dinero`;
       if (egresoLabel) egresoLabel.innerHTML = `<i data-lucide="arrow-up-right" class="w-4 h-4 stroke-[3]"></i> - Sacar Dinero`;
       if (catContainer) catContainer.classList.remove('hidden');
+      if (helpNote) helpNote.classList.add('hidden');
+      if (pagarDesdeCuentaCont) pagarDesdeCuentaCont.classList.add('hidden');
+      if (catSelect && catSelect.value === 'Tarjeta de Crédito') {
+        catSelect.value = 'Gustos';
+      }
     }
 
     if (window.lucide) window.lucide.createIcons();
@@ -740,6 +798,20 @@ class Controller {
     const concepto = document.getElementById('cmovConcepto').value;
     const categoria = document.getElementById('cmovCategoria')?.value || 'Gustos';
 
+    const cajita = this.model.getCajitaById(cajitaId);
+    const isCredito = cajita && (cajita.isCredito || cajita.tipoCajita === 'CREDITO');
+
+    let afectaCuenta = true;
+    if (isCredito) {
+      if (tipo === 'INGRESO' || tipo === 'CARGO') {
+        // Compras con tarjeta nunca restan de la cuenta principal
+        afectaCuenta = false;
+      } else {
+        // Pago a tarjeta: depende de si seleccionó pagar con dinero de la cuenta principal (semana)
+        afectaCuenta = document.getElementById('cmovPagarDesdeCuenta')?.checked !== false;
+      }
+    }
+
     const result = this.model.addCajitaMovement({
       cajitaId,
       tipo,
@@ -747,6 +819,7 @@ class Controller {
       concepto,
       fecha,
       categoria,
+      afectaCuenta,
       syncBitacora: true
     });
 

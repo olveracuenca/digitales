@@ -5,6 +5,35 @@ class View {
     this.lucide = window.lucide;
   }
 
+  isTxAffectingAccount(t, appState) {
+    if (!t) return false;
+    if (t.afectaCuenta !== undefined && t.afectaCuenta !== null) {
+      return Boolean(t.afectaCuenta);
+    }
+    const metodo = (t.metodo || '').toLowerCase();
+    const concepto = (t.concepto || '').toLowerCase();
+    const categoria = (t.categoria || '').toLowerCase();
+
+    if (categoria === 'tarjeta de crédito' || categoria === 'tarjeta de credito') {
+      return false;
+    }
+
+    if (metodo.includes('crédito') || metodo.includes('credito')) {
+      const isPago = concepto.startsWith('pago') || concepto.includes('abono') || categoria === 'deuda';
+      if (t.tipo === 'GASTO' && !isPago) return false;
+    }
+
+    if (t.cajitaId) {
+      const cajita = (appState?.cajitas || []).find(c => c.id === t.cajitaId);
+      if (cajita && (cajita.tipoCajita === 'CREDITO' || cajita.isCredito)) {
+        const isPago = concepto.startsWith('pago') || concepto.includes('abono') || categoria === 'deuda';
+        if (t.tipo === 'GASTO' && !isPago) return false;
+      }
+    }
+
+    return true;
+  }
+
   updateHero(currWeek, appState, weeks, currIdx) {
     document.getElementById('currentWeekBadge').innerText = `Semana ${currWeek.num.toString().padStart(2, '0')}`;
     document.getElementById('currentDateRange').innerText = `${currWeek.periodStr} (${currWeek.monthStr})`;
@@ -64,18 +93,23 @@ class View {
       }
     }
 
+    // Only expenses affecting the main checking/cash account reduce cash spent
     const weekTx = (appState.transactions || []).filter(t => Number(t.semanaNum) === currWeek.num && t.tipo === 'GASTO');
-    const realSpent = weekTx.reduce((acc, t) => acc + Number(t.monto), 0);
+    const realSpentCash = weekTx.filter(t => this.isTxAffectingAccount(t, appState)).reduce((acc, t) => acc + Number(t.monto), 0);
+    const realSpentCredit = weekTx.filter(t => !this.isTxAffectingAccount(t, appState)).reduce((acc, t) => acc + Number(t.monto), 0);
+
     const heroGastoReal = document.getElementById('heroGastoReal');
-    if (heroGastoReal) heroGastoReal.innerText = `$${realSpent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+    if (heroGastoReal) {
+      heroGastoReal.innerHTML = `$${realSpentCash.toLocaleString('es-MX', { minimumFractionDigits: 2 })}${realSpentCredit > 0 ? ` <span class="text-[10px] text-purple-400 font-bold block sm:inline">(+$${realSpentCredit.toLocaleString()} en tarjeta)</span>` : ''}`;
+    }
     
-    // Compute cumulative rolling balance up to current week
+    // Compute cumulative rolling balance up to current week (only counting cash in/out of main account)
     let rollingBalance = 0;
     for (let i = 0; i <= currIdx; i++) {
         const w = weeks[i];
         const wTxs = (appState.transactions || []).filter(t => Number(t.semanaNum) === w.num);
-        const wGastado = wTxs.filter(t => t.tipo === 'GASTO').reduce((a, b) => a + Number(b.monto), 0);
-        const wIngresos = w.baseIncome + wTxs.filter(t => t.tipo === 'INGRESO').reduce((a, b) => a + Number(b.monto), 0);
+        const wGastado = wTxs.filter(t => t.tipo === 'GASTO' && this.isTxAffectingAccount(t, appState)).reduce((a, b) => a + Number(b.monto), 0);
+        const wIngresos = w.baseIncome + wTxs.filter(t => t.tipo === 'INGRESO' && this.isTxAffectingAccount(t, appState)).reduce((a, b) => a + Number(b.monto), 0);
         rollingBalance += (wIngresos - wGastado);
     }
 
@@ -279,9 +313,10 @@ class View {
       const isCurrent = idx === currentWeekIdx;
 
       const weekTxs = (appState.transactions || []).filter(t => Number(t.semanaNum) === w.num);
-      const totalGastado = weekTxs.filter(t => t.tipo === 'GASTO').reduce((a, b) => a + Number(b.monto), 0);
-      const totalIngresos = w.baseIncome + weekTxs.filter(t => t.tipo === 'INGRESO').reduce((a, b) => a + Number(b.monto), 0);
-      const balance = totalIngresos - totalGastado;
+      const totalGastadoCuenta = weekTxs.filter(t => t.tipo === 'GASTO' && this.isTxAffectingAccount(t, appState)).reduce((a, b) => a + Number(b.monto), 0);
+      const totalGastadoCredito = weekTxs.filter(t => t.tipo === 'GASTO' && !this.isTxAffectingAccount(t, appState)).reduce((a, b) => a + Number(b.monto), 0);
+      const totalIngresos = w.baseIncome + weekTxs.filter(t => t.tipo === 'INGRESO' && this.isTxAffectingAccount(t, appState)).reduce((a, b) => a + Number(b.monto), 0);
+      const balance = totalIngresos - totalGastadoCuenta;
 
       rollingBalance += balance;
       
@@ -354,15 +389,21 @@ class View {
           </div>
 
           <div class="flex items-center gap-2 sm:gap-4">
-            <div class="flex gap-4 text-xs font-medium mr-2">
+            <div class="flex gap-3 sm:gap-4 text-xs font-medium mr-1 sm:mr-2">
               <div class="flex flex-col">
                 <span class="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Ingresos</span>
-                <span class="text-emerald-400/80">$${totalIngresos.toLocaleString()}</span>
+                <span class="text-emerald-400/90 font-bold">$${totalIngresos.toLocaleString()}</span>
               </div>
               <div class="flex flex-col">
-                <span class="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Gastos</span>
-                <span class="text-rose-400/80">$${totalGastado.toLocaleString()}</span>
+                <span class="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Gastos Cta</span>
+                <span class="text-rose-400/90 font-bold">$${totalGastadoCuenta.toLocaleString()}</span>
               </div>
+              ${totalGastadoCredito > 0 ? `
+                <div class="flex flex-col">
+                  <span class="text-[10px] text-purple-400 uppercase tracking-wider mb-0.5">💳 Tarjeta</span>
+                  <span class="text-purple-300 font-bold">$${totalGastadoCredito.toLocaleString()}</span>
+                </div>
+              ` : ''}
             </div>
             <div class="px-3 sm:px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800/80 shadow-inner min-w-[80px] sm:min-w-[100px] text-center flex flex-col justify-center">
               <span class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-0.5">Flujo Sem.</span>
@@ -619,16 +660,44 @@ class View {
       tr.className = "hover:bg-slate-800/40 transition-colors border-b border-slate-800/50 last:border-0";
       const isIngreso = t.tipo === 'INGRESO';
       const isDeuda = t.categoria === 'Deuda';
+      const isTarjetaCat = t.categoria === 'Tarjeta de Crédito';
       const isCard = t.metodo && t.metodo.toLowerCase().includes('crédito');
+      const affectsAccount = this.isTxAffectingAccount(t, appState);
 
       let catBadge = `<span class="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 bg-slate-900 rounded-full border border-slate-800 text-slate-300"><i data-lucide="tag" class="w-3 h-3"></i> ${t.categoria}</span>`;
       if (isDeuda) {
         catBadge = `<span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 bg-indigo-500/20 rounded-full border border-indigo-500/30 text-indigo-300"><i data-lucide="credit-card" class="w-3 h-3 text-indigo-400"></i> ${t.categoria}</span>`;
+      } else if (isTarjetaCat) {
+        catBadge = `<span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 bg-purple-500/20 rounded-full border border-purple-500/30 text-purple-300"><i data-lucide="credit-card" class="w-3 h-3 text-purple-400"></i> ${t.categoria}</span>`;
       }
 
       let metodoBadge = `<span class="text-[11px] text-slate-400 font-medium whitespace-nowrap">${t.metodo}</span>`;
       if (isCard) {
         metodoBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 bg-purple-500/20 rounded-md border border-purple-500/30 text-purple-300"><i data-lucide="credit-card" class="w-3 h-3"></i> ${t.metodo}</span>`;
+      }
+
+      const isPago = t.concepto && (t.concepto.toLowerCase().startsWith('pago') || t.concepto.toLowerCase().includes('abono') || t.categoria === 'Deuda');
+
+      let montoHtml = '';
+      if (isIngreso) {
+        montoHtml = `<span class="text-emerald-400 font-black">+$${Number(t.monto).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>`;
+      } else if (!affectsAccount) {
+        const badgeLabel = isPago ? '💳 Pago Tarjeta (No resta balance)' : '💳 Cargo Tarjeta (No resta balance)';
+        montoHtml = `
+          <div class="flex flex-col items-end">
+            <span class="text-purple-300 font-black">-$${Number(t.monto).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+            <span class="text-[9px] text-purple-400 font-bold bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20">${badgeLabel}</span>
+          </div>
+        `;
+      } else if (isPago) {
+        montoHtml = `
+          <div class="flex flex-col items-end">
+            <span class="text-rose-400 font-black">-$${Number(t.monto).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+            <span class="text-[9px] text-indigo-400 font-bold bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">💸 Pago (Descuenta balance)</span>
+          </div>
+        `;
+      } else {
+        montoHtml = `<span class="text-rose-400 font-black">-$${Number(t.monto).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>`;
       }
 
       tr.innerHTML = `
@@ -637,8 +706,8 @@ class View {
         <td class="py-3 px-4 font-bold text-white">${t.concepto}</td>
         <td class="py-3 px-4 whitespace-nowrap">${catBadge}</td>
         <td class="py-3 px-4 whitespace-nowrap">${metodoBadge}</td>
-        <td class="py-3 px-4 text-right font-black whitespace-nowrap ${isIngreso ? 'text-emerald-400' : 'text-rose-400'}">
-          ${isIngreso ? '+' : '-'}$${Number(t.monto).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+        <td class="py-3 px-4 text-right whitespace-nowrap">
+          ${montoHtml}
         </td>
         <td class="py-3 px-4 text-center">
           <button data-action="delete-tx" data-id="${t.id}" title="Eliminar movimiento de la bitácora" class="text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 p-2 rounded-lg transition-colors flex mx-auto">

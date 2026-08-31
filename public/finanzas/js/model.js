@@ -454,6 +454,74 @@ class Model {
 
   // ================= CAJITAS (APARTADOS & TARJETAS DE CRÉDITO) ================= //
 
+  isTransactionAffectingMainAccount(tx) {
+    if (!tx) return false;
+    if (tx.afectaCuenta !== undefined && tx.afectaCuenta !== null) {
+      return Boolean(tx.afectaCuenta);
+    }
+
+    const metodo = (tx.metodo || '').toLowerCase();
+    const concepto = (tx.concepto || '').toLowerCase();
+    const categoria = (tx.categoria || '').toLowerCase();
+
+    // Categoría explícita de tarjeta de crédito
+    if (categoria === 'tarjeta de crédito' || categoria === 'tarjeta de credito') {
+      return false;
+    }
+
+    // Método con tarjeta de crédito
+    if (metodo.includes('crédito') || metodo.includes('credito')) {
+      const isPago = concepto.startsWith('pago') || concepto.includes('abono') || categoria === 'deuda';
+      if (tx.tipo === 'GASTO' && !isPago) {
+        return false;
+      }
+    }
+
+    // Cajita vinculada de tipo CREDITO
+    if (tx.cajitaId) {
+      const cajita = (this.appState.cajitas || []).find(c => c.id === tx.cajitaId);
+      if (cajita && (cajita.tipoCajita === 'CREDITO' || cajita.isCredito)) {
+        const isPago = concepto.startsWith('pago') || concepto.includes('abono') || categoria === 'deuda';
+        if (tx.tipo === 'GASTO' && !isPago) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  getWeekSummary(weekNum, baseIncome = 0) {
+    const wTxs = (this.appState.transactions || []).filter(t => Number(t.semanaNum) === Number(weekNum));
+    
+    // Gastos que descuentan de la cuenta principal / dinero de la semana
+    const gastosCuenta = wTxs
+      .filter(t => t.tipo === 'GASTO' && this.isTransactionAffectingMainAccount(t))
+      .reduce((a, b) => a + Number(b.monto), 0);
+
+    // Gastos / compras con tarjeta de crédito (no descuentan de la cuenta principal)
+    const gastosCredito = wTxs
+      .filter(t => t.tipo === 'GASTO' && !this.isTransactionAffectingMainAccount(t))
+      .reduce((a, b) => a + Number(b.monto), 0);
+
+    // Ingresos a la cuenta principal
+    const ingresosExtras = wTxs
+      .filter(t => t.tipo === 'INGRESO' && this.isTransactionAffectingMainAccount(t))
+      .reduce((a, b) => a + Number(b.monto), 0);
+
+    const ingresosTotales = Number(baseIncome) + ingresosExtras;
+    const balanceCuenta = ingresosTotales - gastosCuenta;
+
+    return {
+      transactions: wTxs,
+      gastosCuenta,
+      gastosCredito,
+      ingresosTotales,
+      ingresosExtras,
+      balanceCuenta
+    };
+  }
+
   getCajitaSaldo(cajitaId) {
     if (!this.appState.cajitasMovimientos) return 0;
     const cajita = (this.appState.cajitas || []).find(c => c.id === cajitaId);
@@ -637,7 +705,7 @@ class Model {
     return true;
   }
 
-  addCajitaMovement({ cajitaId, tipo, monto, concepto, fecha, categoria, syncBitacora = true }) {
+  addCajitaMovement({ cajitaId, tipo, monto, concepto, fecha, categoria, afectaCuenta = null, metodoPago = null, syncBitacora = true }) {
     const numMonto = Number(monto);
     if (isNaN(numMonto) || numMonto <= 0) return { success: false, error: 'Monto inválido' };
 
@@ -685,7 +753,7 @@ class Model {
 
       if (isCredito) {
         if (normalizedTipo === 'CARGO') {
-          // A credit card purchase is an expense in Bitácora
+          // A credit card purchase is an expense in Bitácora that DOES NOT reduce main account cash
           this.appState.transactions.unshift({
             id: 'tx-cmov-' + movId,
             cmovId: movId,
@@ -693,13 +761,16 @@ class Model {
             fecha: movDate,
             semanaNum: semNum,
             concepto: `${cajita.nombre}: ${newMov.concepto}`,
-            categoria: categoria || 'Gustos',
+            categoria: categoria || 'Tarjeta de Crédito',
             metodo: `Tarjeta Crédito (${cajita.nombre})`,
             monto: numMonto,
-            tipo: 'GASTO'
+            tipo: 'GASTO',
+            afectaCuenta: false
           });
         } else {
-          // A payment to the card is an expense in Bitácora under category 'Deuda'
+          // A payment to the credit card
+          // If affects main account (default true unless user specified false)
+          const willAffectMainAccount = afectaCuenta !== false;
           this.appState.transactions.unshift({
             id: 'tx-cmov-' + movId,
             cmovId: movId,
@@ -707,10 +778,11 @@ class Model {
             fecha: movDate,
             semanaNum: semNum,
             concepto: `Pago Tarjeta ${cajita.nombre}: ${newMov.concepto}`,
-            categoria: 'Deuda',
-            metodo: 'Transferencia SPEI',
+            categoria: categoria || 'Deuda',
+            metodo: metodoPago || (willAffectMainAccount ? 'Transferencia SPEI' : 'Ajuste Interno'),
             monto: numMonto,
-            tipo: 'GASTO'
+            tipo: 'GASTO',
+            afectaCuenta: willAffectMainAccount
           });
         }
       }
@@ -933,6 +1005,31 @@ class Model {
   addTransaction(tx) {
     tx.semanaNum = Number(tx.semanaNum);
     tx.monto = Number(tx.monto);
+
+    // Determine if this transaction affects the main checking/cash account
+    if (tx.afectaCuenta === undefined || tx.afectaCuenta === null) {
+      const metodo = (tx.metodo || '').toLowerCase();
+      const concepto = (tx.concepto || '').toLowerCase();
+      const categoria = (tx.categoria || '').toLowerCase();
+
+      if (categoria === 'tarjeta de crédito' || categoria === 'tarjeta de credito') {
+        tx.afectaCuenta = false;
+      } else if (metodo.includes('crédito') || metodo.includes('credito')) {
+        const isPago = concepto.startsWith('pago') || concepto.includes('abono') || categoria === 'deuda';
+        tx.afectaCuenta = isPago;
+      } else if (tx.cajitaId) {
+        const cajita = (this.appState.cajitas || []).find(c => c.id === tx.cajitaId);
+        if (cajita && (cajita.tipoCajita === 'CREDITO' || cajita.isCredito)) {
+          const isPago = concepto.startsWith('pago') || concepto.includes('abono') || categoria === 'deuda' || tx.tipo === 'INGRESO';
+          tx.afectaCuenta = isPago;
+        } else {
+          tx.afectaCuenta = true;
+        }
+      } else {
+        tx.afectaCuenta = true;
+      }
+    }
+
     this.appState.transactions.unshift(tx);
 
     // If linked to a cajita, reflect into cajitasMovimientos
@@ -943,11 +1040,12 @@ class Model {
         const isCredito = cajita.tipoCajita === 'CREDITO';
         
         if (isCredito) {
+          const isPago = tx.tipo === 'INGRESO' || tx.concepto.toLowerCase().includes('pago') || tx.categoria === 'Deuda';
           this.appState.cajitasMovimientos.unshift({
             id: 'cmov-tx-' + tx.id,
             txId: tx.id,
             cajitaId: cajita.id,
-            tipo: tx.tipo === 'GASTO' ? 'CARGO' : 'PAGO',
+            tipo: isPago ? 'PAGO' : 'CARGO',
             monto: tx.monto,
             concepto: tx.concepto,
             fecha: tx.fecha,
@@ -965,6 +1063,22 @@ class Model {
             creadoEn: new Date().toISOString()
           });
         }
+      }
+    } else if (tx.metodo && tx.metodo.toLowerCase().includes('crédito') && tx.tipo === 'GASTO') {
+      // If method is credit card but no specific cajita selected, check if there is a credit card cajita to reflect on
+      const firstCreditCajita = (this.appState.cajitas || []).find(c => c.tipoCajita === 'CREDITO');
+      if (firstCreditCajita) {
+        if (!this.appState.cajitasMovimientos) this.appState.cajitasMovimientos = [];
+        this.appState.cajitasMovimientos.unshift({
+          id: 'cmov-tx-' + tx.id,
+          txId: tx.id,
+          cajitaId: firstCreditCajita.id,
+          tipo: 'CARGO',
+          monto: tx.monto,
+          concepto: tx.concepto,
+          fecha: tx.fecha,
+          creadoEn: new Date().toISOString()
+        });
       }
     }
 

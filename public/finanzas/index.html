@@ -342,7 +342,8 @@
         <div class="flex flex-col sm:flex-row items-center gap-3">
           <select id="filterCategory" class="w-full sm:w-auto bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 font-medium">
             <option value="ALL">Todas las Categorías</option>
-            <option value="Deuda">Abono a Deuda</option>
+            <option value="Tarjeta de Crédito">💳 Compras Tarjeta Crédito</option>
+            <option value="Deuda">Abono a Deuda / Pago Tarjeta</option>
             <option value="Servicios Hogar">Servicios (Luz, Agua, Gas)</option>
             <option value="Telecomunicaciones">Telecomunicaciones (Internet)</option>
             <option value="Alimentación">Alimentación / Despensa</option>
@@ -672,6 +673,7 @@
               <option value="Imprevistos">Imprevistos</option>
               <option value="Servicios Hogar">Servicios</option>
               <option value="Telecomunicaciones">Telecom.</option>
+              <option value="Tarjeta de Crédito">💳 Tarjeta de Crédito</option>
               <option value="Deuda">Deuda / Abono</option>
               <option value="Ingreso Extra">Ingreso Extra</option>
             </select>
@@ -697,6 +699,15 @@
             <option value="">-- Ninguna (Gasto General) --</option>
             <!-- Populated dynamically via JS -->
           </select>
+        </div>
+
+        <!-- Dynamic Credit Card Note -->
+        <div id="txCreditCardNote" class="hidden p-3 rounded-xl bg-purple-950/40 border border-purple-500/30 text-xs text-purple-300 flex items-start gap-2.5">
+          <i data-lucide="info" class="w-4 h-4 text-purple-400 shrink-0 mt-0.5"></i>
+          <div>
+            <span class="font-bold text-purple-200">Compra con Tarjeta de Crédito:</span>
+            <p class="text-[11px] text-purple-300/90 mt-0.5">Se acumulará como deuda en tu tarjeta y <strong class="text-white">NO restará dinero</strong> de tu cuenta bancaria ni del saldo disponible de la semana.</p>
+          </div>
         </div>
 
         <!-- Dynamic Debt Selector (Shown only when category is 'Deuda') -->
@@ -1094,6 +1105,29 @@
           </div>
         </div>
 
+        <!-- Helper Note for Credit Card Purchase -->
+        <div id="cmovCreditHelpNote" class="hidden p-3 rounded-xl bg-purple-950/40 border border-purple-500/30 text-xs text-purple-300 flex items-start gap-2.5">
+          <i data-lucide="info" class="w-4 h-4 text-purple-400 shrink-0 mt-0.5"></i>
+          <div>
+            <span class="font-bold text-purple-200">Compra con Tarjeta:</span>
+            <p class="text-[11px] text-purple-300/90 mt-0.5">Aumentará la deuda por pagar en tu tarjeta y <strong class="text-white">NO quitará dinero</strong> de tu cuenta bancaria ni de tu disponible semanal.</p>
+          </div>
+        </div>
+
+        <!-- Option to Pay Credit Card from Main Account -->
+        <div id="cmovPagarDesdeCuentaContainer" class="hidden p-3.5 rounded-2xl bg-slate-900/90 border border-emerald-500/30 space-y-2">
+          <label class="flex items-start gap-2.5 cursor-pointer">
+            <input type="checkbox" id="cmovPagarDesdeCuenta" checked class="mt-0.5 w-4 h-4 rounded text-emerald-500 bg-slate-950 border-slate-700 focus:ring-emerald-500 focus:ring-offset-slate-900" />
+            <div class="text-xs">
+              <span class="font-bold text-emerald-400">Tomar del balance de la cuenta principal (Semana)</span>
+              <p class="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                <strong class="text-emerald-300">✓ Marcado (Por defecto):</strong> Descuenta este pago del balance de tu cuenta principal / semana y reduce la deuda en la tarjeta.<br>
+                <strong class="text-slate-400">✗ Desmarcado:</strong> Solo reduce la deuda de la tarjeta (ajuste externo) <u class="text-white">sin descontar nada</u> de tu cuenta bancaria.
+              </p>
+            </div>
+          </label>
+        </div>
+
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Monto ($)</label>
@@ -1114,9 +1148,10 @@
         <div id="cmovCategoriaContainer">
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
             <span>Categoría (para Bitácora)</span>
-            <span class="text-[9px] text-emerald-400">Se registrará en gastos semanales</span>
+            <span class="text-[9px] text-emerald-400">Se registrará en tus movimientos</span>
           </label>
           <select id="cmovCategoria" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-semibold text-white focus:outline-none focus:border-emerald-500 transition-colors">
+            <option value="Tarjeta de Crédito">💳 Tarjeta de Crédito</option>
             <option value="Gustos">Gustos / Ocio</option>
             <option value="Alimentación">Alimentación</option>
             <option value="Transporte">Transporte</option>
@@ -1124,7 +1159,7 @@
             <option value="Telecomunicaciones">Telecomunicaciones</option>
             <option value="Salud">Salud</option>
             <option value="Imprevistos">Imprevistos</option>
-            <option value="Deuda">Deuda</option>
+            <option value="Deuda">Deuda / Abono</option>
           </select>
         </div>
 
