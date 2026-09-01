@@ -613,6 +613,9 @@ class Controller {
     const fechaInput = document.getElementById('cmovFecha');
     if (fechaInput) fechaInput.value = new Date().toISOString().split('T')[0];
 
+    const cbCuenta = document.getElementById('cmovPagarDesdeCuenta');
+    if (cbCuenta) cbCuenta.checked = false;
+
     this.view.openModal('modal-cajita-movimiento');
   }
 
@@ -632,6 +635,9 @@ class Controller {
 
     const fechaInput = document.getElementById('cmovFecha');
     if (fechaInput) fechaInput.value = new Date().toISOString().split('T')[0];
+
+    const cbCuenta = document.getElementById('cmovPagarDesdeCuenta');
+    if (cbCuenta) cbCuenta.checked = false;
 
     this.view.openModal('modal-cajita-movimiento');
   }
@@ -653,6 +659,9 @@ class Controller {
     const fechaInput = document.getElementById('cmovFecha');
     if (fechaInput) fechaInput.value = new Date().toISOString().split('T')[0];
 
+    const cbCuenta = document.getElementById('cmovPagarDesdeCuenta');
+    if (cbCuenta) cbCuenta.checked = false;
+
     this.view.openModal('modal-cajita-movimiento');
   }
 
@@ -672,6 +681,9 @@ class Controller {
 
     const fechaInput = document.getElementById('cmovFecha');
     if (fechaInput) fechaInput.value = new Date().toISOString().split('T')[0];
+
+    const cbCuenta = document.getElementById('cmovPagarDesdeCuenta');
+    if (cbCuenta) cbCuenta.checked = false;
 
     this.view.openModal('modal-cajita-movimiento');
   }
