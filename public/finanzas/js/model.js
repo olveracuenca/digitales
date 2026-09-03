@@ -101,7 +101,25 @@ const MONTH_NAMES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Jul
 class Model {
   constructor() {
     this.appState = this.getDefaultState();
-    // loadState is now async and must be called by the controller
+    this.lastServerUpdatedAt = localStorage.getItem('finanzas_pro_last_server_updated_at') || null;
+    this.isSyncing = false;
+    this.syncListeners = [];
+  }
+
+  onSyncStatusChange(callback) {
+    if (typeof callback === 'function') {
+      this.syncListeners.push(callback);
+    }
+  }
+
+  notifySyncStatus(status, details = null) {
+    this.syncListeners.forEach(cb => {
+      try {
+        cb(status, details);
+      } catch (e) {
+        console.error('Error in sync listener:', e);
+      }
+    });
   }
 
   getDefaultState() {
@@ -134,21 +152,131 @@ class Model {
     });
   }
 
+  sanitizeAndMigrateState() {
+    if (!this.appState.paidItemsByWeek) {
+      this.appState.paidItemsByWeek = {};
+    }
+
+    // MIGRATION: Update Internet payment day to 30
+    if (this.appState.fixedExpenses) {
+      const internet = this.appState.fixedExpenses.find(f => f.id === 'fix-3');
+      if (internet && internet.dia !== 30) {
+        internet.dia = 30;
+        internet.quincena = 'Quincena 2';
+      }
+    }
+
+    // Mark August 30th as paid since the user already covered it
+    if (!this.appState.paidItemsByWeek['paid-1-fix-3-0']) {
+      this.appState.paidItemsByWeek['paid-1-fix-3-0'] = true;
+      this.appState.paidItemsByWeek['fix-3-0'] = true;
+      if (this.appState.transactions && !this.appState.transactions.some(t => t.id === 'tx-0' || t.concepto.includes('Pago Internet (Adelantado)'))) {
+        this.appState.transactions.unshift({
+          id: 'tx-0',
+          fecha: '2026-08-30',
+          semanaNum: 1,
+          concepto: 'Pago Internet (Adelantado)',
+          categoria: 'Telecomunicaciones',
+          metodo: 'Transferencia SPEI',
+          monto: 1000,
+          tipo: 'GASTO',
+          paidKey: 'paid-1-fix-3-0'
+        });
+      }
+    }
+
+    // Alignment of Paychecks (Quincena 1: 15-29, Quincena 2: 30-14)
+    const correctQuincena = (dia) => {
+      const d = Number(dia);
+      if (d >= 15 && d <= 29) return 'Quincena 1';
+      return 'Quincena 2';
+    };
+
+    if (this.appState.debts) {
+      this.appState.debts.forEach(d => { 
+        d.quincena = correctQuincena(d.dia);
+        d.inicial = Number(d.inicial) || 0;
+        d.mensual = Number(d.mensual) || 0;
+      });
+    }
+    if (this.appState.fixedExpenses) {
+      this.appState.fixedExpenses.forEach(f => { 
+        f.quincena = correctQuincena(f.dia);
+        f.monto = Number(f.monto) || 0;
+      });
+    }
+    if (this.appState.transactions) {
+      this.appState.transactions.forEach(t => {
+        t.semanaNum = Number(t.semanaNum);
+        t.monto = Number(t.monto);
+        if (t.cajitaId) {
+          const cajita = (this.appState.cajitas || []).find(c => c.id === t.cajitaId);
+          if (cajita && (cajita.tipoCajita === 'CREDITO' || cajita.isCredito)) {
+            if (t.afectaCuenta !== true) {
+              t.afectaCuenta = false;
+            }
+          }
+        }
+      });
+    }
+
+    // Recalculate debt balances
+    this.recalculateDebtBalances();
+
+    // Cajitas
+    if (!this.appState.cajitas || !Array.isArray(this.appState.cajitas) || this.appState.cajitas.length === 0) {
+      this.appState.cajitas = JSON.parse(JSON.stringify(INITIAL_CAJITAS));
+    } else {
+      this.appState.cajitas.forEach(c => {
+        if (!c.tipoCajita) {
+          const nameLower = (c.nombre || '').toLowerCase();
+          if (nameLower.includes('nu') || nameLower.includes('klar') || nameLower.includes('tarjeta') || nameLower.includes('credito') || nameLower.includes('crédito')) {
+            c.tipoCajita = 'CREDITO';
+          } else {
+            c.tipoCajita = 'AHORRO';
+          }
+        }
+      });
+    }
+
+    if (!this.appState.cajitasMovimientos || !Array.isArray(this.appState.cajitasMovimientos)) {
+      this.appState.cajitasMovimientos = JSON.parse(JSON.stringify(INITIAL_CAJITAS_MOVIMIENTOS));
+    }
+
+    if (this.appState.cajitasMovimientos) {
+      this.appState.cajitasMovimientos.forEach(m => {
+        m.monto = Number(m.monto);
+      });
+    }
+  }
+
   async loadState() {
+    this.notifySyncStatus('syncing');
     let savedObj = null;
     let loadedFromDB = false;
     
     try {
-      const res = await fetch('/api/finanzas/state');
+      // Usar cache-busting estricto para evitar que el navegador devuelva respuestas viejas en la laptop/cel
+      const res = await fetch(`/api/finanzas/state?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
       if (res.ok) {
         const data = await res.json();
         if (data && data.state) {
           savedObj = data.state;
           loadedFromDB = true;
+          if (data.updatedAt) {
+            this.lastServerUpdatedAt = data.updatedAt;
+            localStorage.setItem('finanzas_pro_last_server_updated_at', data.updatedAt);
+          }
         }
       }
     } catch(e) {
-      console.error("Error al obtener estado desde BD:", e);
+      console.warn("No se pudo conectar con la BD en este momento, usando respaldo local:", e);
     }
 
     if (!savedObj) {
@@ -165,117 +293,109 @@ class Model {
     if (savedObj) {
       try {
         this.appState = savedObj;
+        this.sanitizeAndMigrateState();
         
-        if (!this.appState.paidItemsByWeek) {
-          this.appState.paidItemsByWeek = {};
-        }
-
-        // MIGRATION: Update Internet payment day to 30
-        if (this.appState.fixedExpenses) {
-          const internet = this.appState.fixedExpenses.find(f => f.id === 'fix-3');
-          if (internet && internet.dia !== 30) {
-            internet.dia = 30;
-            internet.quincena = 'Quincena 2';
-          }
-        }
-
-        // Mark August 30th as paid since the user already covered it
-        if (!this.appState.paidItemsByWeek['paid-1-fix-3-0']) {
-          this.appState.paidItemsByWeek['paid-1-fix-3-0'] = true;
-          this.appState.paidItemsByWeek['fix-3-0'] = true;
-          if (this.appState.transactions && !this.appState.transactions.some(t => t.id === 'tx-0' || t.concepto.includes('Pago Internet (Adelantado)'))) {
-            this.appState.transactions.unshift({
-              id: 'tx-0',
-              fecha: '2026-08-30',
-              semanaNum: 1,
-              concepto: 'Pago Internet (Adelantado)',
-              categoria: 'Telecomunicaciones',
-              metodo: 'Transferencia SPEI',
-              monto: 1000,
-              tipo: 'GASTO',
-              paidKey: 'paid-1-fix-3-0'
-            });
-          }
-        }
-
-        // Alignment of Paychecks (Quincena 1: 15-29, Quincena 2: 30-14)
-        const correctQuincena = (dia) => {
-            const d = Number(dia);
-            if (d >= 15 && d <= 29) return 'Quincena 1';
-            return 'Quincena 2';
-        };
-
-        if (this.appState.debts) {
-          this.appState.debts.forEach(d => { 
-            d.quincena = correctQuincena(d.dia);
-            d.inicial = Number(d.inicial) || 0;
-            d.mensual = Number(d.mensual) || 0;
-          });
-        }
-        if (this.appState.fixedExpenses) {
-          this.appState.fixedExpenses.forEach(f => { 
-            f.quincena = correctQuincena(f.dia);
-            f.monto = Number(f.monto) || 0;
-          });
-        }
-        if (this.appState.transactions) {
-          this.appState.transactions.forEach(t => {
-            t.semanaNum = Number(t.semanaNum);
-            t.monto = Number(t.monto);
-          });
-        }
-
-        // SANITIZATION: Recalculate all debt balances so they start at `inicial` unless actual payment transactions exist
-        this.recalculateDebtBalances();
-
-        // MIGRATION: Cajitas (Cuentas separadas)
-        if (!this.appState.cajitas || !Array.isArray(this.appState.cajitas) || this.appState.cajitas.length === 0) {
-          this.appState.cajitas = JSON.parse(JSON.stringify(INITIAL_CAJITAS));
-        } else {
-          // Ensure all cajitas have tipoCajita
-          this.appState.cajitas.forEach(c => {
-            if (!c.tipoCajita) {
-              const nameLower = (c.nombre || '').toLowerCase();
-              if (nameLower.includes('nu') || nameLower.includes('klar') || nameLower.includes('tarjeta') || nameLower.includes('credito') || nameLower.includes('crédito')) {
-                c.tipoCajita = 'CREDITO';
-              } else {
-                c.tipoCajita = 'AHORRO';
-              }
-            }
-          });
-        }
-
-        if (!this.appState.cajitasMovimientos || !Array.isArray(this.appState.cajitasMovimientos)) {
-          this.appState.cajitasMovimientos = JSON.parse(JSON.stringify(INITIAL_CAJITAS_MOVIMIENTOS));
-        }
-
-        if (this.appState.cajitasMovimientos) {
-          this.appState.cajitasMovimientos.forEach(m => {
-            m.monto = Number(m.monto);
-          });
-        }
+        // Mantener localStorage siempre sincronizado con el último estado válido de la BD
+        localStorage.setItem('finanzas_pro_state_mvc', JSON.stringify(this.appState));
         
-        // Si lo cargamos desde localStorage y no de la BD, lo guardamos para sincronizar
-        if (!loadedFromDB) {
-          this.saveState();
-        }
-        
+        this.notifySyncStatus(loadedFromDB ? 'synced' : 'offline');
+        return { success: true, loadedFromDB };
       } catch (e) {
         console.error("Error al procesar estado:", e);
+        this.notifySyncStatus('error');
+        return { success: false, error: e };
       }
+    }
+
+    this.notifySyncStatus('synced');
+    return { success: true, loadedFromDB: false };
+  }
+
+  async checkForRemoteUpdates() {
+    if (this.isSyncing) return false;
+    try {
+      this.isSyncing = true;
+      const res = await fetch(`/api/finanzas/state?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
+      
+      if (!res.ok) {
+        this.isSyncing = false;
+        return false;
+      }
+
+      const data = await res.json();
+      if (!data || !data.state) {
+        this.isSyncing = false;
+        return false;
+      }
+
+      const serverTime = data.updatedAt;
+      // Si la fecha del servidor es más reciente que la que tenemos localmente
+      if (serverTime && serverTime !== this.lastServerUpdatedAt) {
+        console.log(`[Sync] Nuevos cambios detectados en el servidor (${serverTime} vs local ${this.lastServerUpdatedAt}). Sincronizando...`);
+        this.notifySyncStatus('syncing');
+        this.appState = data.state;
+        this.lastServerUpdatedAt = serverTime;
+        this.sanitizeAndMigrateState();
+        
+        localStorage.setItem('finanzas_pro_state_mvc', JSON.stringify(this.appState));
+        localStorage.setItem('finanzas_pro_last_server_updated_at', serverTime);
+        
+        this.isSyncing = false;
+        this.notifySyncStatus('synced');
+        return true; // Hubo cambios reales
+      }
+      
+      this.isSyncing = false;
+      this.notifySyncStatus('synced');
+      return false;
+    } catch (e) {
+      console.warn('[Sync] Error al verificar actualizaciones:', e);
+      this.isSyncing = false;
+      this.notifySyncStatus('offline');
+      return false;
     }
   }
 
-  saveState() {
+  async saveState() {
+    // Guardar inmediatamente en localStorage como respaldo instantáneo
     localStorage.setItem('finanzas_pro_state_mvc', JSON.stringify(this.appState));
+    this.notifySyncStatus('syncing');
     
-    fetch('/api/finanzas/state', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ state: this.appState })
-    }).catch(e => console.error("Error al sincronizar con BD:", e));
+    try {
+      const res = await fetch(`/api/finanzas/state?_t=${Date.now()}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        },
+        body: JSON.stringify({ state: this.appState })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.updatedAt) {
+          this.lastServerUpdatedAt = data.updatedAt;
+          localStorage.setItem('finanzas_pro_last_server_updated_at', data.updatedAt);
+        }
+        this.notifySyncStatus('synced');
+        return true;
+      } else {
+        console.error("Respuesta fallida al guardar en BD:", res.status);
+        this.notifySyncStatus('error');
+        return false;
+      }
+    } catch (e) {
+      console.error("Error al sincronizar con BD:", e);
+      this.notifySyncStatus('offline');
+      return false;
+    }
   }
 
   // ================= DEBTS METHODS ================= //
@@ -469,22 +589,19 @@ class Model {
       return false;
     }
 
+    // Cajita vinculada de tipo CREDITO: ni compras ni pagos descuentan del balance general de 52 semanas
+    if (tx.cajitaId) {
+      const cajita = (this.appState.cajitas || []).find(c => c.id === tx.cajitaId);
+      if (cajita && (cajita.tipoCajita === 'CREDITO' || cajita.isCredito)) {
+        return false;
+      }
+    }
+
     // Método con tarjeta de crédito
     if (metodo.includes('crédito') || metodo.includes('credito')) {
       const isPago = concepto.startsWith('pago') || concepto.includes('abono') || categoria === 'deuda';
       if (tx.tipo === 'GASTO' && !isPago) {
         return false;
-      }
-    }
-
-    // Cajita vinculada de tipo CREDITO
-    if (tx.cajitaId) {
-      const cajita = (this.appState.cajitas || []).find(c => c.id === tx.cajitaId);
-      if (cajita && (cajita.tipoCajita === 'CREDITO' || cajita.isCredito)) {
-        const isPago = concepto.startsWith('pago') || concepto.includes('abono') || categoria === 'deuda';
-        if (tx.tipo === 'GASTO' && !isPago) {
-          return false;
-        }
       }
     }
 
@@ -769,8 +886,8 @@ class Model {
           });
         } else {
           // A payment to the credit card
-          // If affects main account (default true unless user specified false)
-          const willAffectMainAccount = afectaCuenta !== false;
+          // ONLY affects main account if user explicitly requested it (default false)
+          const willAffectMainAccount = Boolean(afectaCuenta);
           this.appState.transactions.unshift({
             id: 'tx-cmov-' + movId,
             cmovId: movId,
@@ -1020,8 +1137,7 @@ class Model {
       } else if (tx.cajitaId) {
         const cajita = (this.appState.cajitas || []).find(c => c.id === tx.cajitaId);
         if (cajita && (cajita.tipoCajita === 'CREDITO' || cajita.isCredito)) {
-          const isPago = concepto.startsWith('pago') || concepto.includes('abono') || categoria === 'deuda' || tx.tipo === 'INGRESO';
-          tx.afectaCuenta = isPago;
+          tx.afectaCuenta = false;
         } else {
           tx.afectaCuenta = true;
         }

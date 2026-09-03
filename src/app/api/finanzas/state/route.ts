@@ -3,6 +3,16 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+const noCacheHeaders = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+  'Surrogate-Control': 'no-store'
+};
+
 export async function GET() {
   try {
     const config = await prisma.finanzasState.findUnique({
@@ -21,9 +31,11 @@ export async function GET() {
       paidItemsByWeek[item.key] = item.value;
     });
 
+    const updatedAt = config?.updatedAt ? config.updatedAt.toISOString() : new Date().toISOString();
+
     if (!config && debts.length === 0 && fixedExpenses.length === 0) {
        // Return empty so the frontend uses its defaults
-       return NextResponse.json({ state: null });
+       return NextResponse.json({ state: null, updatedAt }, { headers: noCacheHeaders });
     }
 
     const state = {
@@ -39,10 +51,10 @@ export async function GET() {
       paidItemsByWeek
     };
 
-    return NextResponse.json({ state });
+    return NextResponse.json({ state, updatedAt }, { headers: noCacheHeaders });
   } catch (error) {
     console.error('Error fetching finanzas state:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500, headers: noCacheHeaders });
   }
 }
 
@@ -54,8 +66,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No state provided' }, { status: 400 });
     }
 
+    let updatedStateRecord: any = null;
     await prisma.$transaction(async (tx) => {
-      await tx.finanzasState.upsert({
+      updatedStateRecord = await tx.finanzasState.upsert({
         where: { id: 'default' },
         update: {
           sueldoMensual: state.sueldoMensual,
@@ -120,7 +133,8 @@ export async function POST(req: Request) {
             paidKey: t.paidKey || null,
             debtId: t.debtId || null,
             cmovId: t.cmovId || null,
-            cajitaId: t.cajitaId || null
+            cajitaId: t.cajitaId || null,
+            afectaCuenta: t.afectaCuenta !== undefined && t.afectaCuenta !== null ? Boolean(t.afectaCuenta) : null
           }))
         });
       }
@@ -175,9 +189,10 @@ export async function POST(req: Request) {
       }
     });
 
-    return NextResponse.json({ success: true });
+    const updatedAt = updatedStateRecord?.updatedAt ? updatedStateRecord.updatedAt.toISOString() : new Date().toISOString();
+    return NextResponse.json({ success: true, updatedAt }, { headers: noCacheHeaders });
   } catch (error) {
     console.error('Error saving finanzas state:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500, headers: noCacheHeaders });
   }
 }

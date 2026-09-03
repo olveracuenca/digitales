@@ -5,6 +5,56 @@ class View {
     this.lucide = window.lucide;
   }
 
+  setSyncStatus(status) {
+    const dot = document.getElementById('syncDot');
+    const icon = document.getElementById('syncIcon');
+    const text = document.getElementById('syncText');
+    const btn = document.getElementById('btnCloudSync');
+    if (!dot || !text) return;
+
+    if (status === 'syncing') {
+      dot.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
+      text.innerText = "Sincronizando...";
+      text.className = "text-[11px] font-bold text-amber-300 hidden sm:inline";
+      if (icon) {
+        icon.setAttribute('data-lucide', 'refresh-cw');
+        icon.className = "w-3.5 h-3.5 text-amber-400 animate-spin";
+      }
+      if (btn) btn.title = "Sincronizando con la nube...";
+    } else if (status === 'synced') {
+      dot.className = "w-2 h-2 rounded-full bg-emerald-400";
+      text.innerText = "En la nube";
+      text.className = "text-[11px] font-bold text-emerald-300 hidden sm:inline";
+      if (icon) {
+        icon.setAttribute('data-lucide', 'cloud');
+        icon.className = "w-3.5 h-3.5 text-emerald-400";
+      }
+      if (btn) btn.title = "Sincronizado con la nube (Laptop, Celular, Tablet). Clic para refrescar.";
+    } else if (status === 'offline') {
+      dot.className = "w-2 h-2 rounded-full bg-rose-400";
+      text.innerText = "Sin conexión";
+      text.className = "text-[11px] font-bold text-rose-300 hidden sm:inline";
+      if (icon) {
+        icon.setAttribute('data-lucide', 'cloud-off');
+        icon.className = "w-3.5 h-3.5 text-rose-400";
+      }
+      if (btn) btn.title = "Sin conexión con el servidor. Guardado en memoria local.";
+    } else if (status === 'error') {
+      dot.className = "w-2 h-2 rounded-full bg-rose-500";
+      text.innerText = "Reintentar";
+      text.className = "text-[11px] font-bold text-rose-400 hidden sm:inline";
+      if (icon) {
+        icon.setAttribute('data-lucide', 'alert-triangle');
+        icon.className = "w-3.5 h-3.5 text-rose-400";
+      }
+      if (btn) btn.title = "Error al sincronizar. Clic para reintentar.";
+    }
+
+    if (this.lucide && this.lucide.createIcons) {
+      this.lucide.createIcons();
+    }
+  }
+
   isTxAffectingAccount(t, appState) {
     if (!t) return false;
     if (t.afectaCuenta !== undefined && t.afectaCuenta !== null) {
@@ -14,21 +64,22 @@ class View {
     const concepto = (t.concepto || '').toLowerCase();
     const categoria = (t.categoria || '').toLowerCase();
 
+    // Categoría explícita de tarjeta de crédito
     if (categoria === 'tarjeta de crédito' || categoria === 'tarjeta de credito') {
       return false;
+    }
+
+    // Cajita vinculada de tipo CREDITO: ni cargos ni pagos descuentan de la cuenta principal / 52 semanas
+    if (t.cajitaId) {
+      const cajita = (appState?.cajitas || []).find(c => c.id === t.cajitaId);
+      if (cajita && (cajita.tipoCajita === 'CREDITO' || cajita.isCredito)) {
+        return false;
+      }
     }
 
     if (metodo.includes('crédito') || metodo.includes('credito')) {
       const isPago = concepto.startsWith('pago') || concepto.includes('abono') || categoria === 'deuda';
       if (t.tipo === 'GASTO' && !isPago) return false;
-    }
-
-    if (t.cajitaId) {
-      const cajita = (appState?.cajitas || []).find(c => c.id === t.cajitaId);
-      if (cajita && (cajita.tipoCajita === 'CREDITO' || cajita.isCredito)) {
-        const isPago = concepto.startsWith('pago') || concepto.includes('abono') || categoria === 'deuda';
-        if (t.tipo === 'GASTO' && !isPago) return false;
-      }
     }
 
     return true;
@@ -102,15 +153,15 @@ class View {
     if (heroGastoReal) {
       heroGastoReal.innerHTML = `$${realSpentCash.toLocaleString('es-MX', { minimumFractionDigits: 2 })}${realSpentCredit > 0 ? ` <span class="text-[10px] text-purple-400 font-bold block sm:inline">(+$${realSpentCredit.toLocaleString()} en tarjeta)</span>` : ''}`;
     }
-    
+
     // Compute cumulative rolling balance up to current week (only counting cash in/out of main account)
     let rollingBalance = 0;
     for (let i = 0; i <= currIdx; i++) {
-        const w = weeks[i];
-        const wTxs = (appState.transactions || []).filter(t => Number(t.semanaNum) === w.num);
-        const wGastado = wTxs.filter(t => t.tipo === 'GASTO' && this.isTxAffectingAccount(t, appState)).reduce((a, b) => a + Number(b.monto), 0);
-        const wIngresos = w.baseIncome + wTxs.filter(t => t.tipo === 'INGRESO' && this.isTxAffectingAccount(t, appState)).reduce((a, b) => a + Number(b.monto), 0);
-        rollingBalance += (wIngresos - wGastado);
+      const w = weeks[i];
+      const wTxs = (appState.transactions || []).filter(t => Number(t.semanaNum) === w.num);
+      const wGastado = wTxs.filter(t => t.tipo === 'GASTO' && this.isTxAffectingAccount(t, appState)).reduce((a, b) => a + Number(b.monto), 0);
+      const wIngresos = w.baseIncome + wTxs.filter(t => t.tipo === 'INGRESO' && this.isTxAffectingAccount(t, appState)).reduce((a, b) => a + Number(b.monto), 0);
+      rollingBalance += (wIngresos - wGastado);
     }
 
     const heroRem = document.getElementById('heroRemanente');
@@ -319,16 +370,15 @@ class View {
       const balance = totalIngresos - totalGastadoCuenta;
 
       rollingBalance += balance;
-      
-      const matchText = `${w.num} ${w.periodStr} ${w.monthStr} ${w.quincenaStr} ${w.scheduledItems.map(i=>i.name).join(' ')}`.toLowerCase();
+
+      const matchText = `${w.num} ${w.periodStr} ${w.monthStr} ${w.quincenaStr} ${w.scheduledItems.map(i => i.name).join(' ')}`.toLowerCase();
       if (query && !matchText.includes(query)) return;
 
       const card = document.createElement('div');
-      card.className = `p-5 rounded-2xl border transition-all duration-300 hover:shadow-xl ${
-        isCurrent 
-          ? 'bg-gradient-to-br from-slate-900 to-slate-950 border-emerald-500/50 shadow-emerald-900/20' 
+      card.className = `p-5 rounded-2xl border transition-all duration-300 hover:shadow-xl ${isCurrent
+          ? 'bg-gradient-to-br from-slate-900 to-slate-950 border-emerald-500/50 shadow-emerald-900/20'
           : 'bg-slate-900/50 backdrop-blur-md border-slate-800/80 hover:border-slate-700'
-      }`;
+        }`;
 
       let scheduledHtml = '';
       if (w.scheduledItems.length > 0) {
@@ -339,14 +389,13 @@ class View {
             </p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               ${w.scheduledItems.map(item => {
-                const itemPaidKey = `paid-${w.num}-${item.key}`;
-                const isPaid = !!appState.paidItemsByWeek[itemPaidKey];
-                return `
-                  <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border transition-all duration-300 ${
-                    isPaid 
-                      ? 'bg-emerald-950/20 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]' 
-                      : 'bg-slate-950/80 border-slate-800'
-                  }">
+          const itemPaidKey = `paid-${w.num}-${item.key}`;
+          const isPaid = !!appState.paidItemsByWeek[itemPaidKey];
+          return `
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border transition-all duration-300 ${isPaid
+              ? 'bg-emerald-950/20 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]'
+              : 'bg-slate-950/80 border-slate-800'
+            }">
                     <div class="flex items-center gap-3 mb-2 sm:mb-0">
                       <div class="w-8 h-8 rounded-full flex items-center justify-center ${isPaid ? 'bg-emerald-500/20' : 'bg-slate-800'}">
                         <i data-lucide="${isPaid ? 'check' : 'circle-dollar-sign'}" class="w-4 h-4 ${isPaid ? 'text-emerald-400' : 'text-slate-400'}"></i>
@@ -357,16 +406,15 @@ class View {
                       </div>
                     </div>
                     <button data-action="toggle-payment" data-key="${itemPaidKey}" data-name="${item.name}" data-monto="${item.monto}" data-sem="${w.num}" data-debt="${item.debtId || ''}" data-cat="${item.categoria || (item.debtId ? 'Deuda' : 'Servicios Hogar')}"
-                      class="w-full sm:w-auto px-4 py-2 rounded-lg text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-2 ${
-                        isPaid 
-                          ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-lg shadow-emerald-900/40' 
-                          : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-600'
-                      }">
+                      class="w-full sm:w-auto px-4 py-2 rounded-lg text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-2 ${isPaid
+              ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-lg shadow-emerald-900/40'
+              : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-600'
+            }">
                       ${isPaid ? 'PAGADO ✅' : 'Marcar Pagado'}
                     </button>
                   </div>
                 `;
-              }).join('')}
+        }).join('')}
             </div>
           </div>
         `;
@@ -425,10 +473,10 @@ class View {
       btn.addEventListener('click', (e) => {
         const t = e.currentTarget;
         togglePaymentCallback(
-          t.dataset.key, 
-          t.dataset.name, 
-          t.dataset.monto, 
-          t.dataset.sem, 
+          t.dataset.key,
+          t.dataset.name,
+          t.dataset.monto,
+          t.dataset.sem,
           t.dataset.debt,
           t.dataset.cat
         );
@@ -471,11 +519,10 @@ class View {
       const style = colorStyles[d.color] || colorStyles.indigo;
 
       const card = document.createElement('div');
-      card.className = `p-5 rounded-2xl border transition-all duration-300 hover:shadow-lg ${
-        isLiquidada 
-          ? 'bg-emerald-950/20 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.08)]' 
+      card.className = `p-5 rounded-2xl border transition-all duration-300 hover:shadow-lg ${isLiquidada
+          ? 'bg-emerald-950/20 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.08)]'
           : 'bg-slate-900/60 backdrop-blur-md border-slate-800 hover:border-slate-700'
-      }`;
+        }`;
 
       card.innerHTML = `
         <div class="flex items-start justify-between gap-3">
@@ -486,9 +533,8 @@ class View {
             <div>
               <div class="flex items-center gap-2">
                 <h4 class="text-base font-black text-white">${d.nombre}</h4>
-                <span class="text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wide uppercase ${
-                  isLiquidada ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : style.badge
-                }">${isLiquidada ? 'Liquidada' : 'Activa'}</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wide uppercase ${isLiquidada ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : style.badge
+        }">${isLiquidada ? 'Liquidada' : 'Activa'}</span>
               </div>
               <p class="text-xs text-slate-400 font-medium mt-0.5">${d.acreedor} • Corte: ${d.quincena} (Día ${d.dia})</p>
             </div>
@@ -735,7 +781,7 @@ class View {
       const el = document.getElementById(selId);
       if (el) {
         const currVal = el.value;
-        el.innerHTML = (debts || []).map(d => 
+        el.innerHTML = (debts || []).map(d =>
           `<option value="${d.id}">${d.nombre} (Saldo: $${Number(d.restante).toLocaleString()} - Abono: $${Number(d.mensual).toLocaleString()})</option>`
         ).join('');
         if (currVal && debts.some(d => d.id === currVal)) {
@@ -785,7 +831,7 @@ class View {
         cajitas.forEach(c => {
           const card = document.createElement('div');
           const isCredito = c.isCredito || c.tipoCajita === 'CREDITO';
-          
+
           const colorStyles = {
             purple: { border: 'border-purple-500/30', bgGlow: 'bg-purple-500/10', iconBg: 'bg-purple-500/20', iconText: 'text-purple-400', barGrad: 'from-purple-600 to-purple-400', badge: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
             indigo: { border: 'border-indigo-500/30', bgGlow: 'bg-indigo-500/10', iconBg: 'bg-indigo-500/20', iconText: 'text-indigo-400', barGrad: 'from-indigo-600 to-indigo-400', badge: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' },
@@ -806,7 +852,7 @@ class View {
           if (c.asignado === 'Compartido') ownerIcon = 'users';
 
           card.className = `glass rounded-2xl p-5 md:p-6 relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:${style.border} flex flex-col justify-between group ${isCredito ? 'border-purple-500/30 bg-gradient-to-br from-purple-950/20 to-slate-900/90' : ''}`;
-          
+
           card.innerHTML = `
             <div class="absolute -right-8 -top-8 w-32 h-32 ${style.bgGlow} rounded-full blur-2xl group-hover:scale-125 transition-transform pointer-events-none"></div>
             
@@ -1032,7 +1078,7 @@ class View {
     filtered.forEach(m => {
       const tr = document.createElement('tr');
       tr.className = "hover:bg-slate-800/40 transition-colors border-b border-slate-800/50 last:border-0";
-      
+
       const isIngreso = m.tipo === 'INGRESO' || m.tipo === 'CARGO';
       const isCargoTarjeta = m.tipo === 'CARGO';
       const isPagoTarjeta = m.tipo === 'PAGO';
@@ -1127,7 +1173,7 @@ class View {
     if (!modal) return;
     modal.classList.remove('hidden');
     modal.classList.add('flex', 'animate-fade-in-fast');
-    
+
     const today = new Date().toISOString().split('T')[0];
     if (id === 'modal-transaccion') {
       const el = document.getElementById('txFecha');

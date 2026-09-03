@@ -116,18 +116,19 @@ model FinanzasFixedExpense {
 }
 
 model FinanzasTransaction {
-  id        String  @id
-  fecha     String
-  semanaNum Int
-  concepto  String
-  categoria String
-  metodo    String
-  monto     Float
-  tipo      String
-  paidKey   String?
-  debtId    String?
-  cmovId    String?
-  cajitaId  String?
+  id           String   @id
+  fecha        String
+  semanaNum    Int
+  concepto     String
+  categoria    String
+  metodo       String
+  monto        Float
+  tipo         String
+  paidKey      String?
+  debtId       String?
+  cmovId       String?
+  cajitaId     String?
+  afectaCuenta Boolean? @default(true)
 }
 
 model FinanzasCajita {

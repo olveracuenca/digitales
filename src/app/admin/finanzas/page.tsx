@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 export default function FinanzasPage() {
   return (
     <div style={{ width: '100%', height: 'calc(100vh - 6rem)', overflow: 'hidden', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>

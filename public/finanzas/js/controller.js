@@ -2,12 +2,67 @@ class Controller {
   constructor() {
     this.model = new Model();
     this.view = new View();
+    this.syncInterval = null;
     this.bindEvents();
   }
 
   async init() {
+    // Escuchar cambios de sincronización para actualizar la interfaz
+    this.model.onSyncStatusChange((status) => {
+      this.view.setSyncStatus(status);
+    });
+
     await this.model.loadState();
     this.updateAllUI();
+    this.setupMultiDeviceSync();
+  }
+
+  setupMultiDeviceSync() {
+    // 1. Detección inmediata al regresar a la pestaña (cambio de visibilidad)
+    document.addEventListener('visibilitychange', async () => {
+      if (document.visibilityState === 'visible') {
+        await this.syncWithServer();
+      }
+    });
+
+    // 2. Detección inmediata al ganar foco la ventana
+    window.addEventListener('focus', async () => {
+      await this.syncWithServer();
+    });
+
+    // 3. Heartbeat silencioso en segundo plano: sondeo cada 8 segundos si la pestaña está activa
+    if (this.syncInterval) clearInterval(this.syncInterval);
+    this.syncInterval = setInterval(async () => {
+      if (document.visibilityState === 'visible' && !document.hidden) {
+        await this.syncWithServer(true);
+      }
+    }, 8000);
+
+    // 4. Botón manual en la cabecera
+    const btnCloudSync = document.getElementById('btnCloudSync');
+    if (btnCloudSync) {
+      btnCloudSync.addEventListener('click', async () => {
+        await this.syncWithServer(false, true);
+      });
+    }
+  }
+
+  async syncWithServer(isSilent = false, forceFull = false) {
+    try {
+      if (forceFull) {
+        this.view.setSyncStatus('syncing');
+        await this.model.loadState();
+        this.updateAllUI();
+        return;
+      }
+
+      const hasChanges = await this.model.checkForRemoteUpdates();
+      if (hasChanges) {
+        this.updateAllUI();
+      }
+    } catch (e) {
+      console.warn('[Sync] Error sincronizando con servidor:', e);
+    }
   }
 
   updateAllUI() {
@@ -599,10 +654,11 @@ class Controller {
   handleCajitaDeposit(cajitaId) {
     const cajitaSelect = document.getElementById('cmovCajitaId');
     if (cajitaSelect) cajitaSelect.value = cajitaId;
-    this.updateCmovModalForSelectedCajita();
     
     const ingresoRadio = document.querySelector('input[name="cmovTipo"][value="INGRESO"]');
     if (ingresoRadio) ingresoRadio.checked = true;
+
+    this.updateCmovModalForSelectedCajita();
 
     const montoInput = document.getElementById('cmovMonto');
     if (montoInput) montoInput.value = '';
@@ -612,9 +668,6 @@ class Controller {
 
     const fechaInput = document.getElementById('cmovFecha');
     if (fechaInput) fechaInput.value = new Date().toISOString().split('T')[0];
-
-    const cbCuenta = document.getElementById('cmovPagarDesdeCuenta');
-    if (cbCuenta) cbCuenta.checked = false;
 
     this.view.openModal('modal-cajita-movimiento');
   }
@@ -622,10 +675,11 @@ class Controller {
   handleCajitaWithdraw(cajitaId) {
     const cajitaSelect = document.getElementById('cmovCajitaId');
     if (cajitaSelect) cajitaSelect.value = cajitaId;
-    this.updateCmovModalForSelectedCajita();
     
     const egresoRadio = document.querySelector('input[name="cmovTipo"][value="EGRESO"]');
     if (egresoRadio) egresoRadio.checked = true;
+
+    this.updateCmovModalForSelectedCajita();
 
     const montoInput = document.getElementById('cmovMonto');
     if (montoInput) montoInput.value = '';
@@ -635,9 +689,6 @@ class Controller {
 
     const fechaInput = document.getElementById('cmovFecha');
     if (fechaInput) fechaInput.value = new Date().toISOString().split('T')[0];
-
-    const cbCuenta = document.getElementById('cmovPagarDesdeCuenta');
-    if (cbCuenta) cbCuenta.checked = false;
 
     this.view.openModal('modal-cajita-movimiento');
   }
@@ -645,10 +696,11 @@ class Controller {
   handleCajitaCargo(cajitaId) {
     const cajitaSelect = document.getElementById('cmovCajitaId');
     if (cajitaSelect) cajitaSelect.value = cajitaId;
-    this.updateCmovModalForSelectedCajita();
     
     const cargoRadio = document.querySelector('input[name="cmovTipo"][value="INGRESO"]');
     if (cargoRadio) cargoRadio.checked = true;
+
+    this.updateCmovModalForSelectedCajita();
 
     const montoInput = document.getElementById('cmovMonto');
     if (montoInput) montoInput.value = '';
@@ -659,19 +711,17 @@ class Controller {
     const fechaInput = document.getElementById('cmovFecha');
     if (fechaInput) fechaInput.value = new Date().toISOString().split('T')[0];
 
-    const cbCuenta = document.getElementById('cmovPagarDesdeCuenta');
-    if (cbCuenta) cbCuenta.checked = false;
-
     this.view.openModal('modal-cajita-movimiento');
   }
 
   handleCajitaPago(cajitaId) {
     const cajitaSelect = document.getElementById('cmovCajitaId');
     if (cajitaSelect) cajitaSelect.value = cajitaId;
-    this.updateCmovModalForSelectedCajita();
     
     const pagoRadio = document.querySelector('input[name="cmovTipo"][value="EGRESO"]');
     if (pagoRadio) pagoRadio.checked = true;
+
+    this.updateCmovModalForSelectedCajita();
 
     const montoInput = document.getElementById('cmovMonto');
     if (montoInput) montoInput.value = '';
@@ -816,11 +866,10 @@ class Controller {
     let afectaCuenta = true;
     if (isCredito) {
       if (tipo === 'INGRESO' || tipo === 'CARGO') {
-        // Compras con tarjeta nunca restan de la cuenta principal
         afectaCuenta = false;
       } else {
-        // Pago a tarjeta: depende de si seleccionó pagar con dinero de la cuenta principal (semana)
-        afectaCuenta = document.getElementById('cmovPagarDesdeCuenta')?.checked !== false;
+        // En pagos a tarjeta, solo descuenta si el usuario marca deliberadamente la casilla (por defecto desmarcada)
+        afectaCuenta = Boolean(document.getElementById('cmovPagarDesdeCuenta')?.checked);
       }
     }
 
