@@ -360,6 +360,17 @@ class View {
 
     let rollingBalance = 0;
 
+    const pastWeeksDetails = document.createElement('details');
+    pastWeeksDetails.className = 'group mb-6';
+    const pastWeeksSummary = document.createElement('summary');
+    pastWeeksSummary.className = 'p-4 bg-slate-900/50 border border-slate-800/80 hover:bg-slate-800/80 hover:border-slate-700 text-slate-300 text-sm font-bold rounded-2xl cursor-pointer list-none [&::-webkit-details-marker]:hidden flex justify-between items-center transition-all shadow-sm';
+    const pastWeeksContainer = document.createElement('div');
+    pastWeeksContainer.className = 'space-y-4 mt-4';
+    pastWeeksDetails.appendChild(pastWeeksSummary);
+    pastWeeksDetails.appendChild(pastWeeksContainer);
+
+    let pastWeeksCount = 0;
+
     weeks.forEach((w, idx) => {
       const isCurrent = idx === currentWeekIdx;
 
@@ -374,8 +385,9 @@ class View {
       const matchText = `${w.num} ${w.periodStr} ${w.monthStr} ${w.quincenaStr} ${w.scheduledItems.map(i => i.name).join(' ')}`.toLowerCase();
       if (query && !matchText.includes(query)) return;
 
-      const card = document.createElement('div');
-      card.className = `p-5 rounded-2xl border transition-all duration-300 hover:shadow-xl ${isCurrent
+      const card = document.createElement('details');
+      if (idx >= currentWeekIdx) card.open = true;
+      card.className = `p-5 rounded-2xl border transition-all duration-300 hover:shadow-xl group ${isCurrent
           ? 'bg-gradient-to-br from-slate-900 to-slate-950 border-emerald-500/50 shadow-emerald-900/20'
           : 'bg-slate-900/50 backdrop-blur-md border-slate-800/80 hover:border-slate-700'
         }`;
@@ -421,7 +433,7 @@ class View {
       }
 
       card.innerHTML = `
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <summary class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden focus:outline-none">
           <div class="flex items-center gap-4">
             <div class="flex flex-col items-center justify-center w-14 h-14 rounded-2xl ${isCurrent ? 'bg-emerald-500 text-slate-950 shadow-[0_0_20px_rgba(16,185,129,0.3)]' : 'bg-slate-800 text-slate-300'}">
               <span class="text-[10px] font-bold uppercase tracking-wider opacity-80">Sem</span>
@@ -461,13 +473,36 @@ class View {
               <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Acumulado</span>
               <span class="text-sm font-black ${rollingBalance >= 0 ? 'text-emerald-300' : 'text-rose-300'}">$${rollingBalance.toLocaleString()}</span>
             </div>
+            <div class="text-slate-500 transition-transform duration-300 group-open:rotate-180 flex items-center justify-center sm:ml-2">
+              <i data-lucide="chevron-down" class="w-5 h-5"></i>
+            </div>
           </div>
-        </div>
+        </summary>
         ${scheduledHtml}
       `;
 
-      container.appendChild(card);
+      if (idx < currentWeekIdx && !query) {
+        pastWeeksContainer.appendChild(card);
+        pastWeeksCount++;
+      } else {
+        container.appendChild(card);
+      }
     });
+
+    if (pastWeeksCount > 0 && !query) {
+      pastWeeksSummary.innerHTML = `
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-slate-800/80 flex items-center justify-center shadow-inner">
+            <i data-lucide="history" class="w-4 h-4 text-slate-400"></i>
+          </div>
+          <span>Ver semanas anteriores (${pastWeeksCount})</span>
+        </div>
+        <div class="text-slate-500 transition-transform duration-300 group-open:rotate-180 flex items-center justify-center">
+          <i data-lucide="chevron-down" class="w-5 h-5"></i>
+        </div>
+      `;
+      container.insertBefore(pastWeeksDetails, container.firstChild);
+    }
 
     document.querySelectorAll('[data-action="toggle-payment"]').forEach(btn => {
       btn.addEventListener('click', (e) => {
