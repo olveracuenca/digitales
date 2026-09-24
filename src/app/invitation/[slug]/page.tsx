@@ -7,7 +7,8 @@ import FallingIcons from "@/components/FallingIcons";
 import AudioPlayer from "@/components/AudioPlayer";
 import Countdown from "@/components/Countdown";
 import AnimatedSection from "@/components/AnimatedSection";
-import { MapPin } from "lucide-react";
+import SafeIcon from "@/components/SafeIcon";
+import { MapPin, MessageCircle } from "lucide-react";
 import RsvpForm from "@/components/RsvpForm";
 
 const prisma = new PrismaClient();
@@ -126,6 +127,385 @@ export default async function PublicInvitation({
 
   const cleanPhone = String(data.whatsapp || data.phone || "").replace(/\D/g, '');
   const rsvpPhone = String(data.rsvpPhone || data.whatsapp || data.phone || "").replace(/\D/g, '');
+
+  // --- RENDERIZADO DINÁMICO POR BLOQUES (MODULAR STUDIO) ---
+  if (Array.isArray(data.sections) && data.sections.length > 0) {
+    const formatEventDate = (dateStr: string) => {
+      try {
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        return d.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      } catch {
+        return dateStr;
+      }
+    };
+
+    const formatEventTime = (dateStr: string) => {
+      try {
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '';
+        return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true });
+      } catch {
+        return '';
+      }
+    };
+
+    return (
+      <div 
+        style={{ 
+          maxWidth: '540px', 
+          margin: '0 auto', 
+          minHeight: '100vh', 
+          backgroundColor: data.design?.bgColor || '#fdfbf7', 
+          color: data.design?.textColor || '#1f2937', 
+          fontFamily: data.design?.font || 'serif',
+          backgroundImage: data.design?.bgImage ? `url(${data.design.bgImage})` : 'none',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+          position: 'relative',
+          boxShadow: '0 0 40px rgba(0, 0, 0, 0.1)',
+        }}
+      >
+        {/* Lluvia de partículas animadas */}
+        {data.emojis?.falling && <FallingIcons iconString={data.emojis.falling} />}
+
+        {/* Reproductor de audio flotante */}
+        {data.music && <AudioPlayer src={data.music} isAbsolute={false} />}
+
+        {/* Renderizado secuencial de secciones en el orden exacto del usuario */}
+        {data.sections.filter((s: any) => s.visible !== false).map((section: any, idx: number) => {
+          const { type, data: sData } = section;
+
+          switch (type) {
+            case 'hero':
+              return (
+                <div 
+                  key={section.id || idx}
+                  className={styles.simHero} 
+                  style={{ 
+                    backgroundImage: `url(${sData.mainPhoto || data.mainPhoto || 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=1000'})`,
+                    minHeight: '65vh',
+                  }}
+                >
+                  <div 
+                    className={styles.simHeroOverlay}
+                    style={{
+                      background: `linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,${sData.overlayDarkness !== undefined ? sData.overlayDarkness : 0.65}))`,
+                      paddingBottom: '2.5rem',
+                    }}
+                  >
+                    {sData.badgeText && (
+                      <span className={styles.simBadgeText}>{sData.badgeText}</span>
+                    )}
+                    <h1 
+                      className={styles.simTitle} 
+                      style={{ fontFamily: data.design?.titleFont || data.design?.font || 'serif', fontSize: '2.8rem' }}
+                    >
+                      {sData.title || data.title}
+                    </h1>
+                    <p 
+                      className={styles.simSubtitle}
+                      style={{ fontFamily: data.design?.font || 'serif', fontSize: '1.15rem' }}
+                    >
+                      {sData.subtitle || data.subtitle}
+                    </p>
+                  </div>
+                </div>
+              );
+
+            case 'quote':
+              return (
+                <AnimatedSection key={section.id || idx} direction="up">
+                  <div className={styles.simSectionPadded}>
+                    <div className={`${styles.simCard} ${sData.cardStyle === 'glass' ? styles.simGlassCard : ''}`}>
+                      <p 
+                        style={{
+                          fontFamily: sData.font || data.design?.font || 'serif',
+                          color: sData.color || data.design?.textColor,
+                          fontSize: sData.size || '1.25rem',
+                          fontStyle: sData.italic !== false ? 'italic' : 'normal',
+                          lineHeight: 1.6,
+                        }}
+                      >
+                        "{sData.text || ''}"
+                      </p>
+                      {sData.author && (
+                        <span className={styles.simAuthor}>— {sData.author}</span>
+                      )}
+                    </div>
+                  </div>
+                </AnimatedSection>
+              );
+
+            case 'countdown':
+              return (
+                <AnimatedSection key={section.id || idx} direction="up">
+                  <div className={styles.simSectionPadded}>
+                    <div className={styles.simCountdownCard}>
+                      <span className={styles.simCountdownLabel}>{sData.label || 'Faltan'}</span>
+                      <Countdown 
+                        targetDate={sData.targetDate || data.date} 
+                        bgColor={sData.bgColor || data.countdownDesign?.bgColor || 'rgba(0,0,0,0.15)'}
+                        textColor={sData.textColor || data.countdownDesign?.textColor || data.design?.textColor}
+                        font={sData.font || data.countdownDesign?.font || data.design?.font}
+                      />
+                    </div>
+                  </div>
+                </AnimatedSection>
+              );
+
+            case 'datetime':
+              return (
+                <AnimatedSection key={section.id || idx} direction="left">
+                  <div className={styles.simSectionPadded}>
+                    <div className={styles.simDateCard}>
+                      <div className={styles.simIconCircle}><SafeIcon icon={sData.icon} fallback="📅" /></div>
+                      <h3 style={{ fontFamily: data.design?.titleFont || data.design?.font, fontSize: '1.4rem' }}>
+                        {sData.title || '¿Cuándo?'}
+                      </h3>
+                      <p className={styles.simDateString} style={{ fontSize: '1.15rem' }}>
+                        {formatEventDate(sData.date || data.date)}
+                      </p>
+                      <p className={styles.simTimeString}>
+                        A las {formatEventTime(sData.date || data.date)}
+                      </p>
+                      {sData.note && (
+                        <span className={styles.simDateNote}>{sData.note}</span>
+                      )}
+                    </div>
+                  </div>
+                </AnimatedSection>
+              );
+
+            case 'carousel':
+              return (
+                <AnimatedSection key={section.id || idx} direction="right">
+                  <div className={styles.simSectionPadded}>
+                    <div className={styles.simHeaderRow}>
+                      <SafeIcon icon={sData.icon} fallback="📸" />
+                      <h3 style={{ fontFamily: data.design?.titleFont || data.design?.font }}>
+                        {sData.title || 'Nuestros Momentos'}
+                      </h3>
+                    </div>
+                    <AutoCarousel photos={sData.photos && sData.photos.length > 0 ? sData.photos : (data.carouselPhotos || [])} />
+                  </div>
+                </AnimatedSection>
+              );
+
+            case 'photoFrame':
+              return (
+                <AnimatedSection key={section.id || idx} direction="up">
+                  <div className={styles.simSectionPadded}>
+                    <div className={`${styles.simPhotoFrame} ${styles['frame_' + (sData.shape || 'polaroid')]}`}>
+                      <div className={styles.simPhotoContainer}>
+                        <img src={sData.photoUrl || 'https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=800'} alt="Foto" />
+                      </div>
+                      {sData.caption && (
+                        <p className={styles.simPhotoCaption} style={{ fontFamily: data.design?.titleFont || data.design?.font }}>
+                          {sData.caption}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </AnimatedSection>
+              );
+
+            case 'location':
+            case 'secondaryLocation':
+              return (
+                <AnimatedSection key={section.id || idx} direction="left">
+                  <div className={styles.simSectionPadded}>
+                    <div className={styles.simLocationCard}>
+                      <div className={styles.simIconCircle}><SafeIcon icon={sData.icon} fallback={type === 'location' ? '📍' : '⛪'} /></div>
+                      <h3 style={{ fontFamily: data.design?.titleFont || data.design?.font }}>
+                        {sData.title || (type === 'location' ? 'Ubicación' : 'Ceremonia')}
+                      </h3>
+                      <h4 className={styles.simPlaceName}>{sData.name}</h4>
+                      {sData.address && <p className={styles.simAddressText}>{sData.address}</p>}
+                      {sData.locationUrl && (
+                        <a href={sData.locationUrl} target="_blank" rel="noreferrer" className={styles.simMapsBtn}>
+                          <MapPin size={18} />
+                          <span>{sData.btnText || 'Abrir en Google Maps'}</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </AnimatedSection>
+              );
+
+            case 'itinerary':
+              return (
+                <AnimatedSection key={section.id || idx} direction="right">
+                  <div className={styles.simSectionPadded}>
+                    <div className={styles.simHeaderRow}>
+                      <SafeIcon icon={sData.icon} fallback="📋" />
+                      <h3 style={{ fontFamily: data.design?.titleFont || data.design?.font }}>
+                        {sData.title || 'Itinerario'}
+                      </h3>
+                    </div>
+                    <div className={styles.simTimeline}>
+                      <div className={styles.simTimelineLine} style={{ backgroundColor: `${data.design?.textColor || '#000'}30` }} />
+                      {(sData.items || []).map((item: any, i: number) => (
+                        <div key={item.id || i} className={styles.simTimelineStep}>
+                          <div className={styles.simStepIconBox} style={{ borderColor: `${data.design?.textColor || '#000'}40`, background: data.design?.bgColor || '#fff' }}>
+                            <SafeIcon icon={item.icon} fallback="✨" />
+                          </div>
+                          <div className={styles.simStepContent}>
+                            <span className={styles.simStepTime}>{item.time}</span>
+                            <h5 className={styles.simStepTitle}>{item.title}</h5>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </AnimatedSection>
+              );
+
+            case 'dressCode':
+              return (
+                <AnimatedSection key={section.id || idx} direction="left">
+                  <div className={styles.simSectionPadded}>
+                    <div className={styles.simDressCodeCard}>
+                      <div className={styles.simIconCircle}><SafeIcon icon={sData.icon} fallback="👗" /></div>
+                      <h3 style={{ fontFamily: data.design?.titleFont || data.design?.font }}>
+                        {sData.title || 'Código de Vestimenta'}
+                      </h3>
+                      <p className={styles.simDressGeneral}>{sData.general || 'Formal'}</p>
+                      <div className={styles.simDressDetails}>
+                        {sData.him && <div><strong>Caballeros:</strong> {sData.him}</div>}
+                        {sData.her && <div><strong>Damas:</strong> {sData.her}</div>}
+                        {sData.note && <p className={styles.simDressNote}>{sData.note}</p>}
+                      </div>
+                      {sData.palette && sData.palette.length > 0 && (
+                        <div className={styles.simPaletteRow}>
+                          {sData.palette.map((color: string, cIdx: number) => (
+                            <div key={cIdx} className={styles.simPaletteDot} style={{ backgroundColor: color }} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </AnimatedSection>
+              );
+
+            case 'gifts':
+              return (
+                <AnimatedSection key={section.id || idx} direction="right">
+                  <div className={styles.simSectionPadded}>
+                    <div className={styles.simHeaderRow}>
+                      <SafeIcon icon={sData.icon} fallback="🎁" />
+                      <h3 style={{ fontFamily: data.design?.titleFont || data.design?.font }}>
+                        {sData.title || 'Mesa de Regalos'}
+                      </h3>
+                    </div>
+                    {sData.message && <p className={styles.simGiftMessage}>{sData.message}</p>}
+                    <div className={styles.simGiftStoresList}>
+                      {(sData.stores || []).map((store: any, idxS: number) => (
+                        <a key={store.id || idxS} href={store.url || '#'} target="_blank" rel="noreferrer" className={styles.simGiftStoreBtn}>
+                          <span>{store.store || 'Tienda'}</span>
+                          <span>→</span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </AnimatedSection>
+              );
+
+            case 'bankDetails':
+              return (
+                <AnimatedSection key={section.id || idx} direction="up">
+                  <div className={styles.simSectionPadded}>
+                    <div className={styles.simBankCard}>
+                      <div className={styles.simIconCircle}><SafeIcon icon={sData.icon} fallback="✉️" /></div>
+                      <h3 style={{ fontFamily: data.design?.titleFont || data.design?.font }}>
+                        {sData.title || 'Lluvia de Sobres / Transferencia'}
+                      </h3>
+                      {sData.notes && <p className={styles.simBankNotes}>{sData.notes}</p>}
+                      {sData.clabe && (
+                        <div className={styles.simBankBox}>
+                          {sData.bankName && <div><strong>Banco:</strong> {sData.bankName}</div>}
+                          <div><strong>CLABE:</strong> <code>{sData.clabe}</code></div>
+                          {sData.accountHolder && <div><strong>Beneficiario:</strong> {sData.accountHolder}</div>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </AnimatedSection>
+              );
+
+            case 'generalText':
+              return (
+                <AnimatedSection key={section.id || idx} direction="up">
+                  <div className={styles.simSectionPadded}>
+                    <div className={styles.simTextCard} style={{ textAlign: sData.align || 'center' }}>
+                      {sData.icon && (
+                        <div className={styles.simTextIcon}>
+                          <SafeIcon icon={sData.icon} />
+                        </div>
+                      )}
+                      {sData.title && <h3 style={{ fontFamily: data.design?.titleFont || data.design?.font }}>{sData.title}</h3>}
+                      <p className={styles.simTextBody}>{sData.content}</p>
+                    </div>
+                  </div>
+                </AnimatedSection>
+              );
+
+            case 'whatsappRsvp':
+              return (
+                <AnimatedSection key={section.id || idx} direction="up">
+                  <div className={styles.simSectionPadded} style={{ paddingBottom: '3.5rem' }}>
+                    <div className={styles.simRsvpBox}>
+                      <div className={styles.simIconCircle}><SafeIcon icon={sData.icon} fallback="💬" /></div>
+                      <h3 style={{ fontFamily: data.design?.titleFont || data.design?.font, marginBottom: '0.5rem' }}>
+                        {sData.title || 'Confirmación de Asistencia'}
+                      </h3>
+                      <div className={styles.simRsvpButtons}>
+                        <a 
+                          href={`https://wa.me/${cleanPhone || sData.phone}?text=${encodeURIComponent(confirmMsg)}`} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className={styles.simConfirmWaBtn}
+                        >
+                          <MessageCircle size={18} />
+                          <span>{sData.confirmText || '✓ Confirmar por WhatsApp'}</span>
+                        </a>
+                        <a 
+                          href={`https://wa.me/${cleanPhone || sData.phone}?text=${encodeURIComponent(declineMsg)}`} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className={styles.simDeclineWaBtn}
+                          style={{ color: data.design?.textColor || '#000', borderColor: `${data.design?.textColor || '#000'}40`, textAlign: 'center', textDecoration: 'none' }}
+                        >
+                          <span>{sData.declineText || '✕ No podré asistir'}</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </AnimatedSection>
+              );
+
+            case 'rsvpForm':
+              return (
+                <AnimatedSection key={section.id || idx} direction="up">
+                  <div className={styles.simSectionPadded} style={{ paddingBottom: '3.5rem' }}>
+                    <RsvpForm 
+                      invitationId={invitation.id} 
+                      design={data.design} 
+                      guestPass={guestPassProp}
+                      whatsapp={{ enabled: !!rsvpPhone || data.visibility?.whatsapp, number: rsvpPhone, contacts: data.rsvpContacts, confirmMsg, declineMsg }}
+                    />
+                  </div>
+                </AnimatedSection>
+              );
+
+            default:
+              return null;
+          }
+        })}
+      </div>
+    );
+  }
 
   // --- PLANTILLA t-baby-shower (Glassmorphism Pink Dream) ---
   if (invitation.templateId === 't-baby-shower') {
